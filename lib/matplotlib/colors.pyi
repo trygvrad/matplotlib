@@ -64,7 +64,10 @@ class ColorConverter:
 
 colorConverter: ColorConverter
 
-class Colormap:
+class ColormapBase:
+    ...
+
+class Colormap(ColormapBase):
     name: str
     N: int
     colorbar_extend: bool
@@ -137,6 +140,12 @@ class ListedColormap(Colormap):
     ) -> None: ...
     def resampled(self, lutsize: int) -> ListedColormap: ...
     def reversed(self, name: str | None = ...) -> ListedColormap: ...
+
+class MultivarColormap(ColormapBase):
+    def __init__(self) -> None: ...
+
+class BivarColormap(ColormapBase):
+    def __init__(self) -> None: ...
 
 class Normalize:
     callbacks: cbook.CallbackRegistry
