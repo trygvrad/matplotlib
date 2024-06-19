@@ -569,7 +569,7 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
                 else:
                     # wrap multivariate data from shape (k, n, m) to shape (n,m) with
                     # a dtype containing k fields, with k = self.cmap.n_variates
-                    output = cm.ensure_multivariate_data(self.cmap.n_variates, outputs)
+                    output = cm._ensure_multivariate_data(self.cmap.n_variates, outputs)
             else:
                 if A.ndim == 2:  # _interpolation_stage == 'rgba'
                     for n, a in zip(self._norm, cm._iterable_variates_in_data(A)):
@@ -706,7 +706,7 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
         Parse multivariate data and check validity of image-like input *A* and
         normalize it to a format suitable for Image subclasses.
         """
-        A = self.parse_multivariate_data(A)
+        A = self._parse_multivariate_data(A)
         A = self._normalize_image_array(A)
         return A
 

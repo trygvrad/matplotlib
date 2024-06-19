@@ -12,7 +12,7 @@ import numpy as np
 
 import matplotlib as mpl
 from . import _api, cbook
-from .colors import BoundaryNorm
+from .colors import BoundaryNorm, Colormap, BivarColormap
 from .cm import VectorMappable
 from .path import Path
 from .transforms import (BboxBase, Bbox, IdentityTransform, Transform, TransformedBbox,
@@ -1338,8 +1338,13 @@ class Artist:
             if not np.iterable(data):
                 data = [data]
             out_vals = []
-            for nn, dd in zip(self._norm, data):
-                n = self.cmap.N
+            if isinstance(self.cmap, Colormap):
+                ns = [self.cmap.N]
+            elif isinstance(self.cmap, BivarColormap):
+                ns = [self.cmap.N, self.cmap.M]
+            else:  # i.e. isinstance(self.cmap, colors.MultivarColormap):
+                ns = [c.N for c in self.cmap]
+            for n, nn, dd in zip(ns, self._norm, data):
                 normed = nn(dd)
                 if np.isfinite(normed):
                     if isinstance(nn, BoundaryNorm):

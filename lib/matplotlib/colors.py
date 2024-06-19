@@ -691,7 +691,7 @@ class Colormap(ColormapBase):
     Typically, Colormap instances are used to convert data values (floats)
     from the interval ``[0, 1]`` to the RGBA color that the respective
     Colormap represents. For scaling of data into the ``[0, 1]`` interval see
-    `matplotlib.colors.Normalize`. Subclasses of `matplotlib.cm.ScalarMappable`
+    `matplotlib.colors.Normalize`. Subclasses of `matplotlib.cm.VectorMappable`
     make heavy use of this ``data -> normalize -> map-to-color`` processing
     chain.
     """
@@ -2775,7 +2775,7 @@ class BoundaryNorm(Normalize):
 class NoNorm(Normalize):
     """
     Dummy replacement for `Normalize`, for the case where we want to use
-    indices directly in a `~matplotlib.cm.ScalarMappable`.
+    indices directly in a `~matplotlib.cm.VectorMappable`.
     """
     def __call__(self, value, clip=None):
         if np.iterable(value):

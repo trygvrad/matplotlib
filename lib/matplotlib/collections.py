@@ -2006,7 +2006,7 @@ class _MeshData:
             shape is (M, N) for 'gouraud' *shading* and (M+1, N+1) for 'flat'
             shading.
         """
-        A = self.parse_multivariate_data(A)
+        A = self._parse_multivariate_data(A)
         height, width = self._coordinates.shape[0:-1]
         if self._shading == 'flat':
             h, w = height - 1, width - 1

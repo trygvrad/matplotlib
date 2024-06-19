@@ -34,8 +34,8 @@ import matplotlib.units as munits
 from matplotlib import _api, _docstring, _preprocess_data
 from matplotlib.axes._base import (
     _AxesBase, _TransformedBoundsLocator, _process_plot_format)
-from matplotlib.cm import ensure_cmap, ensure_multivariate_params, \
-    ensure_multivariate_data
+from matplotlib.cm import _ensure_cmap, _ensure_multivariate_params, \
+    _ensure_multivariate_data
 from matplotlib.axes._secondary_axes import SecondaryAxis
 from matplotlib.container import BarContainer, ErrorbarContainer, StemContainer
 
@@ -5931,9 +5931,9 @@ class Axes(_AxesBase):
         `~matplotlib.pyplot.imshow` expects RGB images adopting the straight
         (unassociated) alpha representation.
         """
-        cmap = ensure_cmap(cmap)
-        X, norm, vmin, vmax = ensure_multivariate_params(cmap.n_variates, X,
-                                                         norm, vmin, vmax)
+        cmap = _ensure_cmap(cmap)
+        X, norm, vmin, vmax = _ensure_multivariate_params(cmap.n_variates, X,
+                                                          norm, vmin, vmax)
 
         im = mimage.AxesImage(self, cmap=cmap, norm=norm,
                               interpolation=interpolation, origin=origin,
@@ -5982,7 +5982,7 @@ class Axes(_AxesBase):
             shading = 'auto'
 
         if len(args) == 1:
-            C = np.asanyarray(ensure_multivariate_data(n_variates, args[0]))
+            C = np.asanyarray(_ensure_multivariate_data(n_variates, args[0]))
             nrows, ncols = C.shape[:2]
 
             if shading in ['gouraud', 'nearest']:
@@ -5995,7 +5995,7 @@ class Axes(_AxesBase):
 
         if len(args) == 3:
             # Check x and y for bad data...
-            C = np.asanyarray(ensure_multivariate_data(n_variates, args[2]))
+            C = np.asanyarray(_ensure_multivariate_data(n_variates, args[2]))
             # unit conversion allows e.g. datetime objects as axis values
             X, Y = args[:2]
             X, Y = self._process_unit_info([("x", X), ("y", Y)], kwargs)
@@ -6231,12 +6231,12 @@ class Axes(_AxesBase):
             shading = mpl.rcParams['pcolor.shading']
         shading = shading.lower()
 
-        cmap = ensure_cmap(cmap)
+        cmap = _ensure_cmap(cmap)
         X, Y, C, shading = self._pcolorargs('pcolor', *args, shading=shading,
                                             n_variates=cmap.n_variates, kwargs=kwargs)
 
-        C, norm, vmin, vmax = ensure_multivariate_params(cmap.n_variates, C,
-                                                         norm, vmin, vmax)
+        C, norm, vmin, vmax = _ensure_multivariate_params(cmap.n_variates, C,
+                                                          norm, vmin, vmax)
 
         linewidths = (0.25,)
         if 'linewidth' in kwargs:
@@ -6495,12 +6495,12 @@ class Axes(_AxesBase):
         shading = shading.lower()
         kwargs.setdefault('edgecolors', 'none')
 
-        cmap = ensure_cmap(cmap)
+        cmap = _ensure_cmap(cmap)
         X, Y, C, shading = self._pcolorargs('pcolormesh', *args, shading=shading,
                                             n_variates=cmap.n_variates, kwargs=kwargs)
 
-        C, norm, vmin, vmax = ensure_multivariate_params(cmap.n_variates, C,
-                                                         norm, vmin, vmax)
+        C, norm, vmin, vmax = _ensure_multivariate_params(cmap.n_variates, C,
+                                                          norm, vmin, vmax)
 
         coords = np.stack([X, Y], axis=-1)
 

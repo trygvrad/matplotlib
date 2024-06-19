@@ -1,5 +1,6 @@
 """
-Builtin colormaps, colormap handling utilities, and the `ScalarMappable` mixin.
+Builtin colormaps, colormap handling utilities, and the `VectorMappable` and
+`ScalarMappable` mixin.
 
 .. seealso::
 
@@ -298,13 +299,14 @@ class VectorMappable:
         cmap : str or `~matplotlib.colors.Colormap`
             The colormap used to map normalized data values to RGBA colors.
         """
-        self.cmap = ensure_cmap(cmap)
-
         self._A = None
+        self.cmap = None
+        self.set_cmap(cmap)
+
         self._id_norm = [None] * self.cmap.n_variates
         self._norm = [None] * self.cmap.n_variates
-        self.set_norm(norm)  # The Normalize instance of this ScalarMappable.
-        #: The last colorbar associated with this ScalarMappable. May be None.
+        self.set_norm(norm)  # The Normalize instance of this VectorMappable.
+        #: The last colorbar associated with this VectorMappable. May be None.
         self.colorbar = None
         self.callbacks = cbook.CallbackRegistry(signals=["changed"])
 
@@ -312,14 +314,14 @@ class VectorMappable:
         """
         Helper for initial scaling.
 
-        Used by public functions that create a ScalarMappable and support
+        Used by public functions that create a VectorMappable and support
         parameters *vmin*, *vmax* and *norm*. This makes sure that a *norm*
         will take precedence over *vmin*, *vmax*.
 
         Note that this method does not set the norm.
         """
-        norm = ensure_multivariate_norm(self.cmap.n_variates, norm)
-        vmin, vmax = ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
+        norm = _ensure_multivariate_norm(self.cmap.n_variates, norm)
+        vmin, vmax = _ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
         for i, _ in enumerate(norm):
             if vmin[i] is not None or vmax[i] is not None:
                 if isinstance(norm[i], colors.Normalize):
@@ -339,7 +341,7 @@ class VectorMappable:
 
         In the normal case, *x* is a 1D or 2D sequence of scalars, and
         the corresponding `~numpy.ndarray` of RGBA values will be returned,
-        based on the norm and colormap set for this ScalarMappable.
+        based on the norm and colormap set for this VectorMappable.
 
         There is one special case, for handling images that are already
         RGB or RGBA, such as might have been read from an image file.
@@ -413,7 +415,7 @@ class VectorMappable:
                 x = self._norm[0](x)
             rgba = self.cmap(x, alpha=alpha, bytes=bytes)
         else:  # multivariate
-            x = ensure_multivariate_data(self.cmap.n_variates, x)
+            x = _ensure_multivariate_data(self.cmap.n_variates, x)
             x = _iterable_variates_in_data(x)
             if isinstance(self.cmap, colors.BivarColormap):
                 if norm:
@@ -438,13 +440,13 @@ class VectorMappable:
         A : array-like or None
             The values that are mapped to colors.
 
-            The base class `.ScalarMappable` does not make any assumptions on
+            The base class `.VectorMappable` does not make any assumptions on
             the dimensionality and shape of the value array *A*.
         """
         if A is None:
             self._A = None
             return
-        A = ensure_multivariate_data(self.cmap.n_variates, A)
+        A = _ensure_multivariate_data(self.cmap.n_variates, A)
 
         A = cbook.safe_masked_invalid(A, copy=True)
         if not np.can_cast(A.dtype, float, "same_kind"):
@@ -465,7 +467,7 @@ class VectorMappable:
         """
         Return the array of values, that are mapped to colors.
 
-        The base class `.ScalarMappable` does not make any assumptions on
+        The base class `.VectorMappable` does not make any assumptions on
         the dimensionality and shape of the array.
         """
         return self._A
@@ -514,7 +516,7 @@ class VectorMappable:
                 vmin, vmax = vmin
             except (TypeError, ValueError):
                 pass
-        vmin, vmax = ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
+        vmin, vmax = _ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
         for i, _ in enumerate(self._norm):
             self._set_clim(i, vmin[i], vmax[i])
 
@@ -538,7 +540,7 @@ class VectorMappable:
         """
         in_init = self.cmap is None
 
-        self.cmap = ensure_cmap(cmap)
+        self.cmap = _ensure_cmap(cmap)
         if not in_init:
             self.changed()  # Things are not set up properly yet.
 
@@ -567,7 +569,7 @@ class VectorMappable:
         on the colorbar to default.
         """
 
-        norm = ensure_multivariate_norm(self.cmap.n_variates, norm)
+        norm = _ensure_multivariate_norm(self.cmap.n_variates, norm)
 
         changed = False
         for i, n in enumerate(norm):
@@ -634,26 +636,31 @@ class VectorMappable:
         self.callbacks.process('changed', self)
         self.stale = True
 
-    def parse_multivariate_data(self, data):
+    def _parse_multivariate_data(self, data):
         """
-        Input data of shape (self.cmap.n_variates, n, m) is converted to an array of
-        shape (n, m) with data type np.dtype(f'{data.dtype}, ' * self.cmap.n_variates)
+        Parse data to a dtype with self.cmap.n_variates.
+
+        Input data of shape (n_variates, n, m) is converted to an array of shape
+        (n, m) with data type np.dtype(f'{data.dtype}, ' * n_variates)
 
         Complex data is returned as a view with dtype np.dtype('float64, float64')
         or np.dtype('float32, float32')
 
+        If n_variates is 1 and data is not of type np.ndarray (i.e. PIL.Image),
+        the data is returned unchanged.
+
+        If data is None, the function returns None
+
         Parameters
         ----------
-        n_variates : int
-            -  number of variates in the data
-        data : np.ndarray
+        data : np.ndarray, PIL.Image or None
 
         Returns
         -------
-            np.ndarray
-
+            np.ndarray, PIL.Image or None
         """
-        return ensure_multivariate_data(self.cmap.n_variates, data)
+
+        return _ensure_multivariate_data(self.cmap.n_variates, data)
 
 
 class ScalarMappable(VectorMappable):
@@ -665,8 +672,21 @@ class ScalarMappable(VectorMappable):
     """
 
     def __init__(self, norm=None, cmap=None):
-        cmap = ensure_cmap(cmap, accept_multivariate=False)
         super().__init__(norm=norm, cmap=cmap)
+
+    def set_cmap(self, cmap):
+        """
+        Set the colormap for luminance data.
+
+        Parameters
+        ----------
+        cmap : `.Colormap` or str or None
+        """
+        in_init = self.cmap is None
+
+        self.cmap = _ensure_cmap(cmap, accept_multivariate=False)
+        if not in_init:
+            self.changed()  # Things are not set up properly yet.
 
 
 # The docstrings here must be generic enough to apply to all relevant methods.
@@ -699,36 +719,10 @@ vmin, vmax : float, optional
 )
 
 
-@_api.deprecated
-def _ensure_cmap(cmap):
-    """
-    Ensure that we have a `.Colormap` object.
-
-    For internal use to preserve type stability of errors.
-
-    This function is depreciated with the introduction of cm.ensure_cmap().
-    cm.ensure_cmap(cmap, accept_multivariate=False) should be used instead.
-
-    Parameters
-    ----------
-    cmap : None, str, Colormap
-
-        - if a `Colormap`, return it
-        - if a string, look it up in mpl.colormaps
-        - if None, look up the default color map in mpl.colormaps
-
-    Returns
-    -------
-    Colormap
-    """
-
-    return ensure_cmap(cmap, accept_multivariate=False)
-
-
-def ensure_cmap(cmap, accept_multivariate=True):
+def _ensure_cmap(cmap, accept_multivariate=True):
     """
     For internal use to preserve type stability of errors, and
-    for external use to ensure that we have a `~matplotlib.colors.Colormap`,
+    to ensure that we have a `~matplotlib.colors.Colormap`,
     `~matplotlib.colors.MultivarColormap` or
     `~matplotlib.colors.BivarColormap` object.
     This is necessary in order to know the number of variates.
@@ -815,7 +809,7 @@ def _iterable_variates_in_data(data):
         return [data[descriptor[0]] for descriptor in data.dtype.descr]
 
 
-def ensure_multivariate_norm(n_variates, norm):
+def _ensure_multivariate_norm(n_variates, norm):
     """
     Ensure that the nor
     m has the correct number of elements.
@@ -847,7 +841,7 @@ def ensure_multivariate_norm(n_variates, norm):
     return norm
 
 
-def ensure_multivariate_data(n_variates, data):
+def _ensure_multivariate_data(n_variates, data):
     """
     Ensure that the data has dtype with n_variates.
 
@@ -920,7 +914,7 @@ def ensure_multivariate_data(n_variates, data):
                          f" or be of a dtype with {n_variates} fields")
 
 
-def ensure_multivariate_clim(n_variates, vmin=None, vmax=None):
+def _ensure_multivariate_clim(n_variates, vmin=None, vmax=None):
     """
     Ensure that vmin and vmax have the correct number of elements.
     If n_variates > 1: A single argument for vmin/vmax will be repeated n
@@ -957,7 +951,7 @@ def ensure_multivariate_clim(n_variates, vmin=None, vmax=None):
     return vmin, vmax
 
 
-def ensure_multivariate_params(n_variates, data, norm, vmin, vmax):
+def _ensure_multivariate_params(n_variates, data, norm, vmin, vmax):
     """
     Ensure that the data, norm, vmin and vmax have the correct number of elements.
     If n_variates == 1, the norm, vmin and vmax are returned as lists of length 1.
@@ -967,7 +961,7 @@ def ensure_multivariate_params(n_variates, data, norm, vmin, vmax):
     with n_variate fields.
     See the component functions for details.
     """
-    norm = ensure_multivariate_norm(n_variates, norm)
-    vmin, vmax = ensure_multivariate_clim(n_variates, vmin, vmax)
-    data = ensure_multivariate_data(n_variates, data)
+    norm = _ensure_multivariate_norm(n_variates, norm)
+    vmin, vmax = _ensure_multivariate_clim(n_variates, vmin, vmax)
+    data = _ensure_multivariate_data(n_variates, data)
     return data, norm, vmin, vmax
