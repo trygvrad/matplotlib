@@ -13,7 +13,7 @@ import numpy as np
 import matplotlib as mpl
 from . import _api, cbook
 from .colors import BoundaryNorm
-from .cm import ScalarMappable
+from .cm import VectorMappable
 from .path import Path
 from .transforms import (BboxBase, Bbox, IdentityTransform, Transform, TransformedBbox,
                          TransformedPatchPath, TransformedPath)
@@ -1327,35 +1327,40 @@ class Artist:
         --------
         get_cursor_data
         """
-        if np.ndim(data) == 0 and isinstance(self, ScalarMappable):
-            # This block logically belongs to ScalarMappable, but can't be
-            # implemented in it because most ScalarMappable subclasses inherit
-            # from Artist first and from ScalarMappable second, so
+        if np.ndim(data) == 0 and isinstance(self, VectorMappable):
+            # This block logically belongs to Scalar/VectorMappable, but can't be
+            # implemented in it because most Scalar/VectorMappable subclasses
+            # inherit from Artist first and from Scalar/VectorMappable second, so
             # Artist.format_cursor_data would always have precedence over
-            # ScalarMappable.format_cursor_data.
-            n = self.cmap.N
+            # Scalar/VectorMappable.format_cursor_data.
             if np.ma.getmask(data):
                 return "[]"
-            normed = self.norm(data)
-            if np.isfinite(normed):
-                if isinstance(self.norm, BoundaryNorm):
-                    # not an invertible normalization mapping
-                    cur_idx = np.argmin(np.abs(self.norm.boundaries - data))
-                    neigh_idx = max(0, cur_idx - 1)
-                    # use max diff to prevent delta == 0
-                    delta = np.diff(
-                        self.norm.boundaries[neigh_idx:cur_idx + 2]
-                    ).max()
+            if not np.iterable(data):
+                data = [data]
+            out_vals = []
+            for nn, dd in zip(self._norm, data):
+                n = self.cmap.N
+                normed = nn(dd)
+                if np.isfinite(normed):
+                    if isinstance(nn, BoundaryNorm):
+                        # not an invertible normalization mapping
+                        cur_idx = np.argmin(np.abs(nn.boundaries - dd))
+                        neigh_idx = max(0, cur_idx - 1)
+                        # use max diff to prevent delta == 0
+                        delta = np.diff(
+                            nn.boundaries[neigh_idx:cur_idx + 2]
+                        ).max()
 
+                    else:
+                        # Midpoints of neighboring color intervals.
+                        neighbors = nn.inverse(
+                            (int(normed * n) + np.array([0, 1])) / n)
+                        delta = abs(neighbors - dd).max()
+                    g_sig_digits = cbook._g_sig_digits(dd, delta)
                 else:
-                    # Midpoints of neighboring color intervals.
-                    neighbors = self.norm.inverse(
-                        (int(normed * n) + np.array([0, 1])) / n)
-                    delta = abs(neighbors - data).max()
-                g_sig_digits = cbook._g_sig_digits(data, delta)
-            else:
-                g_sig_digits = 3  # Consistent with default below.
-            return f"[{data:-#.{g_sig_digits}g}]"
+                    g_sig_digits = 3  # Consistent with default below.
+                out_vals.append(f"{dd:-#.{g_sig_digits}g}")
+            return "[" + ", ".join(out_vals) + "]"
         else:
             try:
                 data[0]

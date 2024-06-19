@@ -24,6 +24,8 @@ import matplotlib as mpl
 from matplotlib import _api, colors, cbook, scale
 from matplotlib._cm import datad
 from matplotlib._cm_listed import cmaps as cmaps_listed
+from matplotlib._cm_multivar import cmap_families as multivar_cmaps
+from matplotlib._cm_bivar import cmaps as bivar_cmaps
 
 
 _LUTSIZE = mpl.rcParams['image.lut']
@@ -238,6 +240,12 @@ class ColormapRegistry(Mapping):
 _colormaps = ColormapRegistry(_gen_cmap_registry())
 globals().update(_colormaps)
 
+_multivar_colormaps = ColormapRegistry(multivar_cmaps)
+globals().update(_multivar_colormaps)
+
+_bivar_colormaps = ColormapRegistry(bivar_cmaps)
+globals().update(_bivar_colormaps)
+
 
 def _auto_norm_from_scale(scale_cls):
     """
@@ -267,12 +275,13 @@ def _auto_norm_from_scale(scale_cls):
     return type(norm)
 
 
-class ScalarMappable:
+class VectorMappable:
     """
-    A mixin class to map scalar data to RGBA.
+    A mixin class to map one or multiple sets of scalar data to RGBA.
 
-    The ScalarMappable applies data normalization before returning RGBA colors
-    from the given colormap.
+    The VectorMappable applies data normalization before returning RGBA colors
+    from the given `~matplotlib.colors.Colormap`, `~matplotlib.colors.BivarColormap`,
+    or `~matplotlib.colors.MultivarColormap`.
     """
 
     def __init__(self, norm=None, cmap=None):
@@ -289,11 +298,12 @@ class ScalarMappable:
         cmap : str or `~matplotlib.colors.Colormap`
             The colormap used to map normalized data values to RGBA colors.
         """
+        self.cmap = ensure_cmap(cmap)
+
         self._A = None
-        self._norm = None  # So that the setter knows we're initializing.
+        self._id_norm = [None] * self.cmap.n_variates
+        self._norm = [None] * self.cmap.n_variates
         self.set_norm(norm)  # The Normalize instance of this ScalarMappable.
-        self.cmap = None  # So that the setter knows we're initializing.
-        self.set_cmap(cmap)  # The Colormap instance of this ScalarMappable.
         #: The last colorbar associated with this ScalarMappable. May be None.
         self.colorbar = None
         self.callbacks = cbook.CallbackRegistry(signals=["changed"])
@@ -308,13 +318,16 @@ class ScalarMappable:
 
         Note that this method does not set the norm.
         """
-        if vmin is not None or vmax is not None:
-            self.set_clim(vmin, vmax)
-            if isinstance(norm, colors.Normalize):
-                raise ValueError(
-                    "Passing a Normalize instance simultaneously with "
-                    "vmin/vmax is not supported.  Please pass vmin/vmax "
-                    "directly to the norm when creating it.")
+        norm = ensure_multivariate_norm(self.cmap.n_variates, norm)
+        vmin, vmax = ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
+        for i, _ in enumerate(norm):
+            if vmin[i] is not None or vmax[i] is not None:
+                if isinstance(norm[i], colors.Normalize):
+                    raise ValueError(
+                        "Passing a Normalize instance simultaneously with "
+                        "vmin/vmax is not supported.  Please pass vmin/vmax "
+                        "directly to the norm when creating it.")
+                self._set_clim(i, vmin[i], vmax[i])
 
         # always resolve the autoscaling so we have concrete limits
         # rather than deferring to draw time.
@@ -351,53 +364,69 @@ class ScalarMappable:
 
         """
         # First check for special case, image input:
-        try:
-            if x.ndim == 3:
-                if x.shape[2] == 3:
-                    if alpha is None:
-                        alpha = 1
-                    if x.dtype == np.uint8:
-                        alpha = np.uint8(alpha * 255)
-                    m, n = x.shape[:2]
-                    xx = np.empty(shape=(m, n, 4), dtype=x.dtype)
-                    xx[:, :, :3] = x
-                    xx[:, :, 3] = alpha
-                elif x.shape[2] == 4:
-                    xx = x
-                else:
-                    raise ValueError("Third dimension must be 3 or 4")
-                if xx.dtype.kind == 'f':
-                    # If any of R, G, B, or A is nan, set to 0
-                    if np.any(nans := np.isnan(x)):
-                        if x.shape[2] == 4:
-                            xx = xx.copy()
-                        xx[np.any(nans, axis=2), :] = 0
+        if self.cmap.n_variates == 1:
+            try:
+                if x.ndim == 3:
+                    if x.shape[2] == 3:
+                        if alpha is None:
+                            alpha = 1
+                        if x.dtype == np.uint8:
+                            alpha = np.uint8(alpha * 255)
+                        m, n = x.shape[:2]
+                        xx = np.empty(shape=(m, n, 4), dtype=x.dtype)
+                        xx[:, :, :3] = x
+                        xx[:, :, 3] = alpha
+                    elif x.shape[2] == 4:
+                        xx = x
+                    else:
+                        raise ValueError("Third dimension must be 3 or 4")
+                    if xx.dtype.kind == 'f':
+                        # If any of R, G, B, or A is nan, set to 0
+                        if np.any(nans := np.isnan(x)):
+                            if x.shape[2] == 4:
+                                xx = xx.copy()
+                            xx[np.any(nans, axis=2), :] = 0
 
-                    if norm and (xx.max() > 1 or xx.min() < 0):
-                        raise ValueError("Floating point image RGB values "
-                                         "must be in the 0..1 range.")
-                    if bytes:
-                        xx = (xx * 255).astype(np.uint8)
-                elif xx.dtype == np.uint8:
-                    if not bytes:
-                        xx = xx.astype(np.float32) / 255
-                else:
-                    raise ValueError("Image RGB array must be uint8 or "
-                                     "floating point; found %s" % xx.dtype)
-                # Account for any masked entries in the original array
-                # If any of R, G, B, or A are masked for an entry, we set alpha to 0
-                if np.ma.is_masked(x):
-                    xx[np.any(np.ma.getmaskarray(x), axis=2), 3] = 0
-                return xx
-        except AttributeError:
-            # e.g., x is not an ndarray; so try mapping it
-            pass
+                        if norm and (xx.max() > 1 or xx.min() < 0):
+                            raise ValueError("Floating point image RGB values "
+                                             "must be in the 0..1 range.")
+                        if bytes:
+                            xx = (xx * 255).astype(np.uint8)
+                    elif xx.dtype == np.uint8:
+                        if not bytes:
+                            xx = xx.astype(np.float32) / 255
+                    else:
+                        raise ValueError("Image RGB array must be uint8 or "
+                                         "floating point; found %s" % xx.dtype)
+                    # Account for any masked entries in the original array
+                    # If any of R, G, B, or A are masked for an entry, we set alpha to 0
+                    if np.ma.is_masked(x):
+                        xx[np.any(np.ma.getmaskarray(x), axis=2), 3] = 0
+                    return xx
+            except AttributeError:
+                # e.g., x is not an ndarray; so try mapping it
+                pass
 
-        # This is the normal case, mapping a scalar array:
-        x = ma.asarray(x)
-        if norm:
-            x = self.norm(x)
-        rgba = self.cmap(x, alpha=alpha, bytes=bytes)
+            # This is the normal case, mapping a scalar array:
+            x = ma.asarray(x)
+            if norm:
+                x = self._norm[0](x)
+            rgba = self.cmap(x, alpha=alpha, bytes=bytes)
+        else:  # multivariate
+            x = ensure_multivariate_data(self.cmap.n_variates, x)
+            x = _iterable_variates_in_data(x)
+            if isinstance(self.cmap, colors.BivarColormap):
+                if norm:
+                    normed_0 = self._norm[0](x[0])
+                    normed_1 = self._norm[1](x[1])
+                else:
+                    normed_0 = x[0].copy()
+                    normed_1 = x[1].copy()
+                rgba = self.cmap((normed_0, normed_1), alpha=alpha, bytes=bytes)
+            else:  # i.e. isinstance(self._cmaps, colors.MultivarColormap)
+                if norm:
+                    x = [norm(xx) for norm, xx in zip(self._norm, x)]
+                rgba = self.cmap(x, alpha=alpha, bytes=bytes)
         return rgba
 
     def set_array(self, A):
@@ -415,15 +444,22 @@ class ScalarMappable:
         if A is None:
             self._A = None
             return
+        A = ensure_multivariate_data(self.cmap.n_variates, A)
 
         A = cbook.safe_masked_invalid(A, copy=True)
         if not np.can_cast(A.dtype, float, "same_kind"):
-            raise TypeError(f"Image data of dtype {A.dtype} cannot be "
-                            "converted to float")
-
+            if A.dtype.fields is None:
+                raise TypeError(f"Image data of dtype {A.dtype} cannot be "
+                                f"converted to float")
+            else:
+                for key in A.dtype.fields:
+                    if not np.can_cast(A[key].dtype, float, "same_kind"):
+                        raise TypeError(f"Image data of dtype {A.dtype} cannot be "
+                                        f"converted to a sequence of float")
         self._A = A
-        if not self.norm.scaled():
-            self.norm.autoscale_None(A)
+        for AA, norm in zip(_iterable_variates_in_data(A), self._norm):
+            if not norm.scaled():
+                norm.autoscale_None(AA)
 
     def get_array(self):
         """
@@ -442,7 +478,20 @@ class ScalarMappable:
         """
         Return the values (min, max) that are mapped to the colormap limits.
         """
-        return self.norm.vmin, self.norm.vmax
+        if self.cmap.n_variates == 1:
+            return self._norm[0].vmin, self._norm[0].vmax
+        return [n.vmin for n in self._norm], [n.vmax for n in self._norm]
+
+    def _set_clim(self, i, vmin, vmax):
+        if vmax is None:
+            try:
+                vmin, vmax = vmin
+            except (TypeError, ValueError):
+                pass
+        if vmin is not None:
+            self._norm[i].vmin = colors._sanitize_extrema(vmin)
+        if vmax is not None:
+            self._norm[i].vmax = colors._sanitize_extrema(vmax)
 
     def set_clim(self, vmin=None, vmax=None):
         """
@@ -453,22 +502,21 @@ class ScalarMappable:
         vmin, vmax : float
              The limits.
 
-             The limits may also be passed as a tuple (*vmin*, *vmax*) as a
-             single positional argument.
+             For scalar data, the limits may also be passed as a
+             tuple (*vmin*, *vmax*) as a single positional argument.
 
              .. ACCEPTS: (vmin: float, vmax: float)
         """
         # If the norm's limits are updated self.changed() will be called
         # through the callbacks attached to the norm
-        if vmax is None:
+        if self.cmap.n_variates == 1:
             try:
                 vmin, vmax = vmin
             except (TypeError, ValueError):
                 pass
-        if vmin is not None:
-            self.norm.vmin = colors._sanitize_extrema(vmin)
-        if vmax is not None:
-            self.norm.vmax = colors._sanitize_extrema(vmax)
+        vmin, vmax = ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
+        for i, _ in enumerate(self._norm):
+            self._set_clim(i, vmin[i], vmax[i])
 
     def get_alpha(self):
         """
@@ -490,42 +538,19 @@ class ScalarMappable:
         """
         in_init = self.cmap is None
 
-        self.cmap = _ensure_cmap(cmap)
+        self.cmap = ensure_cmap(cmap)
         if not in_init:
             self.changed()  # Things are not set up properly yet.
 
     @property
     def norm(self):
+        if self.cmap.n_variates == 1:
+            return self._norm[0]
         return self._norm
 
     @norm.setter
     def norm(self, norm):
-        _api.check_isinstance((colors.Normalize, str, None), norm=norm)
-        if norm is None:
-            norm = colors.Normalize()
-        elif isinstance(norm, str):
-            try:
-                scale_cls = scale._scale_mapping[norm]
-            except KeyError:
-                raise ValueError(
-                    "Invalid norm str name; the following values are "
-                    f"supported: {', '.join(scale._scale_mapping)}"
-                ) from None
-            norm = _auto_norm_from_scale(scale_cls)()
-
-        if norm is self.norm:
-            # We aren't updating anything
-            return
-
-        in_init = self.norm is None
-        # Remove the current callback and connect to the new one
-        if not in_init:
-            self.norm.callbacks.disconnect(self._id_norm)
-        self._norm = norm
-        self._id_norm = self.norm.callbacks.connect('changed',
-                                                    self.changed)
-        if not in_init:
-            self.changed()
+        self.set_norm(norm)
 
     def set_norm(self, norm):
         """
@@ -541,7 +566,38 @@ class ScalarMappable:
         the norm of the mappable will reset the norm, locator, and formatters
         on the colorbar to default.
         """
-        self.norm = norm
+
+        norm = ensure_multivariate_norm(self.cmap.n_variates, norm)
+
+        changed = False
+        for i, n in enumerate(norm):
+            _api.check_isinstance((colors.Normalize, str, None), norm=n)
+            if n is None:
+                n = colors.Normalize()
+            elif isinstance(n, str):
+                try:
+                    scale_cls = scale._scale_mapping[n]
+                except KeyError:
+                    raise ValueError(
+                        "Invalid norm str name; the following values are "
+                        f"supported: {', '.join(scale._scale_mapping)}"
+                    ) from None
+                n = _auto_norm_from_scale(scale_cls)()
+
+            if n is self._norm[i]:
+                continue
+
+            if self._norm[i] is not None:
+                # Remove the current callback and connect to the new one
+                self._norm[i].callbacks.disconnect(self._id_norm[i])
+                # emit changed if we are changing norm
+                # do not emit during initialization (self.norm[i] is None)
+                changed = True
+            self._norm[i] = n
+            self._id_norm[i] = self._norm[i].callbacks.connect('changed',
+                                                               self.changed)
+        if changed:
+            self.changed()
 
     def autoscale(self):
         """
@@ -552,7 +608,8 @@ class ScalarMappable:
             raise TypeError('You must first set_array for mappable')
         # If the norm's limits are updated self.changed() will be called
         # through the callbacks attached to the norm
-        self.norm.autoscale(self._A)
+        for n, a in zip(self._norm, _iterable_variates_in_data(self._A)):
+            n.autoscale(a)
 
     def autoscale_None(self):
         """
@@ -563,7 +620,11 @@ class ScalarMappable:
             raise TypeError('You must first set_array for mappable')
         # If the norm's limits are updated self.changed() will be called
         # through the callbacks attached to the norm
-        self.norm.autoscale_None(self._A)
+        if self.cmap.n_variates == 1:
+            self._norm[0].autoscale_None(self._A)
+        else:
+            for n, a in zip(self._norm, _iterable_variates_in_data(self._A)):
+                n.autoscale_None(a)
 
     def changed(self):
         """
@@ -572,6 +633,40 @@ class ScalarMappable:
         """
         self.callbacks.process('changed', self)
         self.stale = True
+
+    def parse_multivariate_data(self, data):
+        """
+        Input data of shape (self.cmap.n_variates, n, m) is converted to an array of
+        shape (n, m) with data type np.dtype(f'{data.dtype}, ' * self.cmap.n_variates)
+
+        Complex data is returned as a view with dtype np.dtype('float64, float64')
+        or np.dtype('float32, float32')
+
+        Parameters
+        ----------
+        n_variates : int
+            -  number of variates in the data
+        data : np.ndarray
+
+        Returns
+        -------
+            np.ndarray
+
+        """
+        return ensure_multivariate_data(self.cmap.n_variates, data)
+
+
+class ScalarMappable(VectorMappable):
+    """
+    A mixin class to map one or scalar data to RGBA.
+
+    The VectorMappable applies data normalization before returning RGBA colors
+    from the given `~matplotlib.colors.Colormap`
+    """
+
+    def __init__(self, norm=None, cmap=None):
+        cmap = ensure_cmap(cmap, accept_multivariate=False)
+        super().__init__(norm=norm, cmap=cmap)
 
 
 # The docstrings here must be generic enough to apply to all relevant methods.
@@ -604,11 +699,15 @@ vmin, vmax : float, optional
 )
 
 
+@_api.deprecated
 def _ensure_cmap(cmap):
     """
     Ensure that we have a `.Colormap` object.
 
     For internal use to preserve type stability of errors.
+
+    This function is depreciated with the introduction of cm.ensure_cmap().
+    cm.ensure_cmap(cmap, accept_multivariate=False) should be used instead.
 
     Parameters
     ----------
@@ -621,13 +720,254 @@ def _ensure_cmap(cmap):
     Returns
     -------
     Colormap
+    """
+
+    return ensure_cmap(cmap, accept_multivariate=False)
+
+
+def ensure_cmap(cmap, accept_multivariate=True):
+    """
+    For internal use to preserve type stability of errors, and
+    for external use to ensure that we have a `~matplotlib.colors.Colormap`,
+    `~matplotlib.colors.MultivarColormap` or
+    `~matplotlib.colors.BivarColormap` object.
+    This is necessary in order to know the number of variates.
+
+    objects, strings in mpl.colormaps, or None.
+
+    Parameters
+    ----------
+    cmap : None, str, Colormap
+
+        - if a `~matplotlib.colors.Colormap`,
+          `~matplotlib.colors.MultivarColormap` or
+          `~matplotlib.colors.BivarColormap`,
+          return it
+        - if a string, look it up in three corresponding databases
+          when not found: raise an error based on the expected shape
+        - if None, look up the default color map in mpl.colormaps
+
+    accept_multivariate : bool, default True
+
+        - if False, accept only Colormap, string in mpl.colormaps or None
+
+    Returns
+    -------
+    Colormap, MultivarColormap or BivarColormap
+    """
+    if not accept_multivariate:
+        if isinstance(cmap, colors.Colormap):
+            return cmap
+        cmap_name = cmap if cmap is not None else mpl.rcParams["image.cmap"]
+        # use check_in_list to ensure type stability of the exception raised by
+        # the internal usage of this (ValueError vs KeyError)
+        if cmap_name not in _colormaps:
+            _api.check_in_list(sorted(_colormaps), cmap=cmap_name)
+
+    if isinstance(cmap, colors.ColormapBase):
+        return cmap
+
+    cmap_name = cmap if cmap is not None else mpl.rcParams["image.cmap"]
+    if cmap_name in mpl.colormaps:
+        return mpl.colormaps[cmap_name]
+    if cmap_name in mpl.multivar_colormaps:
+        return mpl.multivar_colormaps[cmap_name]
+    if cmap_name in mpl.bivar_colormaps:
+        return mpl.bivar_colormaps[cmap_name]
+
+    # this error message is a variant of _api.check_in_list but gives
+    # additional hints as to how to access multivariate colormaps
+
+    msg = f"{cmap!r} is not a valid value for cmap"
+    msg += "; supported values for scalar colormaps are "
+    msg += f"{', '.join(map(repr, sorted(mpl.colormaps)))}\n"
+    msg += "See matplotlib.bivar_colormaps() and"
+    msg += " matplotlib.multivar_colormaps() for"
+    msg += " bivariate and multivariate colormaps."
+
+    raise ValueError(msg)
+
+
+def _iterable_variates_in_data(data):
+    """
+    Provides an interable over the variates contained in the data.
+
+    The returned list has length 1 if 'data' contains scalar data.
+    If 'data' has a dtype type with multiple fields, the returned list
+    has a length equal to the number of field in the data type.
+
+    Often used with VectorMappable._norm, which similarly has a list
+    of norms equal to the number of variates
+
+    Parameters
+    ----------
+    data : np.ndarray
+
+
+    Returns
+    -------
+        list of np.ndarray
 
     """
-    if isinstance(cmap, colors.Colormap):
-        return cmap
-    cmap_name = cmap if cmap is not None else mpl.rcParams["image.cmap"]
-    # use check_in_list to ensure type stability of the exception raised by
-    # the internal usage of this (ValueError vs KeyError)
-    if cmap_name not in _colormaps:
-        _api.check_in_list(sorted(_colormaps), cmap=cmap_name)
-    return mpl.colormaps[cmap_name]
+    if data.dtype.fields is None:
+        return [data]
+    else:
+        return [data[descriptor[0]] for descriptor in data.dtype.descr]
+
+
+def ensure_multivariate_norm(n_variates, norm):
+    """
+    Ensure that the nor
+    m has the correct number of elements.
+    If n_variates > 1: A single argument for norm will be repeated n
+    times in the output.
+
+    Parameters
+    ----------
+    n_variates : int
+        -  number of variates in the data
+    norm : `.Normalize` (or subclass thereof) or str or None or iterable
+
+        - If iterable, the length must be equal to n_variates
+
+    Returns
+    -------
+        if n_variates == 1:
+            norm returned unchanged
+        if n_variates > 1:
+            an iterable of length n_variates
+    """
+    if isinstance(norm, str) or not np.iterable(norm):
+        norm = [norm for i in range(n_variates)]
+    else:
+        if len(norm) != n_variates:
+            raise ValueError(
+                f'Unable to map the input for norm ({norm}) to {n_variates} '
+                f'variables.')
+    return norm
+
+
+def ensure_multivariate_data(n_variates, data):
+    """
+    Ensure that the data has dtype with n_variates.
+
+    Input data of shape (n_variates, n, m) is converted to an array of shape
+    (n, m) with data type np.dtype(f'{data.dtype}, ' * n_variates)
+
+    Complex data is returned as a view with dtype np.dtype('float64, float64')
+    or np.dtype('float32, float32')
+
+    If n_variates is 1 and data is not of type np.ndarray (i.e. PIL.Image),
+    the data is returned unchanged.
+
+    If data is None, the function returns None
+
+    Parameters
+    ----------
+    n_variates : int
+        -  number of variates in the data
+    data : np.ndarray, PIL.Image or None
+
+    Returns
+    -------
+        np.ndarray, PIL.Image or None
+
+    """
+
+    if isinstance(data, np.ndarray):
+        if len(data.dtype.descr) == n_variates:
+            return data
+        elif data.dtype in [np.complex64, np.complex128]:
+            if data.dtype == np.complex128:
+                dt = np.dtype('float64, float64')
+            else:
+                dt = np.dtype('float32, float32')
+            reconstructed = np.ma.frombuffer(data.data, dtype=dt).reshape(data.shape)
+            if np.ma.is_masked(data):
+                for descriptor in dt.descr:
+                    reconstructed[descriptor[0]][data.mask] = np.ma.masked
+            return reconstructed
+
+    if n_variates > 1 and len(data) == n_variates:
+        # convert data from shape (n_variates, n, m)
+        # to (n,m) with a new dtype
+        data = [np.ma.array(part, copy=False) for part in data]
+        dt = np.dtype(', '.join([f'{part.dtype}' for part in data]))
+        fields = [descriptor[0] for descriptor in dt.descr]
+        reconstructed = np.ma.empty(data[0].shape, dtype=dt)
+        for i, f in enumerate(fields):
+            if data[i].shape != reconstructed.shape:
+                raise ValueError("For multivariate data all variates must have same "
+                                 f"shape, not {data[0].shape} and {data[i].shape}")
+            reconstructed[f] = data[i]
+            if np.ma.is_masked(data[i]):
+                reconstructed[f][data[i].mask] = np.ma.masked
+        return reconstructed
+
+    if data is None:
+        return data
+
+    if n_variates == 1:
+        # PIL.Image gets passed here
+        return data
+    elif n_variates == 2:
+        raise ValueError("Invalid data entry for mutlivariate data. The data"
+                         " must contain complex numbers, or have a first dimension 2,"
+                         " or be of a dtype with 2 fields")
+    else:
+        raise ValueError("Invalid data entry for mutlivariate data. The shape"
+                         f" of the data must have a first dimension {n_variates}"
+                         f" or be of a dtype with {n_variates} fields")
+
+
+def ensure_multivariate_clim(n_variates, vmin=None, vmax=None):
+    """
+    Ensure that vmin and vmax have the correct number of elements.
+    If n_variates > 1: A single argument for vmin/vmax will be repeated n
+    times in the output.
+
+    Parameters
+    ----------
+    n_variates : int
+        -  number of variates in the data
+    vmin and vmax : float or iterable
+        -  if iterable, the length must be n_variates
+
+    Returns
+    -------
+            vmin, vmax as iterables of length n_variates
+    """
+    if not np.iterable(vmin):
+        vmin = [vmin for i in range(n_variates)]
+    else:
+        if len(vmin) != n_variates:
+            raise ValueError(
+                f'Unable to map the input for vmin ({vmin}) to {n_variates} '
+                f'variables.')
+
+    if not np.iterable(vmax):
+        vmax = [vmax for i in range(n_variates)]
+    else:
+        if len(vmax) != n_variates:
+            raise ValueError(
+                f'Unable to map the input for vmax ({vmax}) to {n_variates} '
+                f'variables.')
+        vmax = vmax
+
+    return vmin, vmax
+
+
+def ensure_multivariate_params(n_variates, data, norm, vmin, vmax):
+    """
+    Ensure that the data, norm, vmin and vmax have the correct number of elements.
+    If n_variates == 1, the norm, vmin and vmax are returned as lists of length 1.
+    If n_variates > 1, the length of each input is checked for consistency and
+    single arguments are repeated as necessary to form lists of length n_variates.
+    Scalar data is returned unchanged, but multivariate data is restructured to a dtype
+    with n_variate fields.
+    See the component functions for details.
+    """
+    norm = ensure_multivariate_norm(n_variates, norm)
+    vmin, vmax = ensure_multivariate_clim(n_variates, vmin, vmax)
+    data = ensure_multivariate_data(n_variates, data)
+    return data, norm, vmin, vmax

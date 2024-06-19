@@ -32,7 +32,7 @@ from ._enums import JoinStyle, CapStyle
     "linewidth": ["linewidths", "lw"],
     "offset_transform": ["transOffset"],
 })
-class Collection(artist.Artist, cm.ScalarMappable):
+class Collection(artist.Artist, cm.VectorMappable):
     r"""
     Base class for Collections. Must be subclassed to be usable.
 
@@ -156,7 +156,7 @@ class Collection(artist.Artist, cm.ScalarMappable):
             ``Collection.set_{key}(val)`` for each key-value pair in *kwargs*.
         """
         artist.Artist.__init__(self)
-        cm.ScalarMappable.__init__(self, norm, cmap)
+        cm.VectorMappable.__init__(self, norm, cmap)
         # list of un-scaled dash patterns
         # this is needed scaling the dash pattern by linewidth
         self._us_linestyles = [(0, None)]
@@ -1991,12 +1991,14 @@ class _MeshData:
         A : array-like
             The mesh data. Supported array shapes are:
 
-            - (M, N) or (M*N,): a mesh with scalar data. The values are mapped
-              to colors using normalization and a colormap. See parameters
-              *norm*, *cmap*, *vmin*, *vmax*.
+            - (M, N) or (M*N,): a mesh with scalar or multivariate data.
+              The values are mapped to colors using normalization and a colormap.
+              See parameters *norm*, *cmap*, *vmin*, *vmax*.
             - (M, N, 3): an image with RGB values (0-1 float or 0-255 int).
             - (M, N, 4): an image with RGBA values (0-1 float or 0-255 int),
               i.e. including transparency.
+            - (n_variates, N, M): a multivariate dataset. It will be parsed
+              to an array with shape (N,M) and a dtype with n_variate fields.
 
             If the values are provided as a 2D grid, the shape must match the
             coordinates grid. If the values are 1D, they are reshaped to 2D.
@@ -2004,6 +2006,7 @@ class _MeshData:
             shape is (M, N) for 'gouraud' *shading* and (M+1, N+1) for 'flat'
             shading.
         """
+        A = self.parse_multivariate_data(A)
         height, width = self._coordinates.shape[0:-1]
         if self._shading == 'flat':
             h, w = height - 1, width - 1
@@ -2286,7 +2289,9 @@ class PolyQuadMesh(_MeshData, PolyCollection):
                 # RGB(A) case
                 mask |= np.any(arr, axis=-1)
             elif arr.ndim == 2:
-                mask |= arr
+                for arr_part in cm._iterable_variates_in_data(arr):
+                    mask |= arr_part
+
             else:
                 mask |= arr.reshape(self._coordinates[:-1, :-1, :].shape[:2])
         return ~mask
