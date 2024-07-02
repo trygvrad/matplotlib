@@ -1409,7 +1409,7 @@ class BivarColormap:
     lookup table. To be used with `~matplotlib.cm.VectorMappable`.
     """
 
-    def __init__(self, name, N=256, M=None, shape='square'):
+    def __init__(self, name, N=256, M=None, shape='square', origin=(0, 0)):
         """
         Parameters
         ----------
@@ -1431,6 +1431,10 @@ class BivarColormap:
             - If  'circleignore' a circular mask is applied, but the data is not
               clipped and instead assigned the 'outside' color
 
+        origin: (int, int)
+            The relative origin of the colormap. Typically (0, 0), for colormaps
+            that are linear on both axis, and (int(N*0.5), int(.5*M) for
+            circular colormaps.
         """
 
         self.name = name
@@ -1444,6 +1448,7 @@ class BivarColormap:
         self._rgba_outside = (1.0, 0.0, 1.0, 1.0)
         self._isinit = False
         self.n_variates = 2
+        self._origin = origin
         '''#: When this colormap exists on a scalar mappable and colorbar_extend
         #: is not False, colorbar creation will pick up ``colorbar_extend`` as
         #: the default value for the ``extend`` keyword in the
@@ -1700,6 +1705,30 @@ class BivarColormap:
                     X[0, mask_outside] = -1
                     X[1, mask_outside] = -1
 
+    def __getitem__(self, item):
+        """Creates and returns a colorbar along the selected axis"""
+        if not self._isinit:
+            self._init()
+        if item == 0:
+            cmap = Colormap(self.name+'0', self.N)
+            one_d_lut = self._lut[:, self._origin[1]]
+        elif item == 1:
+            cmap = Colormap(self.name+'1', self.M)
+            one_d_lut = self._lut[self._origin[0], :]
+        else:
+            raise KeyError(f"only 0 or 1 are"
+                           f" valid keys for BivarColormap, not {item!r}")
+        cmap._lut = np.zeros((self.N + 3, 4), float)
+        cmap._lut[:-3] = one_d_lut
+        cmap.set_bad(self._rgba_bad)
+        self._rgba_outside
+        if self.shape in ['ignore', 'circleignore']:
+            cmap.set_under(self._rgba_outside)
+            cmap.set_over(self._rgba_outside)
+        cmap._set_extremes()
+        cmap._isinit = True
+        return cmap
+
     def _repr_png_(self):
         """Generate a PNG representation of the BivarColormap."""
         if not self._isinit:
@@ -1777,11 +1806,15 @@ class SegmentedBivarColormap(BivarColormap):
           'outside' color
         - If 'circleignore' a circular mask is applied, but the data is not clipped
 
+    origin: (int, int)
+        The relative origin of the colormap. Typically (0, 0), for colormaps
+        that are linear on both axis, and (int(N*0.5), int(.5*M) for
+        circular colormaps.
     """
 
-    def __init__(self, patch, name, N=256, shape='square'):
+    def __init__(self, patch, name, N=256, shape='square', origin=(0, 0)):
         self.patch = patch
-        super().__init__(name, N, N, shape)
+        super().__init__(name, N, N, shape, origin)
 
     def _init(self):
         s = self.patch.shape
@@ -1817,11 +1850,15 @@ class BivarColormapFromImage(BivarColormap):
           'outside' color
         - If 'circleignore' a circular mask is applied, but the data is not clipped
 
+    origin: (int, int)
+        The relative origin of the colormap. Typically (0, 0), for colormaps
+        that are linear on both axis, and (int(N*0.5), int(.5*M) for
+        circular colormaps.
     """
 
-    def __init__(self, lut, name='', shape='square'):
+    def __init__(self, lut, name='', shape='square', origin=(0, 0)):
         self._lut = lut
-        super().__init__(name, lut.shape[0], lut.shape[1], shape)
+        super().__init__(name, lut.shape[0], lut.shape[1], shape, origin)
 
     def _init(self):
         self._isinit = True
