@@ -1651,8 +1651,9 @@ def subplots(
         on, use `~matplotlib.axes.Axes.tick_params`.
 
         When subplots have a shared axis that has units, calling
-        `~matplotlib.axis.Axis.set_units` will update each axis with the
-        new units.
+        `.Axis.set_units` will update each axis with the new units.
+
+        Note that it is not possible to unshare axes.
 
     squeeze : bool, default: True
         - If True, extra dimensions are squeezed out from the returned
@@ -2181,6 +2182,21 @@ def xticks(
     **kwargs
         `.Text` properties can be used to control the appearance of the labels.
 
+        .. warning::
+
+            This only sets the properties of the current ticks, which is
+            only sufficient if you either pass *ticks*, resulting in a
+            fixed list of ticks, or if the plot is static.
+
+            Ticks are not guaranteed to be persistent. Various operations
+            can create, delete and modify the Tick instances. There is an
+            imminent risk that these settings can get lost if you work on
+            the figure further (including also panning/zooming on a
+            displayed figure).
+
+            Use `~.pyplot.tick_params` instead if possible.
+
+
     Returns
     -------
     locs
@@ -2251,6 +2267,20 @@ def yticks(
         ticks/labels.
     **kwargs
         `.Text` properties can be used to control the appearance of the labels.
+
+        .. warning::
+
+            This only sets the properties of the current ticks, which is
+            only sufficient if you either pass *ticks*, resulting in a
+            fixed list of ticks, or if the plot is static.
+
+            Ticks are not guaranteed to be persistent. Various operations
+            can create, delete and modify the Tick instances. There is an
+            imminent risk that these settings can get lost if you work on
+            the figure further (including also panning/zooming on a
+            displayed figure).
+
+            Use `~.pyplot.tick_params` instead if possible.
 
     Returns
     -------
@@ -2881,7 +2911,7 @@ def axhline(y: float = 0, xmin: float = 0, xmax: float = 1, **kwargs) -> Line2D:
 @_copy_docstring_and_deprecators(Axes.axhspan)
 def axhspan(
     ymin: float, ymax: float, xmin: float = 0, xmax: float = 1, **kwargs
-) -> Polygon:
+) -> Rectangle:
     return gca().axhspan(ymin, ymax, xmin=xmin, xmax=xmax, **kwargs)
 
 
@@ -2919,7 +2949,7 @@ def axvline(x: float = 0, ymin: float = 0, ymax: float = 1, **kwargs) -> Line2D:
 @_copy_docstring_and_deprecators(Axes.axvspan)
 def axvspan(
     xmin: float, xmax: float, ymin: float = 0, ymax: float = 1, **kwargs
-) -> Polygon:
+) -> Rectangle:
     return gca().axvspan(xmin, xmax, ymin=ymin, ymax=ymax, **kwargs)
 
 

@@ -65,6 +65,8 @@ class VectorMappable:
     intercepted_changed: bool
     def changed(self) -> None: ...
 
+def get_cmap(name: str | colors.Colormap | None = ..., lut: int | None = ...) -> colors.Colormap: ...
+
 class ScalarMappable:
     cmap: colors.Colormap | None
     colorbar: Colorbar | None

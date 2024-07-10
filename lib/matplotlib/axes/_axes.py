@@ -1007,14 +1007,14 @@ class Axes(_AxesBase):
 
         Returns
         -------
-        `~matplotlib.patches.Polygon`
+        `~matplotlib.patches.Rectangle`
             Horizontal span (rectangle) from (xmin, ymin) to (xmax, ymax).
 
         Other Parameters
         ----------------
-        **kwargs : `~matplotlib.patches.Polygon` properties
+        **kwargs : `~matplotlib.patches.Rectangle` properties
 
-        %(Polygon:kwdoc)s
+        %(Rectangle:kwdoc)s
 
         See Also
         --------
@@ -1029,7 +1029,7 @@ class Axes(_AxesBase):
         # For Rectangles and non-separable transforms, add_patch can be buggy
         # and update the x limits even though it shouldn't do so for an
         # yaxis_transformed patch, so undo that update.
-        ix = self.dataLim.intervalx
+        ix = self.dataLim.intervalx.copy()
         mx = self.dataLim.minposx
         self.add_patch(p)
         self.dataLim.intervalx = ix
@@ -1062,14 +1062,14 @@ class Axes(_AxesBase):
 
         Returns
         -------
-        `~matplotlib.patches.Polygon`
+        `~matplotlib.patches.Rectangle`
             Vertical span (rectangle) from (xmin, ymin) to (xmax, ymax).
 
         Other Parameters
         ----------------
-        **kwargs : `~matplotlib.patches.Polygon` properties
+        **kwargs : `~matplotlib.patches.Rectangle` properties
 
-        %(Polygon:kwdoc)s
+        %(Rectangle:kwdoc)s
 
         See Also
         --------
@@ -2745,7 +2745,7 @@ class Axes(_AxesBase):
 
         data : indexable object, optional
             If given, all parameters also accept a string ``s``, which is
-            interpreted as ``data[s]`` (unless this raises an exception).
+            interpreted as ``data[s]`` if  ``s`` is a key in ``data``.
 
         **kwargs : `.Rectangle` properties
 
@@ -3534,11 +3534,11 @@ class Axes(_AxesBase):
         `.ErrorbarContainer`
             The container contains:
 
-            - plotline: `~matplotlib.lines.Line2D` instance of x, y plot markers
+            - data_line : A `~matplotlib.lines.Line2D` instance of x, y plot markers
               and/or line.
-            - caplines: A tuple of `~matplotlib.lines.Line2D` instances of the error
+            - caplines : A tuple of `~matplotlib.lines.Line2D` instances of the error
               bar caps.
-            - barlinecols: A tuple of `.LineCollection` with the horizontal and
+            - barlinecols : A tuple of `.LineCollection` with the horizontal and
               vertical error ranges.
 
         Other Parameters

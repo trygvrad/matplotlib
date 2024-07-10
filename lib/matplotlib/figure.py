@@ -757,6 +757,8 @@ default: %(va)s
             When subplots have a shared axis that has units, calling
             `.Axis.set_units` will update each axis with the new units.
 
+            Note that it is not possible to unshare axes.
+
         squeeze : bool, default: True
             - If True, extra dimensions are squeezed out from the returned
               array of Axes:
@@ -1680,6 +1682,9 @@ default: %(va)s
         .. note::
             The *subfigure* concept is new in v3.4, and the API is still provisional.
 
+        .. versionchanged:: 3.10
+            subfigures are now added in row-major order.
+
         Parameters
         ----------
         nrows, ncols : int, default: 1
@@ -1713,9 +1718,9 @@ default: %(va)s
                       left=0, right=1, bottom=0, top=1)
 
         sfarr = np.empty((nrows, ncols), dtype=object)
-        for i in range(ncols):
-            for j in range(nrows):
-                sfarr[j, i] = self.add_subfigure(gs[j, i], **kwargs)
+        for i in range(nrows):
+            for j in range(ncols):
+                sfarr[i, j] = self.add_subfigure(gs[i, j], **kwargs)
 
         if self.get_layout_engine() is None and (wspace is not None or
                                                  hspace is not None):
@@ -1761,6 +1766,8 @@ default: %(va)s
         sf = SubFigure(self, subplotspec, **kwargs)
         self.subfigs += [sf]
         sf._remove_method = self.subfigs.remove
+        sf.stale_callback = _stale_figure_callback
+        self.stale = True
         return sf
 
     def sca(self, a):
@@ -2352,7 +2359,6 @@ class SubFigure(FigureBase):
         self.subplotpars = parent.subplotpars
         self.dpi_scale_trans = parent.dpi_scale_trans
         self._axobservers = parent._axobservers
-        self.canvas = parent.canvas
         self.transFigure = parent.transFigure
         self.bbox_relative = Bbox.null()
         self._redo_transform_rel_fig()
@@ -2368,6 +2374,10 @@ class SubFigure(FigureBase):
             in_layout=False, transform=self.transSubfigure)
         self._set_artist_props(self.patch)
         self.patch.set_antialiased(False)
+
+    @property
+    def canvas(self):
+        return self._parent.canvas
 
     @property
     def dpi(self):

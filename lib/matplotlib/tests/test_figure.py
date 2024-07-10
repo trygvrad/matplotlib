@@ -1733,3 +1733,35 @@ def test_warn_colorbar_mismatch():
     subfig3_1.colorbar(im3_2)   # should not warn
     with pytest.warns(UserWarning, match="different Figure"):
         subfig3_1.colorbar(im4_1)
+
+
+def test_subfigure_row_order():
+    # Test that subfigures are drawn in row-major order.
+    fig = plt.figure()
+    sf_arr = fig.subfigures(4, 3)
+    for a, b in zip(sf_arr.ravel(), fig.subfigs):
+        assert a is b
+
+
+def test_subfigure_stale_propagation():
+    fig = plt.figure()
+
+    fig.draw_without_rendering()
+    assert not fig.stale
+
+    sfig1 = fig.subfigures()
+    assert fig.stale
+
+    fig.draw_without_rendering()
+    assert not fig.stale
+    assert not sfig1.stale
+
+    sfig2 = sfig1.subfigures()
+    assert fig.stale
+
+    fig.draw_without_rendering()
+    assert not fig.stale
+    assert not sfig2.stale
+
+    sfig2.stale = True
+    assert fig.stale
