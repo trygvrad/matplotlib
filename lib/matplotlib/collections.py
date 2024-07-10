@@ -32,7 +32,7 @@ from ._enums import JoinStyle, CapStyle
     "linewidth": ["linewidths", "lw"],
     "offset_transform": ["transOffset"],
 })
-class Collection(artist.Artist, cm.ScalarMappable):
+class Collection(artist.Artist, cm.VectorMappable):
     r"""
     Base class for Collections. Must be subclassed to be usable.
 
@@ -55,10 +55,10 @@ class Collection(artist.Artist, cm.ScalarMappable):
 
       prop[i % len(prop)]
 
-    Each Collection can optionally be used as its own `.ScalarMappable` by
+    Each Collection can optionally be used as its own `.VectorMappable` by
     passing the *norm* and *cmap* parameters to its constructor. If the
-    Collection's `.ScalarMappable` matrix ``_A`` has been set (via a call
-    to `.Collection.set_array`), then at draw time this internal scalar
+    Collection's `.VectorMappable` matrix ``_A`` has been set (via a call
+    to `.Collection.set_array`), then at draw time this internal vector
     mappable will be used to set the ``facecolors`` and ``edgecolors``,
     ignoring those that were manually passed in.
     """
@@ -156,7 +156,7 @@ class Collection(artist.Artist, cm.ScalarMappable):
             ``Collection.set_{key}(val)`` for each key-value pair in *kwargs*.
         """
         artist.Artist.__init__(self)
-        cm.ScalarMappable.__init__(self, norm, cmap)
+        cm.VectorMappable.__init__(self, norm, cmap)
         # list of un-scaled dash patterns
         # this is needed scaling the dash pattern by linewidth
         self._us_linestyles = [(0, None)]
@@ -2009,6 +2009,7 @@ class _MeshData:
             h, w = height - 1, width - 1
         else:
             h, w = height, width
+        A = cm._ensure_multivariate_data(self.cmap.n_variates, A)
         ok_shapes = [(h, w, 3), (h, w, 4), (h, w), (h * w,)]
         if A is not None:
             shape = np.shape(A)
@@ -2269,7 +2270,11 @@ class PolyQuadMesh(_MeshData, PolyCollection):
         arr = self.get_array()
         if arr is not None:
             arr = np.ma.getmaskarray(arr)
-            if arr.ndim == 3:
+            if self.cmap.n_variates > 1:
+                # multivar case
+                for a in cm._iterable_variates_in_data(arr):
+                    mask |= np.any(a, axis=0)
+            elif arr.ndim == 3:
                 # RGB(A) case
                 mask |= np.any(arr, axis=-1)
             elif arr.ndim == 2:
