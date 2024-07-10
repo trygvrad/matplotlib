@@ -571,3 +571,15 @@ def test_artist_format_cursor_data_multivar():
             xdisp, ydisp = ax.transData.transform(v)
             event = MouseEvent('motion_notify_event', fig.canvas, xdisp, ydisp)
             assert im.format_cursor_data(im.get_cursor_data(event)) == text
+
+
+def test_multivariate_safe_masked_invalid():
+    from matplotlib import cbook
+    dt = np.dtype('float32, float32').newbyteorder('>')
+    x = np.zeros(2, dtype=dt)
+    x['f0'][0] = np.nan
+    xm = cbook.safe_masked_invalid(x)
+    assert (xm['f0'].mask == (True, False)).all()
+    assert (xm['f1'].mask == (False, False)).all()
+    assert '<f' in xm.dtype.descr[0][1]
+    assert '<f' in xm.dtype.descr[1][1]
