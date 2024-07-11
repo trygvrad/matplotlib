@@ -865,8 +865,16 @@ def _ensure_multivariate_norm(n_variates, norm):
         if n_variates > 1:
             an iterable of length n_variates
     """
-    if isinstance(norm, str) or not np.iterable(norm):
+    if isinstance(norm, str) or norm is None:
         norm = [norm for i in range(n_variates)]
+    elif not np.iterable(norm):
+        if n_variates == 1:
+            norm = [norm]
+        else:
+            raise ValueError(
+                'When using a colormap with more than one variate,'
+                ' norm must be None, a valid string, a sequence of strings,'
+                ' or a sequence of mpl.Colors.Normalize objects.')
     else:
         if len(norm) != n_variates:
             raise ValueError(
