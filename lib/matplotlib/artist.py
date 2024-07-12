@@ -1345,7 +1345,7 @@ class Artist:
                     num_colors = [component.N for component in self.cmap]
 
             out_str = '['
-            for nn, dd, nc in zip(self._norm, data, num_colors):
+            for nn, dd, nc in zip(self.nac._norm, data, num_colors):
                 if np.ma.getmask(dd):
                     out_str += ", "
                 else:

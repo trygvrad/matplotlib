@@ -586,16 +586,16 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
             else:
                 if A.ndim == 2:  # _interpolation_stage == 'rgba'
                     if self.cmap.n_variates == 1:
-                        self._norm[0].autoscale_None(A)
+                        self.nac._norm[0].autoscale_None(A)
                         A = self.to_rgba(A)
                     else:
                         A = cm._iterable_variates_in_data(A)
-                        for n, a in zip(self._norm, A):
+                        for n, a in zip(self.nac._norm, A):
                             n.autoscale_None(a)
                         # We could invoked A = self.to_rgba(A) here
                         # but that would result in an extra memcopy.
                         # Instead do norm + cmap() directly.
-                        A = [norm(xx) for norm, xx in zip(self._norm, A)]
+                        A = [norm(xx) for norm, xx in zip(self.nac._norm, A)]
                         A = self.cmap(A)
                 alpha = self._get_scalar_alpha()
                 if A.shape[2] == 3:

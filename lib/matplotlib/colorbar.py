@@ -297,6 +297,7 @@ class Colorbar:
         self.mappable = mappable
         cmap = mappable.cmap
         norm = mappable.norm
+        self.norm_id = id(norm)
 
         filled = True
         if isinstance(mappable, contour.ContourSet):
@@ -346,8 +347,7 @@ class Colorbar:
         self.alpha = None
         # Call set_alpha to handle array-like alphas properly
         self.set_alpha(alpha)
-        self.cmap = cmap
-        self.norm = norm
+        self.nac = mappable.nac
         self.values = values
         self.boundaries = boundaries
         self.extend = extend
@@ -430,6 +430,19 @@ class Colorbar:
             "ylim_changed", self._do_extends)
 
     @property
+    def cmap(self):
+        return self.nac.cmap
+
+    @cmap.setter
+    def cmap(self, cmap):
+        if not self.nac.cmap == cmap:
+            self.nac.set_cmap(cmap)
+
+    @property
+    def norm(self):
+        return self.nac.norm[0]
+
+    @property
     def locator(self):
         """Major tick `.Locator` for the colorbar."""
         return self._long_axis().get_major_locator()
@@ -490,12 +503,15 @@ class Colorbar:
         changes values of *vmin*, *vmax* or *cmap* then the old formatter
         and locator will be preserved.
         """
-        _log.debug('colorbar update normal %r %r', mappable.norm, self.norm)
+
+        _log.debug('colorbar update normal %r %r', mappable.norm, self.norm)  #
+        # The above debug log should be changed, it will now always give the same
+        # norm twice. However, at this point the old norm should be out of scope
+        # and we only have the new, and the id of the old in terms of debugging
         self.mappable = mappable
         self.set_alpha(mappable.get_alpha())
-        self.cmap = mappable.cmap
-        if mappable.norm != self.norm:
-            self.norm = mappable.norm
+        if not self.norm_id == id(mappable.norm):
+            self.norm_id = id(mappable.norm)
             self._reset_locator_formatter_scale()
 
         self._draw_all()
@@ -572,7 +588,7 @@ class Colorbar:
             self._add_solids_patches(X, Y, C, mappable)
         else:
             self.solids = self.ax.pcolormesh(
-                X, Y, C, cmap=self.cmap, norm=self.norm, alpha=self.alpha,
+                X, Y, C, norm=self.nac, alpha=self.alpha,
                 edgecolors='none', shading='flat')
             if not self.drawedges:
                 if len(self._y) >= self.n_rasterize:
