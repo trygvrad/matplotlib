@@ -155,7 +155,7 @@ def figure_edit(axes, parent=None):
             cmaps = [(cmap, name) for name, cmap in sorted(cm._bivar_colormaps.items())]
             cvals = cm._bivar_colormaps.values()
         else:  # isinstance(mappable.get_cmap(), mcolors.MultivarColormap):
-            cmaps = [(cmap, name) for name, cmap 
+            cmaps = [(cmap, name) for name, cmap
                      in sorted(cm._multivar_colormaps.items())]
             cvals = cm._multivar_colormaps.values()
         if cmap not in cvals:

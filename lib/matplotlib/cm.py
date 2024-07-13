@@ -436,42 +436,8 @@ class NormAndColor():
         # First check for special case, image input:
         try:
             if self.n_variates == 1 and x.ndim == 3:
-                if x.shape[2] == 3:
-                    if alpha is None:
-                        alpha = 1
-                    if x.dtype == np.uint8:
-                        alpha = np.uint8(alpha * 255)
-                    m, n = x.shape[:2]
-                    xx = np.empty(shape=(m, n, 4), dtype=x.dtype)
-                    xx[:, :, :3] = x
-                    xx[:, :, 3] = alpha
-                elif x.shape[2] == 4:
-                    xx = x
-                else:
-                    raise ValueError("Third dimension must be 3 or 4")
-                if xx.dtype.kind == 'f':
-                    # If any of R, G, B, or A is nan, set to 0
-                    if np.any(nans := np.isnan(x)):
-                        if x.shape[2] == 4:
-                            xx = xx.copy()
-                        xx[np.any(nans, axis=2), :] = 0
-
-                    if norm and (xx.max() > 1 or xx.min() < 0):
-                        raise ValueError("Floating point image RGB values "
-                                         "must be in the 0..1 range.")
-                    if bytes:
-                        xx = (xx * 255).astype(np.uint8)
-                elif xx.dtype == np.uint8:
-                    if not bytes:
-                        xx = xx.astype(np.float32) / 255
-                else:
-                    raise ValueError("Image RGB array must be uint8 or "
-                                     "floating point; found %s" % xx.dtype)
-                # Account for any masked entries in the original array
-                # If any of R, G, B, or A are masked for an entry, we set alpha to 0
-                if np.ma.is_masked(x):
-                    xx[np.any(np.ma.getmaskarray(x), axis=2), 3] = 0
-                return xx
+                # looks like imega data, try to process it without cmap
+                return self._pass_image_data(x, alpha, bytes, norm)
         except AttributeError:
             # e.g., x is not an ndarray; so try mapping it
             pass
@@ -480,15 +446,92 @@ class NormAndColor():
         if self.cmap.n_variates == 1:
             x = ma.asarray(x)
             if norm:
-                x = self._norm[0](x)
+                x = self.normalize(x)
             rgba = self.cmap(x, alpha=alpha, bytes=bytes)
         else:
-            x = _ensure_multivariate_data(self.cmap.n_variates, x)
-            x = _iterable_variates_in_data(x)
             if norm:
-                x = [norm(xx) for norm, xx in zip(self._norm, x)]
+                x = self.normalize(x)
             rgba = self.cmap(x, alpha=alpha, bytes=bytes)
         return rgba
+
+    @staticmethod
+    def _pass_image_data(x, alpha=None, bytes=False, norm=True):
+        """
+        Helper function to pass ndarray of shape (...,3) or (..., 4)
+        through `to_rgba()`, see `to_rgba()` for docstring.
+        """
+        if x.shape[2] == 3:
+            if alpha is None:
+                alpha = 1
+            if x.dtype == np.uint8:
+                alpha = np.uint8(alpha * 255)
+            m, n = x.shape[:2]
+            xx = np.empty(shape=(m, n, 4), dtype=x.dtype)
+            xx[:, :, :3] = x
+            xx[:, :, 3] = alpha
+        elif x.shape[2] == 4:
+            xx = x
+        else:
+            raise ValueError("Third dimension must be 3 or 4")
+        if xx.dtype.kind == 'f':
+            # If any of R, G, B, or A is nan, set to 0
+            if np.any(nans := np.isnan(x)):
+                if x.shape[2] == 4:
+                    xx = xx.copy()
+                xx[np.any(nans, axis=2), :] = 0
+
+            if norm and (xx.max() > 1 or xx.min() < 0):
+                raise ValueError("Floating point image RGB values "
+                                 "must be in the 0..1 range.")
+            if bytes:
+                xx = (xx * 255).astype(np.uint8)
+        elif xx.dtype == np.uint8:
+            if not bytes:
+                xx = xx.astype(np.float32) / 255
+        else:
+            raise ValueError("Image RGB array must be uint8 or "
+                             "floating point; found %s" % xx.dtype)
+        # Account for any masked entries in the original array
+        # If any of R, G, B, or A are masked for an entry, we set alpha to 0
+        if np.ma.is_masked(x):
+            xx[np.any(np.ma.getmaskarray(x), axis=2), 3] = 0
+        return xx
+
+    def normalize(self, x):
+        """
+        Normalize the data in x.
+
+        Parameters
+        ----------
+        x : np.array or sequence of arrays. Must be compatible with the number
+            of variates (`NormAndColor.n_variates`).
+
+            - If there is a single norm, x may be of any shape.
+
+            - If there are two norms x may be a sequce of length 2, an array with
+              complex numbers, or an array with a dtype containing two fields
+
+            - If there more than two norms, x may be a sequce of length n, or an array
+              with a dtype containing n fields.
+
+        Returns
+        -------
+        np.array, or if more than one variate, a list of np.arrays.
+
+        """
+        if self.n_variates == 1:
+            return self._norm[0](x)
+        elif hasattr(x, 'dtype') and len(x.dtype.descr) > 1:
+            x = _iterable_variates_in_data(x)
+        elif np.iscomplexobj(x):
+            # NOTE: when data is passed to plotting methods, i.e.
+            # imshow(data), and the data is complex, it is converted
+            # to a dtype with two fields.
+            # Therefore, complex data should only arrive here if
+            # the user invokes VectorMappable.to_rgba(data) or
+            # NormAndColor.to_rgba(data) etc. with complex data directly.
+            x = [x.real, x.imag]
+        return [norm(xx) for norm, xx in zip(self._norm, x)]
 
     def autoscale(self, A):
         """
@@ -511,11 +554,8 @@ class NormAndColor():
             raise TypeError('You must first set_array for mappable')
         # If the norm's limits are updated self.changed() will be called
         # through the callbacks attached to the norm
-        if self.cmap.n_variates == 1:
-            self._norm[0].autoscale_None(A)
-        else:
-            for n, a in zip(self._norm, _iterable_variates_in_data(A)):
-                n.autoscale_None(a)
+        for n, a in zip(self._norm, _iterable_variates_in_data(A)):
+            n.autoscale_None(a)
 
     def _set_cmap(self, cmap):
         """

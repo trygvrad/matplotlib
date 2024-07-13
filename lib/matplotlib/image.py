@@ -543,86 +543,81 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
         if not unsampled:
             if not (A.ndim == 2 or A.ndim == 3 and A.shape[-1] in (3, 4)):
                 raise ValueError(f"Invalid shape {A.shape} for image data")
-            if A.ndim == 2 and self._interpolation_stage != 'rgba':
-                # if we are a 2D array, then we are running through the
-                # norm + colormap transformation.  However, in general the
-                # input data is not going to match the size on the screen so we
-                # have to resample to the correct number of pixels
+            scalar_alpha = self._get_scalar_alpha()
+            if A.ndim == 2:
+                if self._interpolation_stage == 'rgba':
+                    # run norm -> colormap transformation and then rescale
+                    self.nac.autoscale_None(A)
+                    unscaled_rgba = self.nac.to_rgba(A)
+                    output = _resample(  # resample rgba channels
+                        self, unscaled_rgba, out_shape, t, alpha=scalar_alpha)
+                    # transforming to bytes *after* resampling gives improved results
+                    if output.dtype.kind == 'f':
+                        output = (output * 255).astype(np.uint8)
+                else:  # if self._interpolation_stage != 'rgba':
+                    # In general the input data is not going to match the size on the
+                    # screen so we have to resample to the correct number of pixels
 
-                # First compute out_mask (what screen pixels include "bad" data
-                # pixels) and out_alpha (to what extent screen pixels are
-                # covered by data pixels: 0 outside the data extent, 1 inside
-                # (even for bad data), and intermediate values at the edges).
-                if self.cmap.n_variates == 1:
-                    mask = (np.where(A.mask, np.float32(np.nan), np.float32(1))
-                            if A.mask.shape == A.shape  # nontrivial mask
-                            else np.ones_like(A, np.float32))
-                else:
-                    _maskNd = [(np.where(a.mask, np.float32(np.nan), np.float32(1))
-                               if A.mask.shape == a.shape  # nontrivial mask
-                               else np.ones_like(a, np.float32))
-                               for a in cm._iterable_variates_in_data(A)]
-                    mask = np.prod(_maskNd, axis=0)
-
-                # we always have to interpolate the mask to account for
-                # non-affine transformations
-                out_alpha = _resample(self, mask, out_shape, t, resample=True)
-                del mask  # Make sure we don't use mask anymore!
-                out_mask = np.isnan(out_alpha)
-                out_alpha[out_mask] = 1
-                # Apply the pixel-by-pixel alpha values if present
-                alpha = self.get_alpha()
-                if alpha is not None and np.ndim(alpha) > 0:
-                    out_alpha *= _resample(self, alpha, out_shape,
-                                           t, resample=True)
-                # Resample data
-                if self.cmap.n_variates == 1:
-                    output = self._resample_and_norm(A, self.norm, out_shape,
-                                                     out_mask, t)
-                else:
-                    output = [self._resample_and_norm(a, self.norm[i],
-                                                      out_shape, out_mask, t)
-                              for i, a in enumerate(cm._iterable_variates_in_data(A))]
-            else:
-                if A.ndim == 2:  # _interpolation_stage == 'rgba'
-                    if self.cmap.n_variates == 1:
-                        self.nac._norm[0].autoscale_None(A)
-                        A = self.to_rgba(A)
+                    # First compute out_mask (what screen pixels include "bad" data
+                    # pixels) and out_alpha (to what extent screen pixels are
+                    # covered by data pixels: 0 outside the data extent, 1 inside
+                    # (even for bad data), and intermediate values at the edges).
+                    mask = mcolors._get_mask(cm._iterable_variates_in_data(A))
+                    if mask.shape == A.shape:
+                        # we always have to interpolate the mask to account for
+                        # non-affine transformations
+                        # To get all pixels where partially covered by the mask
+                        # we run  _resample with an array with np.nan
+                        nan_mask = np.where(mask, np.float32(np.nan), np.float32(1))
+                        out_alpha = _resample(self, nan_mask, out_shape, t,
+                                              resample=True)
                     else:
-                        A = cm._iterable_variates_in_data(A)
-                        for n, a in zip(self.nac._norm, A):
-                            n.autoscale_None(a)
-                        # We could invoked A = self.to_rgba(A) here
-                        # but that would result in an extra memcopy.
-                        # Instead do norm + cmap() directly.
-                        A = [norm(xx) for norm, xx in zip(self.nac._norm, A)]
-                        A = self.cmap(A)
-                alpha = self._get_scalar_alpha()
+                        out_alpha = np.ones(out_shape, np.float32)
+                    del mask, nan_mask  # Make sure we don't use mask anymore!
+                    out_mask = np.isnan(out_alpha)
+                    out_alpha[out_mask] = 1
+                    # Apply the pixel-by-pixel alpha values if present
+                    alpha = self.get_alpha()
+                    if alpha is not None and np.ndim(alpha) > 0:
+                        out_alpha *= _resample(self, alpha, out_shape,
+                                               t, resample=True)
+                    # Resample and norm data
+                    if self.cmap.n_variates == 1:
+                        normed_resampled = self._resample_and_norm(A,
+                                                                   self.nac._norm[0],
+                                                                   out_shape,
+                                                                   out_mask, t)
+                    else:
+                        normed_resampled = [self._resample_and_norm(a,
+                                                                    self.nac._norm[i],
+                                                                    out_shape,
+                                                                    out_mask, t)
+                                            for i, a in
+                                            enumerate(cm._iterable_variates_in_data(A))]
+                    output = self.cmap(normed_resampled, bytes=True)
+                    # Apply alpha *after* if the input was greyscale without a mask
+                    alpha_channel = output[:, :, 3]
+                    alpha_channel[:] = (  # Assignment will cast to uint8.
+                        alpha_channel.astype(np.float32) * out_alpha * scalar_alpha)
+
+            else:  # A.ndim == 3
                 if A.shape[2] == 3:
                     # No need to resample alpha or make a full array; NumPy will expand
                     # this out and cast to uint8 if necessary when it's assigned to the
                     # alpha channel below.
-                    output_alpha = (255 * alpha) if A.dtype == np.uint8 else alpha
+                    output_alpha = (255 * scalar_alpha) if A.dtype == np.uint8 \
+                                                        else scalar_alpha
                 else:
                     output_alpha = _resample(  # resample alpha channel
-                        self, A[..., 3], out_shape, t, alpha=alpha)
+                        self, A[..., 3], out_shape, t, alpha=scalar_alpha)
+
                 output = _resample(  # resample rgb channels
-                    self, _rgb_to_rgba(A[..., :3]), out_shape, t, alpha=alpha)
+                    self, _rgb_to_rgba(A[..., :3]), out_shape, t, alpha=scalar_alpha)
                 output[..., 3] = output_alpha  # recombine rgb and alpha
-
-            # output is now either a 2D array of normed (int or float) data
-            # or an RGBA array of re-sampled input
-            output = self.to_rgba(output, bytes=True, norm=False)
+                if output.dtype.kind == 'f':
+                    output = (output * 255).astype(np.uint8)
             # output is now a correctly sized RGBA array of uint8
-
-            # Apply alpha *after* if the input was greyscale without a mask
-            if A.ndim == 2:
-                alpha = self._get_scalar_alpha()
-                alpha_channel = output[:, :, 3]
-                alpha_channel[:] = (  # Assignment will cast to uint8.
-                    alpha_channel.astype(np.float32) * out_alpha * alpha)
-
-        else:
+        else:  # if unsampled:
             if self._imcache is None:
                 self._imcache = self.to_rgba(A, bytes=True, norm=(A.ndim == 2))
             output = self._imcache
