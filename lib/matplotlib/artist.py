@@ -11,9 +11,8 @@ import warnings
 import numpy as np
 
 import matplotlib as mpl
-from . import _api, cbook
-from .colors import BoundaryNorm, BivarColormap
-from .cm import VectorMappable
+from . import _api, cbook, cm
+from .cm import ScalarMappable
 from .path import Path
 from .transforms import (BboxBase, Bbox, IdentityTransform, Transform, TransformedBbox,
                          TransformedPatchPath, TransformedPath)
@@ -1327,49 +1326,16 @@ class Artist:
         --------
         get_cursor_data
         """
-        if isinstance(self, VectorMappable) and \
-                      (np.ndim(data) == 0 or len(data) == self.cmap.n_variates):
-            # This block logically belongs to VectorMappable, but can't be
-            # implemented in it because most VectorMappable subclasses
-            # inherit from Artist first and from VectorMappable second, so
-            # Artist.format_cursor_data would always have precedence over
-            # VectorMappable.format_cursor_data.
-            if self.cmap.n_variates == 1:
-                data = [data]
-                # The above if test is equivalent to `isinstance(self.cmap, Colormap)`
-                num_colors = [self.cmap.N]
-            else:
-                if isinstance(self.cmap, BivarColormap):
-                    num_colors = [self.cmap.N, self.cmap.M]
-                else:  # i.e. a MultivarColormap object
-                    num_colors = [component.N for component in self.cmap]
+        if isinstance(self, ScalarMappable):
+            # Internal classes no longer inherit from ScalarMappable, and this
+            # block should never be executed by the internal API
 
-            out_str = '['
-            for nn, dd, nc in zip(self.nac._norm, data, num_colors):
-                if np.ma.getmask(dd):
-                    out_str += ", "
-                else:
-                    # Figure out a reasonable amount of significant digits
-                    normed = nn(dd)
-                    if np.isfinite(normed):
-                        if isinstance(nn, BoundaryNorm):
-                            # not an invertible normalization mapping
-                            cur_idx = np.argmin(np.abs(nn.boundaries - dd))
-                            neigh_idx = max(0, cur_idx - 1)
-                            # use max diff to prevent delta == 0
-                            delta = np.diff(
-                                nn.boundaries[neigh_idx:cur_idx + 2]
-                            ).max()
-                        else:
-                            # Midpoints of neighboring color intervals.
-                            neighbors = nn.inverse(
-                                (int(normed * nc) + np.array([0, 1])) / nc)
-                            delta = abs(neighbors - dd).max()
-                        g_sig_digits = cbook._g_sig_digits(dd, delta)
-                    else:
-                        g_sig_digits = 3  # Consistent with default below.
-                    out_str += f"{dd:-#.{g_sig_digits}g}, "
-            return out_str[:-2] + ']'
+            # This block logically belongs to ScalarMappable, but can't be
+            # implemented in it in case custom ScalarMappable subclasses
+            # inherit from Artist first and from ScalarMappable second, so
+            # Artist.format_cursor_data would always have precedence over
+            # ScalarMappable.format_cursor_data.
+            return self.mapper._format_cursor_data(data)
         else:
             try:
                 data[0]
@@ -1410,6 +1376,115 @@ class Artist:
                 ax._mouseover_set.discard(self)
 
     mouseover = property(get_mouseover, set_mouseover)  # backcompat.
+
+
+class ColorableArtist(Artist):
+    def __init__(self, norm=None, cmap=None):
+        """
+        Parameters
+        ----------
+        norm : `.Normalize` (or subclass thereof) or str or None
+            The normalizing object which scales data, typically into the
+            interval ``[0, 1]``.
+            If a `str`, a `.Normalize` subclass is dynamically generated based
+            on the scale with the corresponding name.
+            If *None*, *norm* defaults to a *colors.Normalize* object which
+            initializes its scaling based on the first data processed.
+        cmap : str or `~matplotlib.colors.Colormap`
+            The colormap used to map normalized data values to RGBA colors.
+        """
+
+        Artist.__init__(self)
+
+        self._A = None
+        if isinstance(norm, cm.Mapper):
+            self._mapper = norm
+        else:
+            self._mapper = cm.Mapper(cmap, norm)
+
+        self._id_mapper = self.mapper.callbacks.connect('changed', self.changed)
+        self.callbacks = cbook.CallbackRegistry(signals=["changed"])
+
+    def set_array(self, A):
+        """
+        Set the value array from array-like *A*.
+
+        Parameters
+        ----------
+        A : array-like or None
+            The values that are mapped to colors.
+
+            The base class `.VectorMappable` does not make any assumptions on
+            the dimensionality and shape of the value array *A*.
+        """
+        if A is None:
+            self._A = None
+            return
+        A = cm._ensure_multivariate_data(self.cmap.n_variates, A)
+
+        A = cbook.safe_masked_invalid(A, copy=True)
+        if not np.can_cast(A.dtype, float, "same_kind"):
+            if A.dtype.fields is None:
+                raise TypeError(f"Image data of dtype {A.dtype} cannot be "
+                                f"converted to float")
+            else:
+                for key in A.dtype.fields:
+                    if not np.can_cast(A[key].dtype, float, "same_kind"):
+                        raise TypeError(f"Image data of dtype {A.dtype} cannot be "
+                                        f"converted to a sequence of floats")
+        self._A = A
+        self.mapper.autoscale_None(A)
+
+    @property
+    def mapper(self):
+        return self._mapper
+
+    @mapper.setter
+    def mapper(self, mapper):
+        self._set_mapper(mapper)
+
+    def _set_mapper(self, mapper):
+        if isinstance(mapper, cm.Mapper):
+            if self._A is not None:
+                if not mapper.n_variates == self.mapper.n_variates:
+                    raise ValueError('The new Mapper object must have the same'
+                                     ' number of variates as the existing data.')
+            else:
+                self.mapper.callbacks.disconnect(self._id_mapper)
+                self._mapper = mapper
+                self._id_mapper = mapper.callbacks.connect('changed', self.changed)
+                self.changed()
+        else:
+            raise ValueError('Only a Mapper object can be set to mapper.')
+
+    def get_array(self):
+        """
+        Return the array of values, that are mapped to colors.
+
+        The base class `.VectorMappable` does not make any assumptions on
+        the dimensionality and shape of the array.
+        """
+        return self._A
+
+    def changed(self):
+        """
+        Call this whenever the mappable is changed to notify all the
+        callbackSM listeners to the 'changed' signal.
+        """
+        self.callbacks.process('changed')
+        self.stale = True
+
+    def format_cursor_data(self, data):
+        """
+        Return a string representation of *data*.
+
+        Uses the colorbar's formatter to format the data.
+
+        See Also
+        --------
+        get_cursor_data
+        """
+        return self.mapper._format_cursor_data(data)
 
 
 def _get_tightbbox_for_layout_only(obj, *args, **kwargs):

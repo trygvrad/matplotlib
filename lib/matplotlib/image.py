@@ -228,7 +228,7 @@ def _rgb_to_rgba(A):
     return rgba
 
 
-class _ImageBase(martist.Artist, cm.VectorMappable):
+class _ImageBase(martist.ColorableArtist, cm.MapperShim):
     """
     Base class for images.
 
@@ -259,8 +259,10 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
                  interpolation_stage=None,
                  **kwargs
                  ):
-        martist.Artist.__init__(self)
-        cm.VectorMappable.__init__(self, norm, cmap)
+
+        martist.ColorableArtist.__init__(self, norm, cmap)
+        # martist.Artist.__init__(self)
+        # cm.ScalarMappable.__init__(self, norm, cmap)
         if origin is None:
             origin = mpl.rcParams['image.origin']
         _api.check_in_list(["upper", "lower"], origin=origin)
@@ -333,7 +335,7 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
         Call this whenever the mappable is changed so observers can update.
         """
         self._imcache = None
-        cm.ScalarMappable.changed(self)
+        martist.ColorableArtist.changed(self)  # cm.ScalarMappable.changed(self)
 
     def _resample_and_norm(self, A, norm, out_shape, out_mask, t):
         """
@@ -547,8 +549,8 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
             if A.ndim == 2:
                 if self._interpolation_stage == 'rgba':
                     # run norm -> colormap transformation and then rescale
-                    self.nac.autoscale_None(A)
-                    unscaled_rgba = self.nac.to_rgba(A)
+                    self.mapper.autoscale_None(A)
+                    unscaled_rgba = self.mapper.to_rgba(A)
                     output = _resample(  # resample rgba channels
                         self, unscaled_rgba, out_shape, t, alpha=scalar_alpha)
                     # transforming to bytes *after* resampling gives improved results
@@ -584,14 +586,14 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
                     # Resample and norm data
                     if self.cmap.n_variates == 1:
                         normed_resampled = self._resample_and_norm(A,
-                                                                   self.nac._norm[0],
+                                                                   self.mapper._norm[0],
                                                                    out_shape,
                                                                    out_mask, t)
                     else:
                         normed_resampled = [self._resample_and_norm(a,
-                                                                    self.nac._norm[i],
-                                                                    out_shape,
-                                                                    out_mask, t)
+                                            self.mapper._norm[i],
+                                            out_shape,
+                                            out_mask, t)
                                             for i, a in
                                             enumerate(cm._iterable_variates_in_data(A))]
                     output = self.cmap(normed_resampled, bytes=True)
@@ -619,7 +621,7 @@ class _ImageBase(martist.Artist, cm.VectorMappable):
             # output is now a correctly sized RGBA array of uint8
         else:  # if unsampled:
             if self._imcache is None:
-                self._imcache = self.to_rgba(A, bytes=True, norm=(A.ndim == 2))
+                self._imcache = self.mapper.to_rgba(A, bytes=True, norm=(A.ndim == 2))
             output = self._imcache
 
             # Subset the input image to only the part that will be displayed.
@@ -1463,7 +1465,8 @@ class FigureImage(_ImageBase):
     def set_data(self, A):
         """Set the image array."""
         A = self._normalize_image_array(A, self.cmap.n_variates)
-        cm.VectorMappable.set_array(self, A)
+        martist.ColorableArtist.set_array(self, A)
+        # cm.ScalarMappable.set_array(self, A)
         self.stale = True
 
 
@@ -1694,7 +1697,7 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
             # as is, saving a few operations.
             rgba = arr
         else:
-            sm = cm.ScalarMappable(cmap=cmap)
+            sm = cm.Mapper(cmap=cmap)
             sm.set_clim(vmin, vmax)
             rgba = sm.to_rgba(arr, bytes=True)
         if pil_kwargs is None:

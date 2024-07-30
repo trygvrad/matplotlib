@@ -347,7 +347,7 @@ class Colorbar:
         self.alpha = None
         # Call set_alpha to handle array-like alphas properly
         self.set_alpha(alpha)
-        self.nac = mappable.nac
+        self.mapper = mappable.mapper
         self.values = values
         self.boundaries = boundaries
         self.extend = extend
@@ -431,16 +431,16 @@ class Colorbar:
 
     @property
     def cmap(self):
-        return self.nac.cmap
+        return self.mapper.cmap
 
     @cmap.setter
     def cmap(self, cmap):
-        if not self.nac.cmap == cmap:
-            self.nac.set_cmap(cmap)
+        if not self.mapper.cmap == cmap:
+            self.mapper.set_cmap(cmap)
 
     @property
     def norm(self):
-        return self.nac.norm[0]
+        return self.mapper.norm[0]
 
     @property
     def locator(self):
@@ -490,7 +490,7 @@ class Colorbar:
         del self.ax.cla
         self.ax.cla()
 
-    def update_normal(self, mappable):
+    def update_normal(self, mappable=None):
         """
         Update solid patches, lines, etc.
 
@@ -502,13 +502,19 @@ class Colorbar:
         they will need to be customized again.  However, if the norm only
         changes values of *vmin*, *vmax* or *cmap* then the old formatter
         and locator will be preserved.
+
+        Note: An update on a ColorableArtist calls cb.update_normal(), while
+        an update on a ScalarMappable calls cb.update_normal(self).
         """
+        if mappable is None:
+            mappable = self.mappable
+        else:
+            self.mappable = mappable
 
         _log.debug('colorbar update normal %r %r', mappable.norm, self.norm)  #
         # The above debug log should be changed, it will now always give the same
         # norm twice. However, at this point the old norm should be out of scope
         # and we only have the new, and the id of the old in terms of debugging
-        self.mappable = mappable
         self.set_alpha(mappable.get_alpha())
         if not self.norm_id == id(mappable.norm):
             self.norm_id = id(mappable.norm)
@@ -588,7 +594,7 @@ class Colorbar:
             self._add_solids_patches(X, Y, C, mappable)
         else:
             self.solids = self.ax.pcolormesh(
-                X, Y, C, norm=self.nac, alpha=self.alpha,
+                X, Y, C, norm=self.mapper, alpha=self.alpha,
                 edgecolors='none', shading='flat')
             if not self.drawedges:
                 if len(self._y) >= self.n_rasterize:

@@ -32,7 +32,7 @@ from ._enums import JoinStyle, CapStyle
     "linewidth": ["linewidths", "lw"],
     "offset_transform": ["transOffset"],
 })
-class Collection(artist.Artist, cm.VectorMappable):
+class Collection(artist.ColorableArtist, cm.MapperShim):
     r"""
     Base class for Collections. Must be subclassed to be usable.
 
@@ -55,9 +55,9 @@ class Collection(artist.Artist, cm.VectorMappable):
 
       prop[i % len(prop)]
 
-    Each Collection can optionally be used as its own `.VectorMappable` by
+    Each Collection can optionally be used as its own `.ScalarMappable` by
     passing the *norm* and *cmap* parameters to its constructor. If the
-    Collection's `.VectorMappable` matrix ``_A`` has been set (via a call
+    Collection's `.ScalarMappable` matrix ``_A`` has been set (via a call
     to `.Collection.set_array`), then at draw time this internal vector
     mappable will be used to set the ``facecolors`` and ``edgecolors``,
     ignoring those that were manually passed in.
@@ -155,8 +155,9 @@ class Collection(artist.Artist, cm.VectorMappable):
             Remaining keyword arguments will be used to set properties as
             ``Collection.set_{key}(val)`` for each key-value pair in *kwargs*.
         """
-        artist.Artist.__init__(self)
-        cm.VectorMappable.__init__(self, norm, cmap)
+        artist.ColorableArtist.__init__(self, norm, cmap)
+        # artist.Artist.__init__(self)
+        # cm.ScalarMappable.__init__(self, norm, cmap)
         # list of un-scaled dash patterns
         # this is needed scaling the dash pattern by linewidth
         self._us_linestyles = [(0, None)]

@@ -443,9 +443,9 @@ def test_missing_multivar_cmap_imshow():
         ax.imshow(im)
 
 
-def test_setting_A_on_vectormappable():
+def test_setting_A_on_ScalarMappable():
     # correct use
-    vm = mpl.cm.VectorMappable(cmap='3VarAddA')
+    vm = mpl.cm.ScalarMappable(cmap='3VarAddA')
     data = np.arange(3*25).reshape((3, 5, 5))
     vm.set_array(data)
 
@@ -457,9 +457,9 @@ def test_setting_A_on_vectormappable():
         vm.set_array(data)
 
 
-def test_setting_norm_on_vectormappable():
+def test_setting_norm_on_ScalarMappable():
     # correct use
-    vm = mpl.cm.VectorMappable(cmap='3VarAddA')
+    vm = mpl.cm.ScalarMappable(cmap='3VarAddA')
     vm.set_norm('linear')
     vm.set_norm(['linear', 'log', 'asinh'])
 
@@ -470,9 +470,9 @@ def test_setting_norm_on_vectormappable():
         vm.set_norm(('None', 'None'))
 
 
-def test_setting_clim_on_vectormappable():
+def test_setting_clim_on_ScalarMappable():
     # correct use
-    vm = mpl.cm.VectorMappable(cmap='3VarAddA')
+    vm = mpl.cm.ScalarMappable(cmap='3VarAddA')
     vm.set_clim(0, 1)
     vm.set_clim([0, 0, 0], [1, 2, 3])
     # attempting to set wrong shape of vmin/vmax

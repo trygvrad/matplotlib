@@ -20,6 +20,7 @@ import functools
 
 import numpy as np
 from numpy import ma
+import numbers
 
 import matplotlib as mpl
 from matplotlib import _api, colors, cbook, scale
@@ -320,7 +321,7 @@ def _auto_norm_from_scale(scale_cls):
     return type(norm)
 
 
-class NormAndColor():
+class Mapper():
     """
     Class that holds (multiple) norm and (one) colormap object.
     """
@@ -331,14 +332,14 @@ class NormAndColor():
 
         self._id_norm = [None] * self.cmap.n_variates
         self._norm = [None] * self.cmap.n_variates
-        self.norm = norm  # The Normalize instance of this NormAndColor
+        self.norm = norm  # The Normalize instance of this Mapper
 
         self.callbacks = cbook.CallbackRegistry(signals=["changed"])
         self.colorbar = None
 
-    @property
-    def n_variates(self):
-        return self.cmap.n_variates
+    # @property
+    # def n_variates(self):
+    #    return self.cmap.n_variates
 
     @property
     def norm(self):
@@ -388,8 +389,8 @@ class NormAndColor():
 
         Note that this method does not set the norm.
         """
-        norm = _ensure_multivariate_norm(self.n_variates, norm)
-        vmin, vmax = _ensure_multivariate_clim(self.n_variates, vmin, vmax)
+        norm = _ensure_multivariate_norm(self.cmap.n_variates, norm)
+        vmin, vmax = _ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
         for i, _ in enumerate(self._norm):
             if vmin[i] is not None or vmax[i] is not None:
                 if isinstance(norm[i], colors.Normalize):
@@ -435,7 +436,7 @@ class NormAndColor():
         """
         # First check for special case, image input:
         try:
-            if self.n_variates == 1 and x.ndim == 3:
+            if self.cmap.n_variates == 1 and x.ndim == 3:
                 # looks like imega data, try to process it without cmap
                 return self._pass_image_data(x, alpha, bytes, norm)
         except AttributeError:
@@ -504,7 +505,7 @@ class NormAndColor():
         Parameters
         ----------
         x : np.array or sequence of arrays. Must be compatible with the number
-            of variates (`NormAndColor.n_variates`).
+            of variates (`Mapper.n_variates`).
 
             - If there is a single norm, x may be of any shape.
 
@@ -519,7 +520,7 @@ class NormAndColor():
         np.array, or if more than one variate, a list of np.arrays.
 
         """
-        if self.n_variates == 1:
+        if self.cmap.n_variates == 1:
             return self._norm[0](x)
         elif hasattr(x, 'dtype') and len(x.dtype.descr) > 1:
             x = _iterable_variates_in_data(x)
@@ -529,7 +530,7 @@ class NormAndColor():
             # to a dtype with two fields.
             # Therefore, complex data should only arrive here if
             # the user invokes VectorMappable.to_rgba(data) or
-            # NormAndColor.to_rgba(data) etc. with complex data directly.
+            # Mapper.to_rgba(data) etc. with complex data directly.
             x = [x.real, x.imag]
         return [norm(xx) for norm, xx in zip(self._norm, x)]
 
@@ -568,7 +569,7 @@ class NormAndColor():
         in_init = self._cmap is None
         cmap = _ensure_cmap(cmap)
         if not in_init:
-            if not cmap.n_variates == self.n_variates:
+            if not cmap.n_variates == self.cmap.n_variates:
                 raise ValueError('The selected colormap does not have'
                                  ' the correct number of variates')
         self._cmap = cmap
@@ -605,7 +606,7 @@ class NormAndColor():
         """
         # If the norm's limits are updated self.changed() will be called
         # through the callbacks attached to the norm
-        vmin, vmax = _ensure_multivariate_clim(self.n_variates, vmin, vmax)
+        vmin, vmax = _ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
         for i, _ in enumerate(self._norm):
             self._set_clim_i(i, vmin[i], vmax[i])
 
@@ -643,89 +644,101 @@ class NormAndColor():
             vmax = [vmax]
         self.set_clim(vmax=vmax)
 
-    def _check_update_super_nac(self):
-        """
-        Updates the cmap if the cmap changes on the parent.
-        Only used if this NormAndColor object was created by __getitem__
-        """
-        if hasattr(self, '_super_nac'):
-            # _super_nac, the nac this is a component of
-            if id(self._super_nac.cmap) != self._id_parent_cmap:
-                self.cmap = self._super_nac.cmap[self._super_nac_index]
-            super_nac_norm = self._super_nac._norm[self._super_nac_index]
-            if id(super_nac_norm) != self._id_parent_norm:
-                self.norm = [super_nac_norm]
-
     def __getitem__(self, index):
         """
-        Returns a NormAndColor object containing the norm and colormap for one axis
+        Returns a Mapper object containing the norm and colormap for one axis
         """
-        if self.n_variates > 1:
-            if index >= 0 and index < self.n_variates:
-                part = NormAndColor(cmap=self._cmap[index], norm=self._norm[index])
-                part._super_nac = self
-                part._super_nac_index = index
+        if self.cmap.n_variates > 1:
+            if index >= 0 and index < self.cmap.n_variates:
+                part = Mapper(cmap=self._cmap[index], norm=self._norm[index])
+                part._super_mapper = self
+                part._super_mapper_index = index
                 part._id_parent_cmap = id(self.cmap)
                 part._id_parent_norm = id(self._norm[index])
-                self.callbacks.connect('changed', part._check_update_super_nac)
+                self.callbacks.connect('changed', part._check_update_super_mapper)
                 return part
-        elif self.n_variates == 1 and index == 0:
+        elif self.cmap.n_variates == 1 and index == 0:
             return self
-        raise ValueError(f'Only 0..{self.n_variates-1} are valid indexes'
-                         ' for this NormAndColor object.')
+        raise ValueError(f'Only 0..{self.cmap.n_variates-1} are valid indexes'
+                         ' for this Mapper object.')
 
-
-class VectorMappable:
-    """
-    A mixin class to map one or multiple sets of scalar data to RGBA.
-
-    The VectorMappable applies data normalization before returning RGBA colors
-    from the given `~matplotlib.colors.Colormap`, `~matplotlib.colors.BivarColormap`,
-    or `~matplotlib.colors.MultivarColormap`.
-    """
-
-    def __init__(self, norm=None, cmap=None):
+    def _check_update_super_mapper(self):
         """
-        Parameters
-        ----------
-        norm : `.Normalize` (or subclass thereof) or str or None
-            The normalizing object which scales data, typically into the
-            interval ``[0, 1]``.
-            If a `str`, a `.Normalize` subclass is dynamically generated based
-            on the scale with the corresponding name.
-            If *None*, *norm* defaults to a *colors.Normalize* object which
-            initializes its scaling based on the first data processed.
-        cmap : str or `~matplotlib.colors.Colormap`
-            The colormap used to map normalized data values to RGBA colors.
+        If this `Mapper` object was created by __getitem__ it is a
+        one-dimensional component of another `Mapper`.
+        In this case, `self._super_mapper` is the Mapper this was generated from.
+
+        This function propagetes changes from the `self._super_mapper` to `self`.
         """
-        self._A = None
-        if isinstance(norm, NormAndColor):
-            self._nac = norm
-        else:
-            self._nac = NormAndColor(cmap, norm)
+        if hasattr(self, '_super_mapper'):
+            # _super_mapper, the mapper this is a component of
+            if id(self._super_mapper.cmap) != self._id_parent_cmap:
+                self.cmap = self._super_mapper.cmap[self._super_mapper_index]
+            super_mapper_norm = self._super_mapper._norm[self._super_mapper_index]
+            if id(super_mapper_norm) != self._id_parent_norm:
+                self.norm = [super_mapper_norm]
 
-        self._id_nac = self.nac.callbacks.connect('changed', self.changed)
-        self.callbacks = cbook.CallbackRegistry(signals=["changed"])
+    def _format_cursor_data(self, data):
+        """
+        Return a string representation of *data*.
 
-    @property
-    def nac(self):
-        return self._nac
-
-    @nac.setter
-    def nac(self, nac):
-        if isinstance(nac, NormAndColor):
-            if self._A is not None:
-                if not nac.n_variates == self.nac.n_variates:
-                    raise ValueError('The new NormAndColor object must have the same'
-                                     ' number of variates as the existing data.')
+        Uses the colorbar's formatter to format the data.
+        """
+        if (np.ndim(data) == 0 or len(data) == self.cmap.n_variates):
+            if self.cmap.n_variates == 1:
+                # This if test is equivalent to `isinstance(self.cmap, Colormap)`
+                data = [data]
+                num_colors = [self.cmap.N]
             else:
-                self._nac = nac
-                self.changed()
+                if isinstance(self.cmap, colors.BivarColormap):
+                    num_colors = [self.cmap.N, self.cmap.M]
+                else:  # i.e. a MultivarColormap object
+                    num_colors = [component.N for component in self.cmap]
+
+            out_str = '['
+            for nn, dd, nc in zip(self._norm, data, num_colors):
+                if np.ma.getmask(dd):
+                    out_str += ", "
+                else:
+                    # Figure out a reasonable amount of significant digits
+                    normed = nn(dd)
+                    if np.isfinite(normed):
+                        if isinstance(nn,  colors.BoundaryNorm):
+                            # not an invertible normalization mapping
+                            cur_idx = np.argmin(np.abs(nn.boundaries - dd))
+                            neigh_idx = max(0, cur_idx - 1)
+                            # use max diff to prevent delta == 0
+                            delta = np.diff(
+                                nn.boundaries[neigh_idx:cur_idx + 2]
+                            ).max()
+                        else:
+                            # Midpoints of neighboring color intervals.
+                            neighbors = nn.inverse(
+                                (int(normed * nc) + np.array([0, 1])) / nc)
+                            delta = abs(neighbors - dd).max()
+                        g_sig_digits = cbook._g_sig_digits(dd, delta)
+                    else:
+                        g_sig_digits = 3  # Consistent with default below.
+                    out_str += f"{dd:-#.{g_sig_digits}g}, "
+            return out_str[:-2] + ']'
         else:
-            raise ValueError('Only a NormAndColor object can be set to nac.')
+            # This point is reacehd if the number of colormaps does not match the length
+            # of data. This happens in the as-of-yet hypothetical case that the norm
+            # converts from one data field to two.
+            raise ValueError
+            try:
+                data[0]
+            except (TypeError, IndexError):
+                data = [data]
+            data_str = ', '.join(f'{item:0.3g}' for item in data
+                                 if isinstance(item, numbers.Number))
+            return "[" + data_str + "]"
+
+
+class MapperShim:
 
     def _scale_norm(self, norm, vmin, vmax):
-        self.nac._scale_norm(norm, vmin, vmax, self._A)
+        self.mapper._scale_norm(norm, vmin, vmax, self._A)
 
     def to_rgba(self, x, alpha=None, bytes=False, norm=True):
         """
@@ -757,7 +770,176 @@ class VectorMappable:
         performed, and it is assumed to be in the range (0-1).
 
         """
-        return self.nac.to_rgba(x, alpha=alpha, bytes=bytes, norm=norm)
+        return self.mapper.to_rgba(x, alpha=alpha, bytes=bytes, norm=norm)
+
+    def get_cmap(self):
+        """Return the `.Colormap` instance."""
+        return self.mapper.cmap
+
+    def get_clim(self):
+        """
+        Return the values (min, max) that are mapped to the colormap limits.
+        """
+        if self.mapper.cmap.n_variates == 1:
+            return self.mapper._norm[0].vmin, self.mapper._norm[0].vmax
+        return self.mapper.get_clim()
+
+    def set_clim(self, vmin=None, vmax=None):
+        """
+        Set the norm limits for image scaling.
+
+        Parameters
+        ----------
+        vmin, vmax : float
+             The limits.
+
+             For scalar data, the limits may also be passed as a
+             tuple (*vmin*, *vmax*) as a single positional argument.
+
+             .. ACCEPTS: (vmin: float, vmax: float)
+        """
+        # If the norm's limits are updated self.changed() will be called
+        # through the callbacks attached to the norm
+        if self.cmap.n_variates == 1:
+            try:
+                vmin, vmax = vmin
+            except (TypeError, ValueError):
+                pass
+        self.mapper.set_clim(vmin, vmax)
+
+    def get_alpha(self):
+        """
+        Returns
+        -------
+        float
+            Always returns 1.
+        """
+        # This method is intended to be overridden by Artist sub-classes
+        return 1.
+
+    @property
+    def cmap(self):
+        return self.mapper.cmap
+
+    @cmap.setter
+    def cmap(self, cmap):
+        self.mapper.cmap = cmap
+
+    def set_cmap(self, cmap):
+        """
+        Set the colormap for luminance data.
+
+        Parameters
+        ----------
+        cmap : `.Colormap` or str or None
+        """
+        self.mapper.cmap = cmap
+
+    @property
+    def norm(self):
+        if self.cmap.n_variates == 1:
+            return self.mapper.norm[0]
+        return self.mapper.norm
+
+    @norm.setter
+    def norm(self, norm):
+        self.mapper.norm = norm
+
+    def set_norm(self, norm):
+        """
+        Set the normalization instance.
+
+        Parameters
+        ----------
+        norm : `.Normalize` or str or None
+
+        Notes
+        -----
+        If there are any colorbars using the mappable for this norm, setting
+        the norm of the mappable will reset the norm, locator, and formatters
+        on the colorbar to default.
+        """
+        self.norm = norm
+
+    def autoscale(self):
+        """
+        Autoscale the scalar limits on the norm instance using the
+        current array
+        """
+        self.mapper.autoscale(self._A)
+
+    def autoscale_None(self):
+        """
+        Autoscale the scalar limits on the norm instance using the
+        current array, changing only limits that are None
+        """
+        self.mapper.autoscale_None(self._A)
+
+    def _parse_multivariate_data(self, data):
+        """
+        Parse data to a dtype with self.cmap.n_variates.
+
+        Input data of shape (n_variates, n, m) is converted to an array of shape
+        (n, m) with data type np.dtype(f'{data.dtype}, ' * n_variates)
+
+        Complex data is returned as a view with dtype np.dtype('float64, float64')
+        or np.dtype('float32, float32')
+
+        If n_variates is 1 and data is not of type np.ndarray (i.e. PIL.Image),
+        the data is returned unchanged.
+
+        If data is None, the function returns None
+
+        Parameters
+        ----------
+        data : np.ndarray, PIL.Image or None
+
+        Returns
+        -------
+            np.ndarray, PIL.Image or None
+        """
+        return _ensure_multivariate_data(self.cmap.n_variates, data)
+
+    @property
+    def colorbar(self):
+        return self.mapper.colorbar
+
+    @colorbar.setter
+    def colorbar(self, colorbar):
+        self.mapper.colorbar = colorbar
+
+
+class ScalarMappable(MapperShim):
+    """
+    A mixin class to map one or multiple sets of scalar data to RGBA.
+
+    The VectorMappable applies data normalization before returning RGBA colors
+    from the given `~matplotlib.colors.Colormap`, `~matplotlib.colors.BivarColormap`,
+    or `~matplotlib.colors.MultivarColormap`.
+    """
+
+    def __init__(self, norm=None, cmap=None):
+        """
+        Parameters
+        ----------
+        norm : `.Normalize` (or subclass thereof) or str or None
+            The normalizing object which scales data, typically into the
+            interval ``[0, 1]``.
+            If a `str`, a `.Normalize` subclass is dynamically generated based
+            on the scale with the corresponding name.
+            If *None*, *norm* defaults to a *colors.Normalize* object which
+            initializes its scaling based on the first data processed.
+        cmap : str or `~matplotlib.colors.Colormap`
+            The colormap used to map normalized data values to RGBA colors.
+        """
+        self._A = None
+        if isinstance(norm, Mapper):
+            self.mapper = norm
+        else:
+            self.mapper = Mapper(cmap, norm)
+
+        self._id_mapper = self.mapper.callbacks.connect('changed', self.changed)
+        self.callbacks = cbook.CallbackRegistry(signals=["changed"])
 
     def set_array(self, A):
         """
@@ -787,7 +969,7 @@ class VectorMappable:
                         raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                                         f"converted to a sequence of floats")
         self._A = A
-        self.nac.autoscale_None(A)
+        self.mapper.autoscale_None(A)
 
     def get_array(self):
         """
@@ -798,109 +980,6 @@ class VectorMappable:
         """
         return self._A
 
-    def get_cmap(self):
-        """Return the `.Colormap` instance."""
-        return self.nac.cmap
-
-    def get_clim(self):
-        """
-        Return the values (min, max) that are mapped to the colormap limits.
-        """
-        if self.nac.n_variates == 1:
-            return self.nac._norm[0].vmin, self.nac._norm[0].vmax
-        return self.nac.get_clim()
-
-    def set_clim(self, vmin=None, vmax=None):
-        """
-        Set the norm limits for image scaling.
-
-        Parameters
-        ----------
-        vmin, vmax : float
-             The limits.
-
-             For scalar data, the limits may also be passed as a
-             tuple (*vmin*, *vmax*) as a single positional argument.
-
-             .. ACCEPTS: (vmin: float, vmax: float)
-        """
-        # If the norm's limits are updated self.changed() will be called
-        # through the callbacks attached to the norm
-        if self.cmap.n_variates == 1:
-            try:
-                vmin, vmax = vmin
-            except (TypeError, ValueError):
-                pass
-        self.nac.set_clim(vmin, vmax)
-
-    def get_alpha(self):
-        """
-        Returns
-        -------
-        float
-            Always returns 1.
-        """
-        # This method is intended to be overridden by Artist sub-classes
-        return 1.
-
-    @property
-    def cmap(self):
-        return self.nac.cmap
-
-    @cmap.setter
-    def cmap(self, cmap):
-        self.nac.cmap = cmap
-
-    def set_cmap(self, cmap):
-        """
-        Set the colormap for luminance data.
-
-        Parameters
-        ----------
-        cmap : `.Colormap` or str or None
-        """
-        self.nac.cmap = cmap
-
-    @property
-    def norm(self):
-        if self.cmap.n_variates == 1:
-            return self.nac.norm[0]
-        return self.nac.norm
-
-    @norm.setter
-    def norm(self, norm):
-        self.nac.norm = norm
-
-    def set_norm(self, norm):
-        """
-        Set the normalization instance.
-
-        Parameters
-        ----------
-        norm : `.Normalize` or str or None
-
-        Notes
-        -----
-        If there are any colorbars using the mappable for this norm, setting
-        the norm of the mappable will reset the norm, locator, and formatters
-        on the colorbar to default.
-        """
-        self.norm = norm
-
-    def autoscale(self):
-        """
-        Autoscale the scalar limits on the norm instance using the
-        current array
-        """
-        self.nac.autoscale(self._A)
-
-    def autoscale_None(self):
-        """
-        Autoscale the scalar limits on the norm instance using the
-        current array, changing only limits that are None
-        """
-        self.nac.autoscale_None(self._A)
-
     def changed(self):
         """
         Call this whenever the mappable is changed to notify all the
@@ -909,69 +988,7 @@ class VectorMappable:
         self.callbacks.process('changed', self)
         self.stale = True
 
-    def _parse_multivariate_data(self, data):
-        """
-        Parse data to a dtype with self.cmap.n_variates.
 
-        Input data of shape (n_variates, n, m) is converted to an array of shape
-        (n, m) with data type np.dtype(f'{data.dtype}, ' * n_variates)
-
-        Complex data is returned as a view with dtype np.dtype('float64, float64')
-        or np.dtype('float32, float32')
-
-        If n_variates is 1 and data is not of type np.ndarray (i.e. PIL.Image),
-        the data is returned unchanged.
-
-        If data is None, the function returns None
-
-        Parameters
-        ----------
-        data : np.ndarray, PIL.Image or None
-
-        Returns
-        -------
-            np.ndarray, PIL.Image or None
-        """
-
-        return _ensure_multivariate_data(self.cmap.n_variates, data)
-
-    @property
-    def colorbar(self):
-        return self.nac.colorbar
-
-    @colorbar.setter
-    def colorbar(self, colorbar):
-        self.nac.colorbar = colorbar
-
-
-class ScalarMappable(VectorMappable):
-    """
-    A mixin class to map one or scalar data to RGBA.
-
-    The VectorMappable applies data normalization before returning RGBA colors
-    from the given `~matplotlib.colors.Colormap`
-    """
-
-    def __init__(self, norm=None, cmap=None):
-        cmap = _ensure_cmap(cmap, accept_multivariate=False)
-        super().__init__(norm=norm, cmap=cmap)
-
-    @property
-    def nac(self):
-        return self._nac
-
-    @nac.setter
-    def nac(self, nac):
-        if isinstance(nac, NormAndColor):
-            if self._A is not None:
-                if not nac.n_variates == 1:
-                    raise ValueError('The new NormAndColor object cannot have'
-                                     ' more than one variate.')
-            else:
-                self._nac = nac
-                self.changed()
-        else:
-            raise ValueError('Only a NormAndColor object can be set to nac.')
 # The docstrings here must be generic enough to apply to all relevant methods.
 mpl._docstring.interpd.update(
     cmap_doc="""\
@@ -1002,7 +1019,7 @@ vmin, vmax : float, optional
 )
 
 
-def _ensure_cmap(cmap, accept_multivariate=True, nac=None):
+def _ensure_cmap(cmap, accept_multivariate=True, mapper=None):
     """
     For internal use to preserve type stability of errors, and
     to ensure that we have a `~matplotlib.colors.Colormap`,
@@ -1032,11 +1049,11 @@ def _ensure_cmap(cmap, accept_multivariate=True, nac=None):
     -------
     Colormap, MultivarColormap or BivarColormap
     """
-    if isinstance(nac, NormAndColor):
+    if isinstance(mapper, Mapper):
         if cmap is not None:
-            raise ValueError('A NormAndColor object cannot be passed'
+            raise ValueError('A Mapper object cannot be passed'
                              ' simultaneously with a cmap.')
-        return nac.cmap
+        return mapper.cmap
     if not accept_multivariate:
         if isinstance(cmap, colors.Colormap):
             return cmap
@@ -1121,7 +1138,7 @@ def _ensure_multivariate_norm(n_variates, norm):
         if n_variates > 1:
             an iterable of length n_variates
     """
-    if isinstance(norm, NormAndColor):
+    if isinstance(norm, Mapper):
         #  we do not need to test for consistency here
         # (norm.n_variates == n_variates)
         # because that is done in _ensure_cmap()

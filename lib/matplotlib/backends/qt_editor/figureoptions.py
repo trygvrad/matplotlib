@@ -160,7 +160,7 @@ def figure_edit(axes, parent=None):
             cvals = cm._multivar_colormaps.values()
         if cmap not in cvals:
             cmaps = [(cmap, cmap.name), *cmaps]
-        low, high = mappable.nac.get_clim()
+        low, high = mappable.mapper.get_clim()
         if len(low) == 1:
             low = low[0]
             high = high[0]

@@ -185,7 +185,7 @@ class ContourLabeler:
         else:
             cmap = mcolors.ListedColormap(colors, N=len(self.labelLevelList))
             self.labelCValueList = list(range(len(self.labelLevelList)))
-            self.labelMappable = cm.ScalarMappable(cmap=cmap,
+            self.labelMappable = cm.Mapper(cmap=cmap,
                                                    norm=mcolors.NoNorm())
 
         self.labelXYs = []
