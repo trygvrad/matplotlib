@@ -1335,7 +1335,7 @@ class Artist:
             # inherit from Artist first and from ScalarMappable second, so
             # Artist.format_cursor_data would always have precedence over
             # ScalarMappable.format_cursor_data.
-            return self.mapper._format_cursor_data(data)
+            return self.colorizer._format_cursor_data(data)
         else:
             try:
                 data[0]
@@ -1378,7 +1378,7 @@ class Artist:
     mouseover = property(get_mouseover, set_mouseover)  # backcompat.
 
 
-class ColorableArtist(Artist):
+class ColorizingArtist(Artist):
     def __init__(self, norm=None, cmap=None):
         """
         Parameters
@@ -1397,12 +1397,12 @@ class ColorableArtist(Artist):
         Artist.__init__(self)
 
         self._A = None
-        if isinstance(norm, cm.Mapper):
-            self._mapper = norm
+        if isinstance(norm, cm.Colorizer):
+            self._colorizer = norm
         else:
-            self._mapper = cm.Mapper(cmap, norm)
+            self._colorizer = cm.Colorizer(cmap, norm)
 
-        self._id_mapper = self.mapper.callbacks.connect('changed', self.changed)
+        self._id_colorizer = self.colorizer.callbacks.connect('changed', self.changed)
         self.callbacks = cbook.CallbackRegistry(signals=["changed"])
 
     def set_array(self, A):
@@ -1420,7 +1420,7 @@ class ColorableArtist(Artist):
         if A is None:
             self._A = None
             return
-        A = cm._ensure_multivariate_data(self.cmap.n_variates, A)
+        A = cm._ensure_multivariate_data(self.colorizer.cmap.n_variates, A)
 
         A = cbook.safe_masked_invalid(A, copy=True)
         if not np.can_cast(A.dtype, float, "same_kind"):
@@ -1433,29 +1433,7 @@ class ColorableArtist(Artist):
                         raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                                         f"converted to a sequence of floats")
         self._A = A
-        self.mapper.autoscale_None(A)
-
-    @property
-    def mapper(self):
-        return self._mapper
-
-    @mapper.setter
-    def mapper(self, mapper):
-        self._set_mapper(mapper)
-
-    def _set_mapper(self, mapper):
-        if isinstance(mapper, cm.Mapper):
-            if self._A is not None:
-                if not mapper.n_variates == self.mapper.n_variates:
-                    raise ValueError('The new Mapper object must have the same'
-                                     ' number of variates as the existing data.')
-            else:
-                self.mapper.callbacks.disconnect(self._id_mapper)
-                self._mapper = mapper
-                self._id_mapper = mapper.callbacks.connect('changed', self.changed)
-                self.changed()
-        else:
-            raise ValueError('Only a Mapper object can be set to mapper.')
+        self.colorizer.autoscale_None(A)
 
     def get_array(self):
         """
@@ -1465,6 +1443,39 @@ class ColorableArtist(Artist):
         the dimensionality and shape of the array.
         """
         return self._A
+
+    @property
+    def colorizer(self):
+        return self._colorizer
+
+    @colorizer.setter
+    def colorizer(self, colorizer):
+        self._set_colorizer(colorizer)
+
+    def _set_colorizer(self, colorizer):
+        if isinstance(colorizer, cm.Colorizer):
+            if self._A is not None:
+                if not colorizer.cmap.n_variates == self.colorizer.cmap.n_variates:
+                    raise ValueError('The new Colorizer object must have the same'
+                                     ' number of variates as the existing data.')
+            else:
+                self.colorizer.callbacks.disconnect(self._id_colorizer)
+                self._colorizer = colorizer
+                self._id_colorizer = colorizer.callbacks.connect('changed',
+                                                                 self.changed)
+                self.changed()
+        else:
+            raise ValueError('Only a Colorizer object can be set to colorizer.')
+
+    def _get_colorizer(self):
+        """
+        Function to get the colorizer.
+        Useful in edge cases where you want a standalone variable with the colorizer,
+        but also want the colorizer to update if the colorizer on the artist changes.
+
+        used in `contour.ContourLabeler.label_colorizer`
+        """
+        return self._colorizer
 
     def changed(self):
         """
@@ -1484,7 +1495,7 @@ class ColorableArtist(Artist):
         --------
         get_cursor_data
         """
-        return self.mapper._format_cursor_data(data)
+        return self.colorizer._format_cursor_data(data)
 
 
 def _get_tightbbox_for_layout_only(obj, *args, **kwargs):

@@ -32,7 +32,7 @@ from ._enums import JoinStyle, CapStyle
     "linewidth": ["linewidths", "lw"],
     "offset_transform": ["transOffset"],
 })
-class Collection(artist.ColorableArtist, cm.MapperShim):
+class Collection(artist.ColorizingArtist, cm.ColorizerShim):
     r"""
     Base class for Collections. Must be subclassed to be usable.
 
@@ -155,7 +155,7 @@ class Collection(artist.ColorableArtist, cm.MapperShim):
             Remaining keyword arguments will be used to set properties as
             ``Collection.set_{key}(val)`` for each key-value pair in *kwargs*.
         """
-        artist.ColorableArtist.__init__(self, norm, cmap)
+        artist.ColorizingArtist.__init__(self, norm, cmap)
         # artist.Artist.__init__(self)
         # cm.ScalarMappable.__init__(self, norm, cmap)
         # list of un-scaled dash patterns
@@ -918,7 +918,7 @@ class Collection(artist.ColorableArtist, cm.MapperShim):
                         'array is dropped.')
                 # pcolormesh, scatter, maybe others flatten their _A
                 self._alpha = self._alpha.reshape(self._A.shape)
-            self._mapped_colors = self.to_rgba(self._A, self._alpha)
+            self._mapped_colors = self.colorizer.to_rgba(self._A, self._alpha)
 
         if self._face_is_mapped:
             self._facecolors = self._mapped_colors
@@ -954,8 +954,7 @@ class Collection(artist.ColorableArtist, cm.MapperShim):
 
         # update_from for scalarmappable
         self._A = other._A
-        self.norm = other.norm
-        self.cmap = other.cmap
+        self.colorizer = other.colorizer
         self.stale = True
 
 
@@ -1158,7 +1157,8 @@ class PathCollection(_CollectionWithSizes):
 
         for val, lab in zip(values, label_values):
             if prop == "colors":
-                color = self.cmap(self.norm(val))
+                # color = self.colorizer.cmap(self.colorizer.norm(val))
+                color = self.colorizer.to_rgba(val)
             elif prop == "sizes":
                 size = np.sqrt(val)
                 if np.isclose(size, 0.0):
@@ -2010,7 +2010,7 @@ class _MeshData:
             h, w = height - 1, width - 1
         else:
             h, w = height, width
-        A = cm._ensure_multivariate_data(self.cmap.n_variates, A)
+        A = cm._ensure_multivariate_data(self.colorizer.cmap.n_variates, A)
         ok_shapes = [(h, w, 3), (h, w, 4), (h, w), (h * w,)]
         if A is not None:
             shape = np.shape(A)
@@ -2271,7 +2271,7 @@ class PolyQuadMesh(_MeshData, PolyCollection):
         arr = self.get_array()
         if arr is not None:
             arr = np.ma.getmaskarray(arr)
-            if self.cmap.n_variates > 1:
+            if self.colorizer.cmap.n_variates > 1:
                 # multivar case
                 for a in cm._iterable_variates_in_data(arr):
                     mask |= np.any(a, axis=0)

@@ -34,7 +34,7 @@ import matplotlib.units as munits
 from matplotlib import _api, _docstring, _preprocess_data
 from matplotlib.axes._base import (
     _AxesBase, _TransformedBoundsLocator, _process_plot_format)
-from matplotlib.cm import _ensure_cmap, _ensure_multivariate_params
+from matplotlib.cm import _ensure_cmap, _ensure_multivariate_params, Colorizer
 from matplotlib.axes._secondary_axes import SecondaryAxis
 from matplotlib.container import BarContainer, ErrorbarContainer, StemContainer
 
@@ -4940,9 +4940,9 @@ class Axes(_AxesBase):
         collection.set_transform(mtransforms.IdentityTransform())
         if colors is None:
             collection.set_array(c)
-            collection.set_cmap(cmap)
-            collection.set_norm(norm)
-            collection._scale_norm(norm, vmin, vmax)
+            collection.colorizer.cmap = cmap
+            collection.colorizer.norm = norm
+            collection.colorizer._scale_norm(norm, vmin, vmax, collection.get_array())
         else:
             extra_kwargs = {
                     'cmap': cmap, 'norm': norm, 'vmin': vmin, 'vmax': vmax
@@ -5266,14 +5266,6 @@ class Axes(_AxesBase):
         else:
             polygons = [polygon]
 
-        collection = mcoll.PolyCollection(
-            polygons,
-            edgecolors=edgecolors,
-            linewidths=linewidths,
-            offsets=offsets,
-            offset_transform=mtransforms.AffineDeltaTransform(self.transData)
-        )
-
         # Set normalizer if bins is 'log'
         if cbook._str_equal(bins, 'log'):
             if norm is not None:
@@ -5284,6 +5276,26 @@ class Axes(_AxesBase):
                 vmin = vmax = None
             bins = None
 
+        collection = mcoll.PolyCollection(
+            polygons,
+            edgecolors=edgecolors,
+            linewidths=linewidths,
+            offsets=offsets,
+            offset_transform=mtransforms.AffineDeltaTransform(self.transData),
+            norm=norm,
+            cmap=cmap
+        )
+
+        if marginals:
+            if vmin is None \
+               and vmax is None \
+               and not isinstance(norm, mcolors.Normalize)\
+               and not isinstance(norm, Colorizer)\
+               and 'clim' not in kwargs:
+                marginals_share_colorizer = False
+            else:
+                marginals_share_colorizer = True
+
         if bins is not None:
             if not np.iterable(bins):
                 minimum, maximum = min(accum), max(accum)
@@ -5293,16 +5305,16 @@ class Axes(_AxesBase):
             accum = bins.searchsorted(accum)
 
         collection.set_array(accum)
-        collection.set_cmap(cmap)
-        collection.set_norm(norm)
         collection.set_alpha(alpha)
         collection._internal_update(kwargs)
-        collection._scale_norm(norm, vmin, vmax)
+        collection.colorizer._scale_norm(norm, vmin, vmax, collection.get_array())
 
+        '''
         # autoscale the norm with current accum values if it hasn't been set
         if norm is not None:
             if collection.norm.vmin is None and collection.norm.vmax is None:
                 collection.norm.autoscale()
+        '''
 
         corners = ((xmin, ymin), (xmax, ymax))
         self.update_datalim(corners)
@@ -5347,24 +5359,28 @@ class Axes(_AxesBase):
             values = values[mask]
 
             trans = getattr(self, f"get_{zname}axis_transform")(which="grid")
-            bar = mcoll.PolyCollection(
-                verts, transform=trans, edgecolors="face")
+            if marginals_share_colorizer:
+                bar = mcoll.PolyCollection(
+                    verts, transform=trans, edgecolors="face",
+                    norm=collection.colorizer)
+            else:
+                bar = mcoll.PolyCollection(
+                    verts, transform=trans, edgecolors="face")
+                bar.colorizer.cmap = cmap
+                bar.colorizer.norm = norm
             bar.set_array(values)
-            bar.set_cmap(cmap)
-            bar.set_norm(norm)
             bar.set_alpha(alpha)
             bar._internal_update(kwargs)
             bars.append(self.add_collection(bar, autolim=False))
 
         collection.hbar, collection.vbar = bars
 
-        def on_changed(collection):
-            collection.hbar.set_cmap(collection.get_cmap())
-            collection.hbar.set_cmap(collection.get_cmap())
-            collection.vbar.set_clim(collection.get_clim())
-            collection.vbar.set_clim(collection.get_clim())
+        if not marginals_share_colorizer:
+            def on_changed():
+                collection.vbar.set_cmap(collection.get_cmap())
+                collection.hbar.set_cmap(collection.get_cmap())
 
-        collection.callbacks.connect('changed', on_changed)
+            collection.callbacks.connect('changed', on_changed)
 
         return collection
 
@@ -5954,7 +5970,7 @@ class Axes(_AxesBase):
         if im.get_clip_path() is None:
             # image does not already have clipping set, clip to Axes patch
             im.set_clip_path(self.patch)
-        im._scale_norm(norm, vmin, vmax)
+        im.colorizer._scale_norm(norm, vmin, vmax, im.get_array())
         im.set_url(url)
 
         # update ax.dataLim, and, if autoscaling, set viewLim
@@ -6278,7 +6294,7 @@ class Axes(_AxesBase):
 
         collection = mcoll.PolyQuadMesh(
             coords, array=C, cmap=cmap, norm=norm, alpha=alpha, **kwargs)
-        collection._scale_norm(norm, vmin, vmax)
+        collection.colorizer._scale_norm(norm, vmin, vmax, collection.get_array())
 
         # Transform from native to data coordinates?
         t = collection._transform
@@ -6513,7 +6529,7 @@ class Axes(_AxesBase):
         collection = mcoll.QuadMesh(
             coords, antialiased=antialiased, shading=shading,
             array=C, cmap=cmap, norm=norm, alpha=alpha, **kwargs)
-        collection._scale_norm(norm, vmin, vmax)
+        collection.colorizer._scale_norm(norm, vmin, vmax, collection.get_array())
 
         coords = coords.reshape(-1, 2)  # flatten the grid structure; keep x, y
 
@@ -6713,7 +6729,7 @@ class Axes(_AxesBase):
             ret = im
 
         if np.ndim(C) == 2:  # C.ndim == 3 is RGB(A) so doesn't need scaling.
-            ret._scale_norm(norm, vmin, vmax)
+            ret.colorizer._scale_norm(norm, vmin, vmax, C)
 
         if ret.get_clip_path() is None:
             # image does not already have clipping set, clip to Axes patch

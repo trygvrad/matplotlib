@@ -321,7 +321,7 @@ def _auto_norm_from_scale(scale_cls):
     return type(norm)
 
 
-class Mapper():
+class Colorizer():
     """
     Class that holds (multiple) norm and (one) colormap object.
     """
@@ -332,7 +332,7 @@ class Mapper():
 
         self._id_norm = [None] * self.cmap.n_variates
         self._norm = [None] * self.cmap.n_variates
-        self.norm = norm  # The Normalize instance of this Mapper
+        self.norm = norm  # The Normalize instance of this Colorizer
 
         self.callbacks = cbook.CallbackRegistry(signals=["changed"])
         self.colorbar = None
@@ -505,7 +505,7 @@ class Mapper():
         Parameters
         ----------
         x : np.array or sequence of arrays. Must be compatible with the number
-            of variates (`Mapper.n_variates`).
+            of variates (`Colorizer.n_variates`).
 
             - If there is a single norm, x may be of any shape.
 
@@ -530,7 +530,7 @@ class Mapper():
             # to a dtype with two fields.
             # Therefore, complex data should only arrive here if
             # the user invokes VectorMappable.to_rgba(data) or
-            # Mapper.to_rgba(data) etc. with complex data directly.
+            # Colorizer.to_rgba(data) etc. with complex data directly.
             x = [x.real, x.imag]
         return [norm(xx) for norm, xx in zip(self._norm, x)]
 
@@ -588,10 +588,19 @@ class Mapper():
         """
         Set the norm limits for the norm at index i
         """
-        if vmin is not None:
-            self._norm[i].vmin = colors._sanitize_extrema(vmin)
-        if vmax is not None:
-            self._norm[i].vmax = colors._sanitize_extrema(vmax)
+        if vmin is not None and vmax is not None:
+            # this block exists to avoid calling _changed twice.
+            vmin = colors._sanitize_extrema(vmin)
+            vmax = colors._sanitize_extrema(vmax)
+            if vmin != self._norm[i]._vmin or vmax != self._norm[i]._vmax:
+                self._norm[i]._vmin = vmin
+                self._norm[i]._vmax = vmax
+                self._norm[i]._changed()
+        else:
+            if vmin is not None:
+                self._norm[i].vmin = vmin
+            if vmax is not None:
+                self._norm[i].vmax = vmax
 
     def set_clim(self, vmin=None, vmax=None):
         """
@@ -606,6 +615,11 @@ class Mapper():
         """
         # If the norm's limits are updated self.changed() will be called
         # through the callbacks attached to the norm
+
+        # we can add logic here to avoid multiple calls to self.changed() if the
+        # data is multivariate. This would be a minor efficiency improvement, but
+        # the use case of repeated calls to multivariate set_clim is limited,
+        # so the performance improvement is not prioritized at this moment.
         vmin, vmax = _ensure_multivariate_clim(self.cmap.n_variates, vmin, vmax)
         for i, _ in enumerate(self._norm):
             self._set_clim_i(i, vmin[i], vmax[i])
@@ -644,39 +658,51 @@ class Mapper():
             vmax = [vmax]
         self.set_clim(vmax=vmax)
 
+    @property
+    def clip(self):
+        return [n.clip for n in self._norm]
+
+    @clip.setter
+    def clip(self, clip):
+        if not np.iterable(clip):
+            clip = [clip]*len(self._norm)
+        for n, c in zip(self._norm, clip):
+            n.clip = c
+
     def __getitem__(self, index):
         """
-        Returns a Mapper object containing the norm and colormap for one axis
+        Returns a Colorizer object containing the norm and colormap for one axis
         """
         if self.cmap.n_variates > 1:
             if index >= 0 and index < self.cmap.n_variates:
-                part = Mapper(cmap=self._cmap[index], norm=self._norm[index])
-                part._super_mapper = self
-                part._super_mapper_index = index
+                part = Colorizer(cmap=self._cmap[index], norm=self._norm[index])
+                part._super_colorizer = self
+                part._super_colorizer_index = index
                 part._id_parent_cmap = id(self.cmap)
                 part._id_parent_norm = id(self._norm[index])
-                self.callbacks.connect('changed', part._check_update_super_mapper)
+                self.callbacks.connect('changed', part._check_update_super_colorizer)
                 return part
         elif self.cmap.n_variates == 1 and index == 0:
             return self
         raise ValueError(f'Only 0..{self.cmap.n_variates-1} are valid indexes'
-                         ' for this Mapper object.')
+                         ' for this Colorizer object.')
 
-    def _check_update_super_mapper(self):
+    def _check_update_super_colorizer(self):
         """
-        If this `Mapper` object was created by __getitem__ it is a
-        one-dimensional component of another `Mapper`.
-        In this case, `self._super_mapper` is the Mapper this was generated from.
+        If this `Colorizer` object was created by __getitem__ it is a
+        one-dimensional component of another `Colorizer`.
+        In this case, `self._super_colorizer` is the Colorizer this was generated from.
 
-        This function propagetes changes from the `self._super_mapper` to `self`.
+        This function propagetes changes from the `self._super_colorizer` to `self`.
         """
-        if hasattr(self, '_super_mapper'):
-            # _super_mapper, the mapper this is a component of
-            if id(self._super_mapper.cmap) != self._id_parent_cmap:
-                self.cmap = self._super_mapper.cmap[self._super_mapper_index]
-            super_mapper_norm = self._super_mapper._norm[self._super_mapper_index]
-            if id(super_mapper_norm) != self._id_parent_norm:
-                self.norm = [super_mapper_norm]
+        if hasattr(self, '_super_colorizer'):
+            # _super_colorizer, the colorizer this is a component of
+            if id(self._super_colorizer.cmap) != self._id_parent_cmap:
+                self.cmap = self._super_colorizer.cmap[self._super_colorizer_index]
+            super_colorizer_norm =\
+                    self._super_colorizer._norm[self._super_colorizer_index]
+            if id(super_colorizer_norm) != self._id_parent_norm:
+                self.norm = [super_colorizer_norm]
 
     def _format_cursor_data(self, data):
         """
@@ -735,10 +761,10 @@ class Mapper():
             return "[" + data_str + "]"
 
 
-class MapperShim:
+class ColorizerShim:
 
     def _scale_norm(self, norm, vmin, vmax):
-        self.mapper._scale_norm(norm, vmin, vmax, self._A)
+        self.colorizer._scale_norm(norm, vmin, vmax, self._A)
 
     def to_rgba(self, x, alpha=None, bytes=False, norm=True):
         """
@@ -770,19 +796,19 @@ class MapperShim:
         performed, and it is assumed to be in the range (0-1).
 
         """
-        return self.mapper.to_rgba(x, alpha=alpha, bytes=bytes, norm=norm)
+        return self.colorizer.to_rgba(x, alpha=alpha, bytes=bytes, norm=norm)
 
     def get_cmap(self):
         """Return the `.Colormap` instance."""
-        return self.mapper.cmap
+        return self.colorizer.cmap
 
     def get_clim(self):
         """
         Return the values (min, max) that are mapped to the colormap limits.
         """
-        if self.mapper.cmap.n_variates == 1:
-            return self.mapper._norm[0].vmin, self.mapper._norm[0].vmax
-        return self.mapper.get_clim()
+        if self.colorizer.cmap.n_variates == 1:
+            return self.colorizer._norm[0].vmin, self.colorizer._norm[0].vmax
+        return self.colorizer.get_clim()
 
     def set_clim(self, vmin=None, vmax=None):
         """
@@ -805,7 +831,7 @@ class MapperShim:
                 vmin, vmax = vmin
             except (TypeError, ValueError):
                 pass
-        self.mapper.set_clim(vmin, vmax)
+        self.colorizer.set_clim(vmin, vmax)
 
     def get_alpha(self):
         """
@@ -819,11 +845,11 @@ class MapperShim:
 
     @property
     def cmap(self):
-        return self.mapper.cmap
+        return self.colorizer.cmap
 
     @cmap.setter
     def cmap(self, cmap):
-        self.mapper.cmap = cmap
+        self.colorizer.cmap = cmap
 
     def set_cmap(self, cmap):
         """
@@ -833,17 +859,17 @@ class MapperShim:
         ----------
         cmap : `.Colormap` or str or None
         """
-        self.mapper.cmap = cmap
+        self.colorizer.cmap = cmap
 
     @property
     def norm(self):
         if self.cmap.n_variates == 1:
-            return self.mapper.norm[0]
-        return self.mapper.norm
+            return self.colorizer.norm[0]
+        return self.colorizer.norm
 
     @norm.setter
     def norm(self, norm):
-        self.mapper.norm = norm
+        self.colorizer.norm = norm
 
     def set_norm(self, norm):
         """
@@ -866,14 +892,14 @@ class MapperShim:
         Autoscale the scalar limits on the norm instance using the
         current array
         """
-        self.mapper.autoscale(self._A)
+        self.colorizer.autoscale(self._A)
 
     def autoscale_None(self):
         """
         Autoscale the scalar limits on the norm instance using the
         current array, changing only limits that are None
         """
-        self.mapper.autoscale_None(self._A)
+        self.colorizer.autoscale_None(self._A)
 
     def _parse_multivariate_data(self, data):
         """
@@ -902,14 +928,14 @@ class MapperShim:
 
     @property
     def colorbar(self):
-        return self.mapper.colorbar
+        return self.colorizer.colorbar
 
     @colorbar.setter
     def colorbar(self, colorbar):
-        self.mapper.colorbar = colorbar
+        self.colorizer.colorbar = colorbar
 
 
-class ScalarMappable(MapperShim):
+class ScalarMappable(ColorizerShim):
     """
     A mixin class to map one or multiple sets of scalar data to RGBA.
 
@@ -933,13 +959,15 @@ class ScalarMappable(MapperShim):
             The colormap used to map normalized data values to RGBA colors.
         """
         self._A = None
-        if isinstance(norm, Mapper):
-            self.mapper = norm
+        if isinstance(norm, Colorizer):
+            self.colorizer = norm
         else:
-            self.mapper = Mapper(cmap, norm)
+            self.colorizer = Colorizer(cmap, norm)
 
-        self._id_mapper = self.mapper.callbacks.connect('changed', self.changed)
+        self._id_colorizer = self.colorizer.callbacks.connect('changed', self.changed)
         self.callbacks = cbook.CallbackRegistry(signals=["changed"])
+
+        self.get_alpha = lambda: 1
 
     def set_array(self, A):
         """
@@ -969,7 +997,7 @@ class ScalarMappable(MapperShim):
                         raise TypeError(f"Image data of dtype {A.dtype} cannot be "
                                         f"converted to a sequence of floats")
         self._A = A
-        self.mapper.autoscale_None(A)
+        self.colorizer.autoscale_None(A)
 
     def get_array(self):
         """
@@ -1019,7 +1047,7 @@ vmin, vmax : float, optional
 )
 
 
-def _ensure_cmap(cmap, accept_multivariate=True, mapper=None):
+def _ensure_cmap(cmap, accept_multivariate=True, colorizer=None):
     """
     For internal use to preserve type stability of errors, and
     to ensure that we have a `~matplotlib.colors.Colormap`,
@@ -1049,11 +1077,11 @@ def _ensure_cmap(cmap, accept_multivariate=True, mapper=None):
     -------
     Colormap, MultivarColormap or BivarColormap
     """
-    if isinstance(mapper, Mapper):
+    if isinstance(colorizer, Colorizer):
         if cmap is not None:
-            raise ValueError('A Mapper object cannot be passed'
+            raise ValueError('A Colorizer object cannot be passed'
                              ' simultaneously with a cmap.')
-        return mapper.cmap
+        return colorizer.cmap
     if not accept_multivariate:
         if isinstance(cmap, colors.Colormap):
             return cmap
@@ -1110,10 +1138,10 @@ def _iterable_variates_in_data(data):
         list of np.ndarray
 
     """
-    if data.dtype.fields is None:
-        return [data]
-    else:
+    if isinstance(data, np.ndarray) and data.dtype.fields is not None:
         return [data[descriptor[0]] for descriptor in data.dtype.descr]
+    else:
+        return [data]
 
 
 def _ensure_multivariate_norm(n_variates, norm):
@@ -1138,7 +1166,7 @@ def _ensure_multivariate_norm(n_variates, norm):
         if n_variates > 1:
             an iterable of length n_variates
     """
-    if isinstance(norm, Mapper):
+    if isinstance(norm, Colorizer):
         #  we do not need to test for consistency here
         # (norm.n_variates == n_variates)
         # because that is done in _ensure_cmap()

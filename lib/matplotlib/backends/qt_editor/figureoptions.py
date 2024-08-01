@@ -147,20 +147,20 @@ def figure_edit(axes, parent=None):
         labeled_mappables.append((label, mappable))
     mappables = []
     for label, mappable in labeled_mappables:
-        cmap = mappable.get_cmap()
+        cmap = mappable.colorizer.cmap
         if isinstance(cmap, mcolors.Colormap):
             cmaps = [(cmap, name) for name, cmap in sorted(cm._colormaps.items())]
             cvals = cm._colormaps.values()
         elif isinstance(cmap, mcolors.BivarColormap):
             cmaps = [(cmap, name) for name, cmap in sorted(cm._bivar_colormaps.items())]
             cvals = cm._bivar_colormaps.values()
-        else:  # isinstance(mappable.get_cmap(), mcolors.MultivarColormap):
+        else:  # isinstance(mappable.colorizer.cmap, mcolors.MultivarColormap):
             cmaps = [(cmap, name) for name, cmap
                      in sorted(cm._multivar_colormaps.items())]
             cvals = cm._multivar_colormaps.values()
         if cmap not in cvals:
             cmaps = [(cmap, cmap.name), *cmaps]
-        low, high = mappable.mapper.get_clim()
+        low, high = mappable.colorizer.get_clim()
         if len(low) == 1:
             low = low[0]
             high = high[0]

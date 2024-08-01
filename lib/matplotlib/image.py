@@ -228,7 +228,7 @@ def _rgb_to_rgba(A):
     return rgba
 
 
-class _ImageBase(martist.ColorableArtist, cm.MapperShim):
+class _ImageBase(martist.ColorizingArtist, cm.ColorizerShim):
     """
     Base class for images.
 
@@ -260,7 +260,7 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
                  **kwargs
                  ):
 
-        martist.ColorableArtist.__init__(self, norm, cmap)
+        martist.ColorizingArtist.__init__(self, norm, cmap)
         # martist.Artist.__init__(self)
         # cm.ScalarMappable.__init__(self, norm, cmap)
         if origin is None:
@@ -335,7 +335,7 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
         Call this whenever the mappable is changed so observers can update.
         """
         self._imcache = None
-        martist.ColorableArtist.changed(self)  # cm.ScalarMappable.changed(self)
+        martist.ColorizingArtist.changed(self)  # cm.ScalarMappable.changed(self)
 
     def _resample_and_norm(self, A, norm, out_shape, out_mask, t):
         """
@@ -549,8 +549,8 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
             if A.ndim == 2:
                 if self._interpolation_stage == 'rgba':
                     # run norm -> colormap transformation and then rescale
-                    self.mapper.autoscale_None(A)
-                    unscaled_rgba = self.mapper.to_rgba(A)
+                    self.colorizer.autoscale_None(A)
+                    unscaled_rgba = self.colorizer.to_rgba(A)
                     output = _resample(  # resample rgba channels
                         self, unscaled_rgba, out_shape, t, alpha=scalar_alpha)
                     # transforming to bytes *after* resampling gives improved results
@@ -584,19 +584,20 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
                         out_alpha *= _resample(self, alpha, out_shape,
                                                t, resample=True)
                     # Resample and norm data
-                    if self.cmap.n_variates == 1:
-                        normed_resampled = self._resample_and_norm(A,
-                                                                   self.mapper._norm[0],
-                                                                   out_shape,
-                                                                   out_mask, t)
+                    if self.colorizer.cmap.n_variates == 1:
+                        normed_resampled =\
+                                self._resample_and_norm(A,
+                                                        self.colorizer._norm[0],
+                                                        out_shape,
+                                                        out_mask, t)
                     else:
                         normed_resampled = [self._resample_and_norm(a,
-                                            self.mapper._norm[i],
+                                            self.colorizer._norm[i],
                                             out_shape,
                                             out_mask, t)
                                             for i, a in
                                             enumerate(cm._iterable_variates_in_data(A))]
-                    output = self.cmap(normed_resampled, bytes=True)
+                    output = self.colorizer.cmap(normed_resampled, bytes=True)
                     # Apply alpha *after* if the input was greyscale without a mask
                     alpha_channel = output[:, :, 3]
                     alpha_channel[:] = (  # Assignment will cast to uint8.
@@ -621,7 +622,8 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
             # output is now a correctly sized RGBA array of uint8
         else:  # if unsampled:
             if self._imcache is None:
-                self._imcache = self.mapper.to_rgba(A, bytes=True, norm=(A.ndim == 2))
+                self._imcache = self.colorizer.to_rgba(A, bytes=True,
+                                                       norm=(A.ndim == 2))
             output = self._imcache
 
             # Subset the input image to only the part that will be displayed.
@@ -716,8 +718,9 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
 
     def write_png(self, fname):
         """Write the image to png file *fname*."""
-        im = self.to_rgba(self._A[::-1] if self.origin == 'lower' else self._A,
-                          bytes=True, norm=True)
+        im = self.colorizer.to_rgba(
+                    self._A[::-1] if self.origin == 'lower' else self._A,
+                    bytes=True, norm=True)
         PIL.Image.fromarray(im).save(fname, format="png")
 
     @staticmethod
@@ -784,7 +787,7 @@ class _ImageBase(martist.ColorableArtist, cm.MapperShim):
         """
         if isinstance(A, PIL.Image.Image):
             A = pil_to_array(A)  # Needed e.g. to apply png palette.
-        self._A = self._normalize_image_array(A, self.cmap.n_variates)
+        self._A = self._normalize_image_array(A, self.colorizer.cmap.n_variates)
         self._imcache = None
         self.stale = True
 
@@ -1133,7 +1136,7 @@ class NonUniformImage(AxesImage):
         A = self._A
         if A.ndim == 2:
             if A.dtype != np.uint8:
-                A = self.to_rgba(A, bytes=True)
+                A = self.colorizer.to_rgba(A, bytes=True)
             else:
                 A = np.repeat(A[:, :, np.newaxis], 4, 2)
                 A[:, :, 3] = 255
@@ -1211,7 +1214,7 @@ class NonUniformImage(AxesImage):
             (M, N) `~numpy.ndarray` or masked array of values to be
             colormapped, or (M, N, 3) RGB array, or (M, N, 4) RGBA array.
         """
-        A = self._normalize_image_array(A, self.cmap.n_variates)
+        A = self._normalize_image_array(A, self.colorizer.cmap.n_variates)
         x = np.array(x, np.float32)
         y = np.array(y, np.float32)
         if not (x.ndim == y.ndim == 1 and A.shape[:2] == y.shape + x.shape):
@@ -1325,7 +1328,7 @@ class PcolorImage(AxesImage):
             raise ValueError('unsampled not supported on PColorImage')
 
         if self._imcache is None:
-            A = self.to_rgba(self._A, bytes=True)
+            A = self.colorizer.to_rgba(self._A, bytes=True)
             self._imcache = np.pad(A, [(1, 1), (1, 1), (0, 0)], "constant")
         padded_A = self._imcache
         bg = mcolors.to_rgba(self.axes.patch.get_facecolor(), 0)
@@ -1371,7 +1374,7 @@ class PcolorImage(AxesImage):
             - (M, N, 3): RGB array
             - (M, N, 4): RGBA array
         """
-        A = self._normalize_image_array(A, self.cmap.n_variates)
+        A = self._normalize_image_array(A, self.colorizer.cmap.n_variates)
         x = np.arange(0., A.shape[1] + 1) if x is None else np.array(x, float).ravel()
         y = np.arange(0., A.shape[0] + 1) if y is None else np.array(y, float).ravel()
         if A.shape[:2] != (y.size - 1, x.size - 1):
@@ -1464,8 +1467,8 @@ class FigureImage(_ImageBase):
 
     def set_data(self, A):
         """Set the image array."""
-        A = self._normalize_image_array(A, self.cmap.n_variates)
-        martist.ColorableArtist.set_array(self, A)
+        A = self._normalize_image_array(A, self.colorizer.cmap.n_variates)
+        martist.ColorizingArtist.set_array(self, A)
         # cm.ScalarMappable.set_array(self, A)
         self.stale = True
 
@@ -1697,7 +1700,7 @@ def imsave(fname, arr, vmin=None, vmax=None, cmap=None, format=None,
             # as is, saving a few operations.
             rgba = arr
         else:
-            sm = cm.Mapper(cmap=cmap)
+            sm = cm.Colorizer(cmap=cmap)
             sm.set_clim(vmin, vmax)
             rgba = sm.to_rgba(arr, bytes=True)
         if pil_kwargs is None:
