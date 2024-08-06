@@ -14,7 +14,8 @@ import numpy as np
 import matplotlib as mpl
 from . import _api, cbook
 from .colors import BoundaryNorm
-from .cm import ScalarMappable, Colorizer
+from .cm import ScalarMappable
+from .colorizer import Colorizer
 from .path import Path
 from .transforms import (BboxBase, Bbox, IdentityTransform, Transform, TransformedBbox,
                          TransformedPatchPath, TransformedPath)
