@@ -15,7 +15,7 @@ import matplotlib as mpl
 from . import _api, cbook
 from .colors import BoundaryNorm
 from .cm import ScalarMappable
-from .colorizer import Colorizer
+from .colorizer import Colorizer, _ensure_multivariate_data
 from .path import Path
 from .transforms import (BboxBase, Bbox, IdentityTransform, Transform, TransformedBbox,
                          TransformedPatchPath, TransformedPath)
@@ -1445,21 +1445,26 @@ class ColorizingArtist(Artist):
         ----------
         A : array-like or None
             The values that are mapped to colors.
-
             The base class `.VectorMappable` does not make any assumptions on
             the dimensionality and shape of the value array *A*.
         """
         if A is None:
             self._A = None
             return
+        A = _ensure_multivariate_data(self.colorizer.norm.n_input, A)
 
         A = cbook.safe_masked_invalid(A, copy=True)
         if not np.can_cast(A.dtype, float, "same_kind"):
-            raise TypeError(f"Image data of dtype {A.dtype} cannot be "
-                            "converted to float")
-
+            if A.dtype.fields is None:
+                raise TypeError(f"Image data of dtype {A.dtype} cannot be "
+                                f"converted to float")
+            else:
+                for key in A.dtype.fields:
+                    if not np.can_cast(A[key].dtype, float, "same_kind"):
+                        raise TypeError(f"Image data of dtype {A.dtype} cannot be "
+                                        f"converted to a sequence of floats")
         self._A = A
-        if not self.norm.scaled():
+        if not self.colorizer.norm.scaled():
             self.colorizer.autoscale_None(A)
 
     def get_array(self):

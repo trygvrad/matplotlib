@@ -11,6 +11,7 @@ from numpy import ma
 import matplotlib as mpl
 import matplotlib.category  # Register category unit converter as side effect.
 import matplotlib.cbook as cbook
+import matplotlib.colorizer as colorizer
 import matplotlib.collections as mcoll
 import matplotlib.colors as mcolors
 import matplotlib.contour as mcontour
@@ -6231,6 +6232,11 @@ class Axes(_AxesBase):
         if shading is None:
             shading = mpl.rcParams['pcolor.shading']
         shading = shading.lower()
+
+        cmap_obj, norm_obj, data = colorizer._ensure_color_pipeline_compatibility(
+                                    cmap, norm, args[0])
+        args = (data, *args[1:])
+
         X, Y, C, shading = self._pcolorargs('pcolor', *args, shading=shading,
                                             kwargs=kwargs)
         linewidths = (0.25,)
@@ -6267,7 +6273,7 @@ class Axes(_AxesBase):
         coords = stack([X, Y], axis=-1)
 
         collection = mcoll.PolyQuadMesh(
-            coords, array=C, cmap=cmap, norm=norm, alpha=alpha, **kwargs)
+            coords, array=C, cmap=cmap_obj, norm=norm_obj, alpha=alpha, **kwargs)
         collection._scale_norm(norm, vmin, vmax)
 
         # Transform from native to data coordinates?
@@ -6489,6 +6495,10 @@ class Axes(_AxesBase):
         shading = shading.lower()
         kwargs.setdefault('edgecolors', 'none')
 
+        cmap_obj, norm_obj, data = colorizer._ensure_color_pipeline_compatibility(
+                                    cmap, norm, args[-1])
+        args = (*args[:-1], data)
+
         X, Y, C, shading = self._pcolorargs('pcolormesh', *args,
                                             shading=shading, kwargs=kwargs)
         coords = np.stack([X, Y], axis=-1)
@@ -6497,7 +6507,7 @@ class Axes(_AxesBase):
 
         collection = mcoll.QuadMesh(
             coords, antialiased=antialiased, shading=shading,
-            array=C, cmap=cmap, norm=norm, alpha=alpha, **kwargs)
+            array=C, cmap=cmap_obj, norm=norm_obj, alpha=alpha, **kwargs)
         collection._scale_norm(norm, vmin, vmax)
 
         coords = coords.reshape(-1, 2)  # flatten the grid structure; keep x, y
