@@ -58,7 +58,7 @@ import matplotlib.legend as mlegend
 from matplotlib.patches import Rectangle
 from matplotlib.text import Text
 from matplotlib.transforms import (Affine2D, Bbox, BboxTransformTo,
-                                   TransformedBbox)
+                                   BboxTransform, TransformedBbox)
 
 _log = logging.getLogger(__name__)
 
@@ -1316,6 +1316,253 @@ default: %(va)s
             k: v for k, v in kwargs.items() if k not in NON_COLORBAR_KEYS})
         cax.figure.stale = True
         return cb
+
+    def multi_colorbars(self, mappable, cax=None, ax=None, shape=(-1, -1),
+                        location='right', orientation=None,
+                        fraction_per_line=0.15, pad=0.05, internal_pad=(0.08, 0.08),
+                        aspect=None):
+        """
+        Add a colorbars to a plot.
+
+        Parameters
+        ----------
+        mappable
+            The `matplotlib.colorizer.ColorizingArtist` (i.e., `.AxesImage`,
+            `.ContourSet`, etc.) or `matplotlib.colorizer.Colorier` described by this
+            colorbar.
+
+            Note that one can create a `.Colorier` "on-the-fly" to
+            generate colorbars not attached to a previously drawn artist, e.g.
+            ::
+
+                fig.colorbar(colorizer.Colorier(norm=norm, cmap=cmap), ax=ax)
+
+        cax : `~matplotlib.axes.Axes`, optional
+            Axes into which the colorbars will be drawn.  If `None`, then a new
+            Axes is created and the space for it will be stolen from the Axes(s)
+            specified in *ax*.
+
+        ax : `~matplotlib.axes.Axes` or iterable or `numpy.ndarray` of Axes, optional
+            The one or more parent Axes from which space for a new colorbar Axes
+            will be stolen. This parameter is only used if *cax* is not set.
+
+            Defaults to the Axes that contains the mappable used to create the
+            colorbars.
+
+        shape : The shape of the grid used to position colorbars.
+            Described as (row, column). Only one parameter must be specified, so long
+            as the other is -1. The default (-1, -1) gives a single column for vertical
+            colorbars or a single row for horizontal colorbars.
+
+        location : 'right', 'left', 'top', or 'bottom'. The position of the colorbars.
+            Also determines the orientation if `orientation` is not specified separately
+
+        orientation : None, 'vertical' or 'horizontal'. Orientation of the colorbars.
+            If None, the orientation  is determined by the location.
+
+        fraction_per_line : The fraction of space stolen from the ax per row or
+            column of colorbars. Only used if `cax` is None.
+
+        pad : Fraction of space stolen from the ax to use for padding between the
+            ax and the colorbars.
+            Only used if `cax` is None.
+
+        internal_pad : Fraction of space stolen (vertical, horizontal) from the ax to
+            use for internal padding between the colorbars.
+
+        aspect : The total aspect ratio of each colorbar.
+
+        Returns
+        -------
+        colorbars : List of `~matplotlib.colorbar.Colorbar` objects
+
+        """
+
+        if isinstance(mappable, mpl.colorizer.Colorizer):
+            colorizer = mappable
+        else:
+            colorizer = mappable.colorizer
+            ax = mappable.axes
+
+        if cax is None:
+            if ax is None:
+                raise ValueError(
+                    'Unable to determine Axes to steal space for colorbars. '
+                    'Either provide the *cax* argument to use as the Axes for '
+                    'the Colorbar, provide the *ax* argument to steal space '
+                    'from it, or add *mappable* to an Axes.')
+
+        n_variates = colorizer.cmap.n_variates
+
+        # ensure we are working on the correct type of colormap
+        if not isinstance(colorizer.cmap, mpl.colors.MultivarColormap):
+            raise AttributeError('fig.colorbars() is used with mutlivariate '
+                                 'colorbars, but this object contains'
+                                 f'{type(colorizer.cmap)}. Try '
+                                 'fig.colorbar(mappable) or '
+                                 'fig.bivar_colorbar(mappable) instead.')
+
+        if not orientation:
+            if location in ['right', 'left']:
+                orientation = 'vertical'
+            elif location in ['top', 'bottom']:
+                orientation = 'horizontal'
+
+        if shape[0] == -1:
+            if shape[1] == -1:
+                if location in ['right', 'left']:
+                    shape = (n_variates, 1)
+                else:
+                    shape = (1, n_variates)
+            else:
+                shape = (np.ceil(n_variates / shape[1]).astype(int), shape[1])
+        else:
+            if shape[1] == -1:
+                shape = (shape[0], np.ceil(n_variates / shape[0]).astype(int))
+            else:
+                if not shape[0] * shape[1] >= n_variates:
+                    raise ValueError(f"shape {shape} cannot fit {n_variates} colorbars")
+
+        # shrink ax
+        if ax and not cax:
+            parents_bbox = ax.get_position(original=True).frozen()
+            if location in ['right', 'left']:
+                fraction = fraction_per_line * shape[1]
+                if location == 'right':
+                    pb1, _, pbcb = parents_bbox.splitx(1 - fraction - pad, 1 - fraction)
+                else:
+                    pbcb, _, pb1 = parents_bbox.splitx(fraction, fraction + pad)
+            else:  # ['top', 'bottom']
+                fraction = fraction_per_line * shape[0]
+                if location == 'top':
+                    pb1, _, pbcb = parents_bbox.splity(1 - fraction - pad, 1 - fraction)
+                else:
+                    pbcb, _, pb1 = parents_bbox.splity(fraction, fraction + pad)
+
+            shrinking_trans = BboxTransform(parents_bbox, pb1)
+
+            new_posn = shrinking_trans.transform(ax.get_position(original=True))
+            new_posn = Bbox(new_posn)
+            ax._set_position(new_posn)
+        else:  # cax != None
+            pbcb = cax.get_position(original=True).frozen()
+            cax.remove()
+
+        ip = internal_pad[0]
+        bar_space = (1 - ip*(shape[0]-1))/shape[0]
+        splits_y = [[i*(ip+bar_space) - ip, i*(ip+bar_space)]
+                    for i in range(1, shape[0])]
+        splits_y = [item for sublist in splits_y for item in sublist]  # unravel
+        ip = internal_pad[1]
+        bar_space = (1 - ip*(shape[1]-1))/shape[1]
+        splits_x = [[i*(ip+bar_space) - ip, i*(ip+bar_space)]
+                    for i in range(1, shape[1])]
+        splits_x = [item for sublist in splits_x for item in sublist]  # unravel
+
+        caxs = []
+        regions = pbcb.splitx(*splits_x)
+        for region in regions[::2]:
+            spaces = region.splity(*splits_y)
+            for space in spaces[::-2]:
+                if len(caxs) < n_variates:
+                    caxs.append(self.add_axes(space, label="<colorbar>"))
+
+        # make colorbars
+        cbs = []
+        if not aspect:
+            if orientation == 'vertical' and location in ['right', 'left']:
+                aspect = 20 / (1 + internal_pad[0]*(shape[0]-1)) / shape[0]
+            elif orientation == 'vertical':
+                aspect = 4
+            elif orientation == 'horizontal' and location in ['top', 'bottom']:
+                aspect = 1/(20 / (1 + internal_pad[1]*(shape[1]-1)) / shape[1])
+            else:
+                aspect = 1/4
+
+        for ncax, clrizr in zip(caxs, colorizer):
+            cb = cbar.Colorbar(ncax, clrizr, orientation=orientation)
+            ncax.figure.stale = True
+            ncax.set_box_aspect(aspect)
+            ncax.set_aspect('auto')
+            cbs.append(cb)
+        return cbs
+
+    def bivar_colorbar(self, mappable, ax=None, cax=None, location='right',
+                       fraction=0.25, pad=0.1):
+        """
+        Minimal implementation of colorbar option for bivariate data.
+
+        Note how this version supports `matplotlib.colors.LogNorm` etc.
+        by plotting the colormap in the axis coordinate system rather than the
+        data coordinate system
+
+
+        Further improvements need to be made:
+            1. In the returned axes `drag_pan` needs to be overloaded, and the
+            'xlim_changed' and 'ylim_changed' callbacks need to be connected.
+            2. This should probably use the tick locators of a colorbar (vis-a-vis
+            log norm), rather than those of a regular axes
+            3. The axes placement needs some work, particularly with respect to
+            gridspec
+        """
+
+        if isinstance(mappable, mpl.colorizer.Colorizer):
+            colorizer = mappable
+        else:
+            colorizer = mappable.colorizer
+            ax = mappable.axes
+
+        if cax is None:
+            if ax is None:
+                raise ValueError(
+                    'Unable to determine Axes to steal space for the colorbar. '
+                    'Either provide the *cax* argument to use as the Axes for '
+                    'the colorbar, provide the *ax* argument to steal space '
+                    'from it, or add *mappable* to an Axes.')
+
+        # assume right - shift original ax
+        if not cax:
+            parents_bbox = ax.get_position(original=True).frozen()  # .union(
+            #    [ax.get_position(original=True).frozen() for ax in [ax]])
+            if location == 'right':
+                pb1, _, pbcb = parents_bbox.splitx(1 - fraction - pad, 1 - fraction)
+            elif location == 'left':
+                pbcb, _, pb1 = parents_bbox.splitx(fraction, fraction + pad)
+            elif location == 'bottom':
+                pbcb, _, pb1 = parents_bbox.splity(fraction, fraction + pad)
+            else:  # location == 'top':
+                pb1, _, pbcb = parents_bbox.splity(1 - fraction - pad, 1 - fraction)
+            shrinking_trans = BboxTransform(parents_bbox, pb1)
+            new_posn = shrinking_trans.transform(ax.get_position(original=True))
+            new_posn = Bbox(new_posn)
+            ax._set_position(new_posn)
+            cax = self.add_axes(pbcb, label="<colorbar2D>")
+
+        # make colorbar
+        extent = [colorizer.norm[1].vmin,
+                  colorizer.norm[1].vmax,
+                  colorizer.norm[0].vmin,
+                  colorizer.norm[0].vmax, ]
+        cim = cax.imshow(mappable.cmap.lut, origin='lower',
+                         extent=(0, 1, 0, 1),
+                         transform=cax.transAxes,
+                         interpolation='nearest')
+
+        # scale the x and y axis according to the norm
+        # i.e. for use with `matplotlib.colors.LogNorm` etc.
+        cax.set_yscale('function',
+                       functions=(mappable.norm[0], mappable.norm[0].inverse))
+        cax.set_xscale('function',
+                       functions=(mappable.norm[1], mappable.norm[1].inverse))
+
+        # set limits manually
+        # since the image uses transform=cax.transAxes, the limits are not set
+        cax.set_ylim(extent[2:4])
+        cax.set_xlim(extent[0:2])
+        # make the colormap square
+        cax.set_box_aspect(1)
+
+        return cax
 
     def subplots_adjust(self, left=None, bottom=None, right=None, top=None,
                         wspace=None, hspace=None):

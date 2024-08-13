@@ -293,6 +293,41 @@ class Colorizer():
     def clip(self, clip):
         self.norm.clip = clip
 
+    def __getitem__(self, index):
+        """
+        Returns a Colorizer object containing the norm and colormap for one axis
+        """
+        if self.cmap.n_variates > 1 and self.norm:
+            if index >= 0 and index < self.cmap.n_variates:
+                part = Colorizer(cmap=self._cmap[index], norm=self._norm.norms[index])
+                part._super_colorizer = self
+                part._super_colorizer_index = index
+                part._id_parent_cmap = id(self.cmap)
+                part._id_parent_norm = id(self._norm[index])
+                self.callbacks.connect('changed', part._check_update_super_colorizer)
+                return part
+        elif self.cmap.n_variates == 1 and index == 0:
+            return self
+        raise ValueError(f'Only 0..{self.cmap.n_variates-1} are valid indexes'
+                         ' for this Colorizer object.')
+
+    def _check_update_super_colorizer(self):
+        """
+        If this `Colorizer` object was created by __getitem__ it is a
+        one-dimensional component of another `Colorizer`.
+        In this case, `self._super_colorizer` is the Colorizer this was generated from.
+
+        This function propagetes changes from the `self._super_colorizer` to `self`.
+        """
+        if hasattr(self, '_super_colorizer'):
+            # _super_colorizer, the colorizer this is a component of
+            if id(self._super_colorizer.cmap) != self._id_parent_cmap:
+                self.cmap = self._super_colorizer.cmap[self._super_colorizer_index]
+            super_colorizer_norm =\
+                    self._super_colorizer._norm[self._super_colorizer_index]
+            if id(super_colorizer_norm) != self._id_parent_norm:
+                self.norm = [super_colorizer_norm]
+
 
 def _get_colorizer(cmap, norm):
     """

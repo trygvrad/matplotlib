@@ -3194,6 +3194,9 @@ class MultiNorm(Normalize):
                     self.norms[i].clip = v
         self._changed()
 
+    def __getitem__(self, index):
+        return self.norms[index]
+
     def _changed(self):
         """
         Call this whenever the norm is changed to notify all the
