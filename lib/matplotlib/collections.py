@@ -17,8 +17,9 @@ import warnings
 import numpy as np
 
 import matplotlib as mpl
-from . import (_api, _path, artist, cbook, colorizer as mcolorizer, colors as mcolors,
-               _docstring, hatch as mhatch, lines as mlines, path as mpath, transforms)
+from . import (_api, _path, artist, cbook, colors as mcolors, _docstring,
+               hatch as mhatch, lines as mlines, path as mpath, transforms)
+from .colormapping import colorizer as mcolorizer
 from ._enums import JoinStyle, CapStyle
 
 

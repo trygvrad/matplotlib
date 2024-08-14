@@ -45,7 +45,7 @@ from matplotlib.backend_bases import (
     DrawEvent, FigureCanvasBase, NonGuiException, MouseButton, _get_renderer)
 import matplotlib._api as _api
 import matplotlib.cbook as cbook
-import matplotlib.colorbar as cbar
+import matplotlib.colormapping.colorbar as cbar
 import matplotlib.image as mimage
 
 from matplotlib.axes import Axes

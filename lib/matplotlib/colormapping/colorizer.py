@@ -18,7 +18,9 @@ normalization and a colormap.
 import numpy as np
 from numpy import ma
 import functools
-from matplotlib import _api, colors, cbook, scale, cm, artist
+from numbers import Number
+from matplotlib import _api, cbook, scale, artist
+from . import colormaps, norms
 import matplotlib as mpl
 
 mpl._docstring.interpd.update(
@@ -59,7 +61,7 @@ class Colorizer():
         """
         if vmin is not None or vmax is not None:
             self.set_clim(vmin, vmax)
-            if isinstance(norm, colors.Normalize):
+            if isinstance(norm, norms.Normalize):
                 raise ValueError(
                     "Passing a Normalize instance simultaneously with "
                     "vmin/vmax is not supported.  Please pass vmin/vmax "
@@ -75,9 +77,9 @@ class Colorizer():
 
     @norm.setter
     def norm(self, norm):
-        _api.check_isinstance((colors.Normalize, str, None), norm=norm)
+        _api.check_isinstance((norms.Normalize, str, None), norm=norm)
         if norm is None:
-            norm = colors.Normalize()
+            norm = norms.Normalize()
         elif isinstance(norm, str):
             try:
                 scale_cls = scale._scale_mapping[norm]
@@ -232,7 +234,7 @@ class Colorizer():
         cmap : `.Colormap` or str or None
         """
         in_init = self._cmap is None
-        cmap = cm._ensure_cmap(cmap)
+        cmap = _ensure_cmap(cmap)
         self._cmap = cmap
         if not in_init:
             self.changed()  # Things are not set up properly yet.
@@ -267,9 +269,9 @@ class Colorizer():
             except (TypeError, ValueError):
                 pass
         if vmin is not None:
-            self.norm.vmin = colors._sanitize_extrema(vmin)
+            self.norm.vmin = norms._sanitize_extrema(vmin)
         if vmax is not None:
-            self.norm.vmax = colors._sanitize_extrema(vmax)
+            self.norm.vmax = norms._sanitize_extrema(vmax)
 
     def get_clim(self):
         """
@@ -555,6 +557,47 @@ class ColorizingArtist(artist.Artist, _ColorizerInterface):
                 raise ValueError("The `colorizer` keyword cannot be used simultaneously"
                                  " with `cmap`, `norm`, `vmin` or `vmax`.")
 
+    def format_cursor_data(self, data):
+        """
+        Return a string representation of *data*.
+
+        See Also
+        --------
+        artist.Artist.format_cursor_data
+        """
+        if np.ndim(data) == 0:
+            n = self.cmap.N
+            if np.ma.getmask(data):
+                return "[]"
+            normed = self.norm(data)
+            if np.isfinite(normed):
+                if isinstance(self.norm, norms.BoundaryNorm):
+                    # not an invertible normalization mapping
+                    cur_idx = np.argmin(np.abs(self.norm.boundaries - data))
+                    neigh_idx = max(0, cur_idx - 1)
+                    # use max diff to prevent delta == 0
+                    delta = np.diff(
+                        self.norm.boundaries[neigh_idx:cur_idx + 2]
+                    ).max()
+
+                else:
+                    # Midpoints of neighboring color intervals.
+                    neighbors = self.norm.inverse(
+                        (int(normed * n) + np.array([0, 1])) / n)
+                    delta = abs(neighbors - data).max()
+                g_sig_digits = cbook._g_sig_digits(data, delta)
+            else:
+                g_sig_digits = 3  # Consistent with default below.
+            return f"[{data:-#.{g_sig_digits}g}]"
+        else:
+            try:
+                data[0]
+            except (TypeError, IndexError):
+                data = [data]
+            data_str = ', '.join(f'{item:0.3g}' for item in data
+                                 if isinstance(item, Number))
+            return "[" + data_str + "]"
+
 
 def _auto_norm_from_scale(scale_cls):
     """
@@ -575,10 +618,100 @@ def _auto_norm_from_scale(scale_cls):
     # Actually try to construct an instance, to verify whether
     # ``nonpositive="mask"`` is supported.
     try:
-        norm = colors.make_norm_from_scale(
+        norm = norms.make_norm_from_scale(
             functools.partial(scale_cls, nonpositive="mask"))(
-            colors.Normalize)()
+            norms.Normalize)()
     except TypeError:
-        norm = colors.make_norm_from_scale(scale_cls)(
-            colors.Normalize)()
+        norm = norms.make_norm_from_scale(scale_cls)(
+            norms.Normalize)()
     return type(norm)
+
+
+def from_levels_and_colors(levels, colors, extend='neither'):
+    """
+    A helper routine to generate a cmap and a norm instance which
+    behave similar to contourf's levels and colors arguments.
+
+    Parameters
+    ----------
+    levels : sequence of numbers
+        The quantization levels used to construct the `BoundaryNorm`.
+        Value ``v`` is quantized to level ``i`` if ``lev[i] <= v < lev[i+1]``.
+    colors : sequence of colors
+        The fill color to use for each level. If *extend* is "neither" there
+        must be ``n_level - 1`` colors. For an *extend* of "min" or "max" add
+        one extra color, and for an *extend* of "both" add two colors.
+    extend : {'neither', 'min', 'max', 'both'}, optional
+        The behaviour when a value falls out of range of the given levels.
+        See `~.Axes.contourf` for details.
+
+    Returns
+    -------
+    cmap : `~matplotlib.colors.Colormap`
+    norm : `~matplotlib.colors.Normalize`
+    """
+    slice_map = {
+        'both': slice(1, -1),
+        'min': slice(1, None),
+        'max': slice(0, -1),
+        'neither': slice(0, None),
+    }
+    _api.check_in_list(slice_map, extend=extend)
+    color_slice = slice_map[extend]
+
+    n_data_colors = len(levels) - 1
+    n_expected = n_data_colors + color_slice.start - (color_slice.stop or 0)
+    if len(colors) != n_expected:
+        raise ValueError(
+            f'With extend == {extend!r} and {len(levels)} levels, '
+            f'expected {n_expected} colors, but got {len(colors)}')
+
+    cmap = colormaps.ListedColormap(colors[color_slice], N=n_data_colors)
+
+    if extend in ['min', 'both']:
+        cmap.set_under(colors[0])
+    else:
+        cmap.set_under('none')
+
+    if extend in ['max', 'both']:
+        cmap.set_over(colors[-1])
+    else:
+        cmap.set_over('none')
+
+    cmap.colorbar_extend = extend
+
+    norm = norms.BoundaryNorm(levels, ncolors=n_data_colors)
+    return cmap, norm
+
+
+def _ensure_cmap(cmap):
+    """
+    Ensure that we have a `.Colormap` object.
+
+    For internal use to preserve type stability of errors.
+
+    Parameters
+    ----------
+    cmap : None, str, Colormap
+
+        - if a `Colormap`, return it
+        - if a string, look it up in mpl.colormaps
+        - if None, look up the default color map in mpl.colormaps
+
+    Returns
+    -------
+    Colormap
+
+    """
+    if isinstance(cmap, colormaps.Colormap):
+        return cmap
+    cmap_name = cmap if cmap is not None else mpl.rcParams["image.cmap"]
+    # use check_in_list to ensure type stability of the exception raised by
+    # the internal usage of this (ValueError vs KeyError)
+    if cmap_name not in mpl.colormaps:
+        _api.check_in_list(sorted(mpl.colormaps), cmap=cmap_name)
+    return mpl.colormaps[cmap_name]
+
+### compatibility between old colors.py and new colormapping submodule
+import matplotlib.colors as mcolors
+mcolors._import_colormaps()

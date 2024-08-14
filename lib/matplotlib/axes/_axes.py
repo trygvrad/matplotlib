@@ -31,6 +31,7 @@ import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
 import matplotlib.tri as mtri
 import matplotlib.units as munits
+import matplotlib.colormapping as mcm
 from matplotlib import _api, _docstring, _preprocess_data
 from matplotlib.axes._base import (
     _AxesBase, _TransformedBoundsLocator, _process_plot_format)
@@ -5289,7 +5290,7 @@ class Axes(_AxesBase):
                 _api.warn_external("Only one of 'bins' and 'norm' arguments "
                                    f"can be supplied, ignoring {bins=}")
             else:
-                norm = mcolors.LogNorm(vmin=vmin, vmax=vmax)
+                norm = mcm.norms.LogNorm(vmin=vmin, vmax=vmax)
                 vmin = vmax = None
             bins = None
 
@@ -8355,12 +8356,12 @@ such objects
             mask = np.abs(Z) > precision
 
             if 'cmap' not in kwargs:
-                kwargs['cmap'] = mcolors.ListedColormap(['w', 'k'],
-                                                        name='binary')
+                kwargs['cmap'] = mcm.colormaps.ListedColormap(['w', 'k'],
+                                                              name='binary')
             if 'interpolation' in kwargs:
                 raise _api.kwarg_error("spy", "interpolation")
             if 'norm' not in kwargs:
-                kwargs['norm'] = mcolors.NoNorm()
+                kwargs['norm'] = mcm.norms.NoNorm()
             ret = self.imshow(mask, interpolation='nearest',
                               aspect=aspect, origin=origin,
                               **kwargs)

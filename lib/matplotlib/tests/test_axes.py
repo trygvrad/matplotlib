@@ -9260,8 +9260,8 @@ def test_use_colorizer_keyword():
     c = np.arange(25, dtype='float32').reshape((5, 5))
 
     fig, axes = plt.subplots(2, 3)
-    norm = mpl.colors.Normalize(4, 20)
-    cl = mpl.colorizer.Colorizer(norm=norm, cmap='RdBu')
+    norm = mpl.colormapping.norms.Normalize(4, 20)
+    cl = mpl.colormapping.colorizer.Colorizer(norm=norm, cmap='RdBu')
 
     axes[0, 0].scatter(c, c, c=c, colorizer=cl)
     axes[0, 1].hexbin(rand_x, rand_y, colorizer=cl, gridsize=(2, 2))
@@ -9281,8 +9281,8 @@ def test_wrong_use_colorizer():
     c = np.arange(25, dtype='float32').reshape((5, 5))
 
     fig, axes = plt.subplots(2, 3)
-    norm = mpl.colors.Normalize(4, 20)
-    cl = mpl.colorizer.Colorizer(norm=norm, cmap='RdBu')
+    norm = mpl.colormapping.norms.Normalize(4, 20)
+    cl = mpl.colormapping.colorizer.Colorizer(norm=norm, cmap='RdBu')
 
     match_str_0 = "The `colorizer` keyword cannot be used simultaneously"
     with pytest.raises(ValueError, match=match_str_0):

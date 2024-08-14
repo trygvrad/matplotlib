@@ -3,8 +3,6 @@ python_sources = [
   '_afm.py',
   '_animation_data.py',
   '_blocking_input.py',
-  '_cm.py',
-  '_cm_listed.py',
   '_color_data.py',
   '_constrained_layout.py',
   '_docstring.py',
@@ -31,7 +29,6 @@ python_sources = [
   'cm.py',
   'collections.py',
   'colorbar.py',
-  'colorizer.py',
   'colors.py',
   'container.py',
   'contour.py',
@@ -156,6 +153,7 @@ endif
 subdir('_api')
 subdir('axes')
 subdir('backends')
+subdir('colormapping')
 subdir('mpl-data')
 subdir('projections')
 subdir('sphinxext')

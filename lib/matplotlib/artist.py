@@ -12,8 +12,8 @@ import warnings
 import numpy as np
 
 import matplotlib as mpl
-from . import _api, cbook, colorizer
-from .colors import BoundaryNorm
+from . import _api, cbook
+from .colormapping.norms import BoundaryNorm
 from .path import Path
 from .transforms import (BboxBase, Bbox, IdentityTransform, Transform, TransformedBbox,
                          TransformedPatchPath, TransformedPath)
@@ -1345,13 +1345,14 @@ class Artist:
         --------
         get_cursor_data
         """
-        if np.ndim(data) == 0 and (isinstance(self, mpl.cm.ScalarMappable) or
-                                   isinstance(self, colorizer.ColorizingArtist)):
+        if np.ndim(data) == 0 and isinstance(self, mpl.cm.ScalarMappable):
             # This block logically belongs to ScalarMappable, but can't be
             # implemented in it because most ScalarMappable subclasses inherit
             # from Artist first and from ScalarMappable second, so
             # Artist.format_cursor_data would always have precedence over
             # ScalarMappable.format_cursor_data.
+
+            # If ScalarMappable is deprecated, this code block can be removed
             n = self.cmap.N
             if np.ma.getmask(data):
                 return "[]"

@@ -75,8 +75,10 @@ from matplotlib.projections import PolarAxes
 from matplotlib import mlab  # for detrend_none, window_hanning
 from matplotlib.scale import get_scale_names  # noqa: F401
 
-from matplotlib.cm import _colormaps
-from matplotlib.colors import _color_sequences, Colormap
+from matplotlib.colormapping.colormap_registry import _colormaps
+from matplotlib.colormapping.colormaps import Colormap
+from matplotlib.colors import _color_sequences
+
 
 import numpy as np
 
@@ -130,7 +132,7 @@ if TYPE_CHECKING:
 
 
 # We may not need the following imports here:
-from matplotlib.colors import Normalize
+from matplotlib.colormapping.norms import Normalize
 from matplotlib.lines import Line2D, AxLine
 from matplotlib.text import Text, Annotation
 from matplotlib.patches import Arrow, Circle, Rectangle  # noqa: F401

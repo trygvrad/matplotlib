@@ -1,4 +1,10 @@
-from .colors import ListedColormap
+"""
+This differs from _colormp_data.py in that this file contains
+lookup tables (LUTs) of lenght 256, rather than linearly interpolated colormaps.
+"""
+
+
+from .colormaps import ListedColormap
 
 _magma_data = [[0.001462, 0.000466, 0.013866],
                [0.002258, 0.001295, 0.018331],
@@ -2831,7 +2837,7 @@ _vanimo_data = [
     [0.7362, 0.98063, 0.63191],
     [0.74458, 0.99141, 0.64748]]
 
-cmaps = {
+cmap_luts = {
     name: ListedColormap(data, name=name) for name, data in [
         ('magma', _magma_data),
         ('inferno', _inferno_data),

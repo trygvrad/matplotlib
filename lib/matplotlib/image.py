@@ -21,7 +21,8 @@ from matplotlib import _image
 # the image namespace
 from matplotlib._image import *  # noqa: F401, F403
 import matplotlib.artist as martist
-import matplotlib.colorizer as mcolorizer
+import matplotlib.colormapping.colorizer as mcolorizer
+import matplotlib.colormapping.norms as mnorms
 from matplotlib.backend_bases import FigureCanvasBase
 import matplotlib.colors as mcolors
 from matplotlib.transforms import (
@@ -475,7 +476,7 @@ class _ImageBase(mcolorizer.ColorizingArtist):
                 A_resampled = _resample(self, A.astype(scaled_dtype), out_shape, t)
 
                 # if using NoNorm, cast back to the original datatype
-                if isinstance(self.norm, mcolors.NoNorm):
+                if isinstance(self.norm, mnorms.NoNorm):
                     A_resampled = A_resampled.astype(A.dtype)
 
                 # Compute out_mask (what screen pixels include "bad" data

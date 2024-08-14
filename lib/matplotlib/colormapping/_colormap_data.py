@@ -1366,7 +1366,7 @@ _tab20c_data = (
 )
 
 
-datad = {
+cmap_data = {
     'Blues': _Blues_data,
     'BrBG': _BrBG_data,
     'BuGn': _BuGn_data,
