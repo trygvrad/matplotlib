@@ -745,7 +745,7 @@ class Colormap:
         self._i_over = self.N + 1
         self._i_bad = self.N + 2
         self._isinit = False
-        self.n_variates = 1
+        self.n_components = 1
         #: When this colormap exists on a scalar mappable and colorbar_extend
         #: is not False, colorbar creation will pick up ``colorbar_extend`` as
         #: the default value for the ``extend`` keyword in the
@@ -1414,10 +1414,10 @@ class MultivarColormap:
         combination_mode: str, 'sRGB_add' or 'sRGB_sub'
             Describe how colormaps are combined in sRGB space
 
-            - If 'sRGB_add' -> Mixing produces brighter colors
-              `sRGB = sum(colors)`
-            - If 'sRGB_sub' -> Mixing produces darker colors
-              `sRGB = 1 - sum(1 - colors)`
+            - If 'sRGB_add': Mixing produces brighter colors
+              ``sRGB = sum(colors)``
+            - If 'sRGB_sub': Mixing produces darker colors
+              ``sRGB = 1 - sum(1 - colors)``
         name : str, optional
             The name of the colormap family.
         """
@@ -1438,7 +1438,7 @@ class MultivarColormap:
         self._colormaps = colormaps
         _api.check_in_list(['sRGB_add', 'sRGB_sub'], combination_mode=combination_mode)
         self._combination_mode = combination_mode
-        self.n_variates = len(colormaps)
+        self.n_components = len(colormaps)
         self._rgba_bad = (0.0, 0.0, 0.0, 0.0)  # If bad, don't paint anything.
 
     def __call__(self, X, alpha=None, bytes=False, clip=True):
@@ -1446,14 +1446,16 @@ class MultivarColormap:
         Parameters
         ----------
         X : tuple (X0, X1, ...) of length equal to the number of colormaps
-            X0, X1 ...:
-            float or int, `~numpy.ndarray` or scalar
+            or structured array with multiple fields, X0, X1, ...:
+            Xi: float or int, `~numpy.ndarray` or scalar.
             The data value(s) to convert to RGBA.
-            For floats, *Xi...* should be in the interval ``[0.0, 1.0]`` to
-            return the RGBA values ``X*100`` percent along the Colormap line.
-            For integers, *Xi...*  should be in the interval ``[0, self[i].N)`` to
-            return RGBA values *indexed* from colormap [i] with index ``Xi``, where
-            self[i] is colormap i.
+
+            - For floats, *Xi...* should be in the interval ``[0.0, 1.0]`` to
+              return the RGBA values ``X*100`` percent along the line of colormap i.
+            - For integers, *Xi...*  should be in the interval ``[0, self[i].N)`` to
+              return RGBA values *indexed* from colormap i with
+              index ``Xi``, where self[i] is colormap i.
+
         alpha : float or array-like or None
             Alpha must be a scalar between 0 and 1, a sequence of such
             floats with shape matching *Xi*, or None.
@@ -1470,10 +1472,14 @@ class MultivarColormap:
         RGBA values with a shape of ``X.shape + (4, )``.
         """
 
+        if isinstance(X, np.ndarray) and X.dtype.fields is not None:
+            X = tuple(X[descriptor[0]] for descriptor in X.dtype.descr)
+
         if len(X) != len(self):
             raise ValueError(
                 f'For the selected colormap the data must have a first dimension '
-                f'{len(self)}, not {len(X)}')
+                f'{len(self)}, not {len(X)}, or be structured array ',
+                f'with {len(self)} fields.')
         rgba, mask_bad = self[0]._get_rgba_and_mask(X[0], bytes=False)
         for c, xx in zip(self[1:], X[1:]):
             sub_rgba, sub_mask_bad = c._get_rgba_and_mask(xx, bytes=False)
@@ -1561,7 +1567,7 @@ class MultivarColormap:
         Parameters
         ----------
         lutshape : tuple of (`int`, `None`)
-            The tuple must have a length matching the number of variates.
+            The tuple must have a length matching the number of components.
             For each element in the tuple, if `int`, the corresponding colorbar
             is resampled, if `None`, the corresponding colorbar is not resampled.
 
@@ -1589,15 +1595,15 @@ class MultivarColormap:
 
         Parameters
         ----------
-        bad: :mpltype:`color`, default: None
+        bad : :mpltype:`color`, default: None
             If Matplotlib color, the bad value is set accordingly in the copy
 
-        under tuple of :mpltype:`color`, default: None
-            If tuple, the `under` value of each component is set with the values
+        under : tuple of :mpltype:`color`, default: None
+            If tuple, the ``under`` value of each component is set with the values
             from the tuple.
 
-        over tuple of :mpltype:`color`, default: None
-            If tuple, the `over` value of each component is set with the values
+        over : tuple of :mpltype:`color`, default: None
+            If tuple, the ``over`` value of each component is set with the values
             from the tuple.
 
         Returns
@@ -1697,7 +1703,7 @@ class BivarColormap:
         self._rgba_bad = (0.0, 0.0, 0.0, 0.0)  # If bad, don't paint anything.
         self._rgba_outside = (1.0, 0.0, 1.0, 1.0)
         self._isinit = False
-        self.n_variates = 2
+        self.n_components = 2
         self._origin = (float(origin[0]), float(origin[1]))
         '''#: When this colormap exists on a scalar mappable and colorbar_extend
         #: is not False, colorbar creation will pick up ``colorbar_extend`` as
@@ -1709,7 +1715,8 @@ class BivarColormap:
         r"""
         Parameters
         ----------
-        X : tuple (X0, X1), X0 and X1: float or int or array-like
+        X : tuple (X0, X1) or structured array with two fields, X0 and X1:
+            Xi: float or int or array-like.
             The data value(s) to convert to RGBA.
 
             - For floats, *X* should be in the interval ``[0.0, 1.0]`` to
@@ -1731,10 +1738,14 @@ class BivarColormap:
         RGBA values with a shape of ``X.shape + (4, )``.
         """
 
+        # unwrap structured data.
+        if isinstance(X, np.ndarray) and X.dtype.fields is not None:
+            X = tuple(X[descriptor[0]] for descriptor in X.dtype.descr)
+
         if len(X) != 2:
             raise ValueError(
-                f'For a `BivarColormap` the data must have a first dimension '
-                f'2, not {len(X)}')
+                'For a `BivarColormap` the data must have a first dimension '
+                f'2, not {len(X)}, or be a structured array with 2 fields.')
 
         if not self._isinit:
             self._init()
@@ -2264,8 +2275,8 @@ class Norm(ABC):
 
     Subclasses include `Normalize` which maps from a scalar to
     a scalar. However, this class makes no such requirement, and subclasses may
-    support the normalization of multiple variates simultaneously, with
-    separate normalization for each variate.
+    support the normalization of multiple components simultaneously, with
+    separate normalization for each component.
     """
 
     def __init__(self):

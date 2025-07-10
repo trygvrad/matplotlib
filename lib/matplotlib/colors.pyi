@@ -157,7 +157,7 @@ class ListedColormap(Colormap):
 
 class MultivarColormap:
     name: str
-    n_variates: int
+    n_components: int
     def __init__(self, colormaps: list[Colormap], combination_mode: Literal['sRGB_add', 'sRGB_sub'], name: str = ...) -> None: ...
     @overload
     def __call__(
@@ -195,7 +195,7 @@ class BivarColormap:
     name: str
     N: int
     M: int
-    n_variates: int
+    n_components: int
     def __init__(
         self, N: int = ..., M: int | None = ..., shape: Literal['square', 'circle', 'ignore', 'circleignore'] = ...,
         origin: Sequence[float] = ..., name: str = ...
