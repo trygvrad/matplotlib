@@ -15,6 +15,7 @@ import itertools
 import math
 import textwrap
 import warnings
+import numbers
 
 import numpy as np
 
@@ -3370,7 +3371,8 @@ class Axes3D(Axes):
     quiver3D = quiver
 
     def voxels(self, *args, facecolors=None, edgecolors=None, shade=True,
-               lightsource=None, axlim_clip=False, **kwargs):
+               lightsource=None, axlim_clip=False, colorizer=None,
+               norm=None, cmap=None, vmin=None, vmax=None, **kwargs):
         """
         ax.voxels([x, y, z,] /, filled, facecolors=None, edgecolors=None, \
 **kwargs)
@@ -3408,6 +3410,8 @@ class Axes3D(Axes):
               the style default for the edges.
             - A 3D `~numpy.ndarray` of color names, with each item the color
               for the corresponding voxel. The size must match the voxels.
+            - facecolors only: A 3D `~numpy.ndarray` of scalar values, with 
+              each value mapped using a norm and colormap.
             - A 4D `~numpy.ndarray` of RGB/RGBA data, with the components
               along the last axis.
 
@@ -3421,6 +3425,19 @@ class Axes3D(Axes):
             Whether to hide voxels with points outside the axes view limits.
 
             .. versionadded:: 3.10
+
+        cmap : Colormap, optional
+            Colormap to use if facecolor is scalar.
+
+        norm : `~matplotlib.colors.Normalize`, optional
+            Normalization for the colormap.
+
+        vmin, vmax : float, optional
+            Bounds for the normalization.
+
+        colorizer : `~matplotlib.colorizer.Colorizer` or None, default: None
+            The Colorizer object used to map color to data. If None, a Colorizer
+            object is created from a *norm* and *cmap*.
 
         **kwargs
             Additional keyword arguments to pass onto
@@ -3442,6 +3459,10 @@ class Axes3D(Axes):
         .. plot:: gallery/mplot3d/voxels_torus.py
         .. plot:: gallery/mplot3d/voxels_numpy_logo.py
         """
+        mpl.colorizer.ColorizingArtist._check_exclusionary_keywords(\
+            colorizer, cmap=cmap, norm=norm, vmin=vmin, vmax=vmax)
+        if colorizer is None:
+            colorizer = mpl.colorizer.Colorizer(cmap, norm)
 
         # work out which signature we should be using, and use it to parse
         # the arguments. Name must be voxels for the correct error message
@@ -3484,6 +3505,11 @@ class Axes3D(Axes):
         # broadcast and default on facecolors
         if facecolors is None:
             facecolors = self._get_patches_for_fill.get_next_color()
+        elif (isinstance(facecolors, np.ndarray) and facecolors.ndim == 3 
+              and np.can_cast(facecolors.dtype, float, "same_kind")):
+            # scale the norm
+            colorizer._scale_norm(colorizer.norm, vmin, vmax, facecolors.ravel())
+
         facecolors = _broadcast_color_arg(facecolors, 'facecolors')
 
         # broadcast but no default on edgecolors
@@ -3574,11 +3600,14 @@ class Axes3D(Axes):
             # shade the faces
             facecolor = facecolors[coord]
             edgecolor = edgecolors[coord]
-
+            array = None
+            if isinstance(facecolor, numbers.Number):
+                array = [facecolor]
+                facecolor = 'k'
             poly = art3d.Poly3DCollection(
-                faces, facecolors=facecolor, edgecolors=edgecolor,
+                faces, facecolors=facecolor, array=array, edgecolors=edgecolor,
                 shade=shade, lightsource=lightsource, axlim_clip=axlim_clip,
-                **kwargs)
+                colorizer=colorizer, **kwargs)
             self.add_collection3d(poly)
             polygons[coord] = poly
 
