@@ -1335,6 +1335,8 @@ class Axis(martist.Artist):
             minor_ticks = []
 
         ticks = [*major_ticks, *minor_ticks]
+        if not ticks:
+            return []
 
         view_low, view_high = self.get_view_interval()
         if view_low > view_high:
