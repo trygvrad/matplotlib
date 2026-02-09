@@ -341,6 +341,9 @@ class Fonts(abc.ABC):
         """
         return [(fontname, sym)]
 
+    def get_font_constants(self) -> type[FontConstantsBase]:
+        return FontConstantsBase
+
 
 class TruetypeFonts(Fonts, metaclass=abc.ABCMeta):
     """
@@ -420,7 +423,7 @@ class TruetypeFonts(Fonts, metaclass=abc.ABCMeta):
         )
 
     def get_axis_height(self, fontname: str, fontsize: float, dpi: float) -> float:
-        consts = _get_font_constants(self, fontname)
+        consts = self.get_font_constants()
         if consts.axis_height is not None:
             return consts.axis_height * fontsize * dpi / 72
         else:
@@ -431,7 +434,7 @@ class TruetypeFonts(Fonts, metaclass=abc.ABCMeta):
             return (metrics.ymax + metrics.ymin) / 2
 
     def get_quad(self, fontname: str, fontsize: float, dpi: float) -> float:
-        consts = _get_font_constants(self, fontname)
+        consts = self.get_font_constants()
         if consts.quad is not None:
             return consts.quad * fontsize * dpi / 72
         else:
@@ -550,6 +553,9 @@ class BakomaFonts(TruetypeFonts):
     def get_sized_alternatives_for_symbol(self, fontname: str,
                                           sym: str) -> list[tuple[str, str]]:
         return self._size_alternatives.get(sym, [(fontname, sym)])
+
+    def get_font_constants(self) -> type[FontConstantsBase]:
+        return ComputerModernFontConstants
 
 
 class UnicodeFonts(TruetypeFonts):
@@ -741,6 +747,9 @@ class DejaVuSerifFonts(DejaVuFonts):
         0:    'DejaVu Serif',
     }
 
+    def get_font_constants(self) -> type[FontConstantsBase]:
+        return DejaVuSerifFontConstants
+
 
 class DejaVuSansFonts(DejaVuFonts):
     """
@@ -758,6 +767,9 @@ class DejaVuSansFonts(DejaVuFonts):
         'ex': 'DejaVu Sans Display',
         0:    'DejaVu Sans',
     }
+
+    def get_font_constants(self) -> type[FontConstantsBase]:
+        return DejaVuSansFontConstants
 
 
 class StixFonts(UnicodeFonts):
@@ -873,6 +885,12 @@ class StixFonts(UnicodeFonts):
         if sym == r'\__sqrt__':
             alternatives = alternatives[:-1]
         return alternatives
+
+    def get_font_constants(self) -> type[FontConstantsBase]:
+        if self._sans:
+            return STIXSansFontConstants
+        else:
+            return STIXFontConstants
 
 
 class StixSansFonts(StixFonts):
@@ -1076,45 +1094,6 @@ class DejaVuSansFontConstants(FontConstantsBase):
     # These come from the same TeX table, scaled by Em size so they are in multiples of
     # design size.
     axis_height = 512 / 2048
-
-
-# Maps font family names to the FontConstantBase subclass to use
-_font_constant_mapping = {
-    'DejaVu Sans': DejaVuSansFontConstants,
-    'DejaVu Sans Mono': DejaVuSansFontConstants,
-    'DejaVu Serif': DejaVuSerifFontConstants,
-    'cmb10': ComputerModernFontConstants,
-    'cmex10': ComputerModernFontConstants,
-    'cmmi10': ComputerModernFontConstants,
-    'cmr10': ComputerModernFontConstants,
-    'cmss10': ComputerModernFontConstants,
-    'cmsy10': ComputerModernFontConstants,
-    'cmtt10': ComputerModernFontConstants,
-    'STIXGeneral': STIXFontConstants,
-    'STIXNonUnicode': STIXFontConstants,
-    'STIXSizeFiveSym': STIXFontConstants,
-    'STIXSizeFourSym': STIXFontConstants,
-    'STIXSizeThreeSym': STIXFontConstants,
-    'STIXSizeTwoSym': STIXFontConstants,
-    'STIXSizeOneSym': STIXFontConstants,
-    # Map the fonts we used to ship, just for good measure
-    'Bitstream Vera Sans': DejaVuSansFontConstants,
-    'Bitstream Vera': DejaVuSansFontConstants,
-    }
-
-
-def _get_font_constants(fontset: Fonts, font: str) -> type[FontConstantsBase]:
-    constants = _font_constant_mapping.get(fontset._get_font(font).family_name,
-                                           FontConstantsBase)
-    # STIX sans isn't really its own fonts, just different code points
-    # in the STIX fonts, so we have to detect this one separately.
-    if constants is STIXFontConstants and isinstance(fontset, StixSansFonts):
-        return STIXSansFontConstants
-    return constants
-
-
-def _get_font_constant_set(state: ParserState) -> type[FontConstantsBase]:
-    return _get_font_constants(state.fontset, state.font)
 
 
 class Node:
@@ -2649,7 +2628,7 @@ class Parser:
             nucleus = Hlist([nucleus])
 
         # Handle regular sub/superscripts
-        consts = _get_font_constant_set(state)
+        consts = state.fontset.get_font_constants()
         lc_height   = last_char.height
         lc_baseline = 0
         if self.is_dropsub(last_char):
@@ -2743,7 +2722,7 @@ class Parser:
 
         axis_height = state.fontset.get_axis_height(
             state.font, state.fontsize, state.dpi)
-        consts = _get_font_constant_set(state)
+        consts = state.fontset.get_font_constants()
         x_height = state.fontset.get_xheight(state.font, state.fontsize, state.dpi)
 
         for _ in range(style.value):
