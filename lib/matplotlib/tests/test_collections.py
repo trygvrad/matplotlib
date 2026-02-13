@@ -392,6 +392,7 @@ def test_barb_limits():
 
 
 @image_comparison(['EllipseCollection_test_image.png'], remove_text=True,
+                  style='_classic_test',
                   tol=0 if platform.machine() == 'x86_64' else 0.021)
 def test_EllipseCollection():
     # Test basic functionality
@@ -514,7 +515,8 @@ def test_scalarmap_change_cmap(fig_test, fig_ref):
     ax_ref.scatter(x, y, z, c=c, s=40, cmap='viridis')
 
 
-@image_comparison(['regularpolycollection_rotate.png'], remove_text=True)
+@image_comparison(['regularpolycollection_rotate.png'], remove_text=True,
+                  style='_classic_test')
 def test_regularpolycollection_rotate():
     xx, yy = np.mgrid[:10, :10]
     xy_points = np.transpose([xx.flatten(), yy.flatten()])
@@ -528,7 +530,8 @@ def test_regularpolycollection_rotate():
         ax.add_collection(col)
 
 
-@image_comparison(['regularpolycollection_scale.png'], remove_text=True)
+@image_comparison(['regularpolycollection_scale.png'], remove_text=True,
+                  style='_classic_test')
 def test_regularpolycollection_scale():
     # See issue #3860
 
@@ -647,7 +650,7 @@ def test_linestyle_single_dashes():
     plt.draw()
 
 
-@image_comparison(['size_in_xy.png'], remove_text=True)
+@image_comparison(['size_in_xy.png'], remove_text=True, style='_classic_test')
 def test_size_in_xy():
     fig, ax = plt.subplots()
 

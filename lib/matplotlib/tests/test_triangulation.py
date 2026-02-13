@@ -865,7 +865,8 @@ def test_triinterp_transformations():
             matest.assert_array_almost_equal(interpz, interp_z0[interp_key])
 
 
-@image_comparison(['tri_smooth_contouring.png'], remove_text=True, tol=0.072)
+@image_comparison(['tri_smooth_contouring.png'], remove_text=True,
+                  style='_classic_test', tol=0.072)
 def test_tri_smooth_contouring():
     # Image comparison based on example tricontour_smooth_user.
     n_angles = 20
@@ -904,7 +905,8 @@ def test_tri_smooth_contouring():
     plt.tricontour(tri_refi, z_test_refi, levels=levels, colors="black")
 
 
-@image_comparison(['tri_smooth_gradient.png'], remove_text=True, tol=0.092)
+@image_comparison(['tri_smooth_gradient.png'], remove_text=True, style='_classic_test',
+                  tol=0.092)
 def test_tri_smooth_gradient():
     # Image comparison based on example trigradient_demo.
 

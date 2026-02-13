@@ -269,7 +269,7 @@ def test_clip_to_bbox():
     ax.add_patch(result_patch)
 
 
-@image_comparison(['patch_alpha_coloring'], remove_text=True)
+@image_comparison(['patch_alpha_coloring'], remove_text=True, style='_classic_test')
 def test_patch_alpha_coloring():
     """
     Test checks that the patch and collection are rendered with the specified
@@ -300,7 +300,7 @@ def test_patch_alpha_coloring():
     ax.set_ylim(-1, 2)
 
 
-@image_comparison(['patch_alpha_override'], remove_text=True)
+@image_comparison(['patch_alpha_override'], remove_text=True, style='_classic_test')
 def test_patch_alpha_override():
     #: Test checks that specifying an alpha attribute for a patch or
     #: collection will override any alpha component of the facecolor
@@ -340,7 +340,7 @@ def test_patch_color_none():
     assert c.get_facecolor()[0] == 0
 
 
-@image_comparison(['patch_custom_linestyle'], remove_text=True)
+@image_comparison(['patch_custom_linestyle'], remove_text=True, style='_classic_test')
 def test_patch_custom_linestyle():
     #: A test to check that patches and collections accept custom dash
     #: patterns as linestyle and that they display correctly.
@@ -437,7 +437,7 @@ def test_wedge_movement():
         assert getattr(w, attr) == new_v
 
 
-@image_comparison(['wedge_range'], remove_text=True,
+@image_comparison(['wedge_range'], remove_text=True, style='_classic_test',
                   tol=0 if platform.machine() == 'x86_64' else 0.009)
 def test_wedge_range():
     ax = plt.axes()

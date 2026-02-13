@@ -39,13 +39,14 @@ def test_visibility():
     parser.Parse(buf)  # this will raise ExpatError if the svg is invalid
 
 
-@image_comparison(['fill_black_with_alpha.svg'], remove_text=True)
+@image_comparison(['fill_black_with_alpha.svg'], remove_text=True,
+                  style='_classic_test')
 def test_fill_black_with_alpha():
     fig, ax = plt.subplots()
     ax.scatter(x=[0, 0.1, 1], y=[0, 0, 0], c='k', alpha=0.1, s=10000)
 
 
-@image_comparison(['noscale'], remove_text=True)
+@image_comparison(['noscale'], remove_text=True, style='_classic_test')
 def test_noscale():
     X, Y = np.meshgrid(np.arange(-5, 5, 1), np.arange(-5, 5, 1))
     Z = np.sin(Y ** 2)
@@ -78,7 +79,7 @@ def test_bold_font_output():
     ax.set_title('bold-title', fontweight=600)
 
 
-@image_comparison(['bold_font_output_with_none_fonttype.svg'])
+@image_comparison(['bold_font_output_with_none_fonttype.svg'], style='_classic_test')
 def test_bold_font_output_with_none_fonttype():
     plt.rcParams['svg.fonttype'] = 'none'
     fig, ax = plt.subplots()

@@ -642,7 +642,7 @@ def test_single_artist_usenotex(fmt):
     fig.savefig(io.BytesIO(), format=fmt)
 
 
-@image_comparison(['text_as_path_opacity.svg'])
+@image_comparison(['text_as_path_opacity.svg'], style='_classic_test')
 def test_text_as_path_opacity():
     plt.figure()
     plt.gca().set_axis_off()
@@ -651,7 +651,7 @@ def test_text_as_path_opacity():
     plt.text(0.25, 0.75, 'x', alpha=0.5, color=(0, 0, 0, 1))
 
 
-@image_comparison(['text_as_text_opacity.svg'])
+@image_comparison(['text_as_text_opacity.svg'], style='_classic_test')
 def test_text_as_text_opacity():
     mpl.rcParams['svg.fonttype'] = 'none'
     plt.figure()
