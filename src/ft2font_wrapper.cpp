@@ -1282,12 +1282,17 @@ PyFT2Font_get_sfnt_table(PyFT2Font *self, std::string tagname)
             "yStrikeoutPosition"_a=t->yStrikeoutPosition,
             "sFamilyClass"_a=t->sFamilyClass,
             "panose"_a=py::bytes(reinterpret_cast<const char *>(t->panose), 10),
-            "ulCharRange"_a=py::make_tuple(t->ulUnicodeRange1, t->ulUnicodeRange2,
-                                           t->ulUnicodeRange3, t->ulUnicodeRange4),
+            "ulUnicodeRange"_a=py::make_tuple(t->ulUnicodeRange1, t->ulUnicodeRange2,
+                                              t->ulUnicodeRange3, t->ulUnicodeRange4),
             "achVendID"_a=py::bytes(reinterpret_cast<const char *>(t->achVendID), 4),
             "fsSelection"_a=t->fsSelection,
-            "fsFirstCharIndex"_a=t->usFirstCharIndex,
-            "fsLastCharIndex"_a=t->usLastCharIndex);
+            "usFirstCharIndex"_a=t->usFirstCharIndex,
+            "usLastCharIndex"_a=t->usLastCharIndex,
+            "sTypoAscender"_a=t->sTypoAscender,
+            "sTypoDescender"_a=t->sTypoDescender,
+            "sTypoLineGap"_a=t->sTypoLineGap,
+            "usWinAscent"_a=t->usWinAscent,
+            "usWinDescent"_a=t->usWinDescent);
         if (version >= 1) {
             result["ulCodePageRange"] = py::make_tuple(t->ulCodePageRange1,
                                                        t->ulCodePageRange2);
@@ -1333,7 +1338,7 @@ PyFT2Font_get_sfnt_table(PyFT2Font *self, std::string tagname)
             "vertTypoLineGap"_a=t->Line_Gap,
             "advanceHeightMax"_a=t->advance_Height_Max,
             "minTopSideBearing"_a=t->min_Top_Side_Bearing,
-            "minBottomSizeBearing"_a=t->min_Bottom_Side_Bearing,
+            "minBottomSideBearing"_a=t->min_Bottom_Side_Bearing,
             "yMaxExtent"_a=t->yMax_Extent,
             "caretSlopeRise"_a=t->caret_Slope_Rise,
             "caretSlopeRun"_a=t->caret_Slope_Run,
