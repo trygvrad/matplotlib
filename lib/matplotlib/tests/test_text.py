@@ -1155,8 +1155,7 @@ def test_empty_annotation_get_window_extent():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(baseline_images=['basictext_wrap'],
-                  extensions=['png'], tol=0.3)
+@image_comparison(['basictext_wrap.png'], tol=0.3)
 def test_basic_wrap():
     fig = plt.figure()
     plt.axis([0, 10, 0, 10])
@@ -1173,8 +1172,7 @@ def test_basic_wrap():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(baseline_images=['fonttext_wrap'],
-                  extensions=['png'], tol=0.3)
+@image_comparison(['fonttext_wrap.png'], tol=0.3)
 def test_font_wrap():
     fig = plt.figure()
     plt.axis([0, 10, 0, 10])
@@ -1207,8 +1205,8 @@ def test_va_for_angle():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(baseline_images=['xtick_rotation_mode'],
-                  remove_text=False, extensions=['png'], style='mpl20', tol=0.3)
+@image_comparison(['xtick_rotation_mode.png'], remove_text=False, style='mpl20',
+                  tol=0.3)
 def test_xtick_rotation_mode():
     fig, ax = plt.subplots(figsize=(12, 1))
     ax.set_yticks([])
@@ -1228,8 +1226,8 @@ def test_xtick_rotation_mode():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(baseline_images=['ytick_rotation_mode'],
-                  remove_text=False, extensions=['png'], style='mpl20', tol=0.3)
+@image_comparison(['ytick_rotation_mode.png'], remove_text=False, style='mpl20',
+                  tol=0.3)
 def test_ytick_rotation_mode():
     fig, ax = plt.subplots(figsize=(1, 12))
     ax.set_xticks([])
