@@ -3089,13 +3089,16 @@ class _AxesBase(martist.Artist):
             # streamplot; it is defined relative to x1-x0 but has
             # no absolute term (e.g. "+1e-8") to avoid issues when working with
             # datasets where all values are tiny (less than 1e-8).
-            tol = 1e-5 * abs(x1 - x0)
-            # Index of largest element < x0 + tol, if any.
-            i0 = stickies.searchsorted(x0 + tol) - 1
-            x0bound = stickies[i0] if i0 != -1 else None
-            # Index of smallest element > x1 - tol, if any.
-            i1 = stickies.searchsorted(x1 - tol)
-            x1bound = stickies[i1] if i1 != len(stickies) else None
+            if len(stickies):
+                tol = 1e-5 * abs(x1 - x0)
+                # Index of largest element < x0 + tol, if any.
+                i0 = stickies.searchsorted(x0 + tol) - 1
+                x0bound = stickies[i0] if i0 != -1 else None
+                # Index of smallest element > x1 - tol, if any.
+                i1 = stickies.searchsorted(x1 - tol)
+                x1bound = stickies[i1] if i1 != len(stickies) else None
+            else:
+                x0bound = x1bound = None
 
             # Add the margin in figure space and then transform back, to handle
             # non-linear scales.
