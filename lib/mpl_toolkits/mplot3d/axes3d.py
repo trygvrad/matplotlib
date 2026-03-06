@@ -822,7 +822,8 @@ class Axes3D(Axes):
                           lower, upper, view_margin)
 
     def _set_lim3d(self, axis, lower=None, upper=None, *, emit=True,
-                   auto=False, view_margin=None, axmin=None, axmax=None):
+                   auto=False, view_margin=None, axmin=None, axmax=None,
+                   minpos=np.inf):
         """
         Set 3D axis limits.
         """
@@ -852,7 +853,6 @@ class Axes3D(Axes):
         if view_margin > 0 and hasattr(axis, '_scale') and axis._scale is not None:
             transform = axis.get_transform()
             inverse_trans = transform.inverted()
-            minpos = max(1e-300, abs(lower) if lower > 0 else 1e-5)
             lower, upper = axis._scale.limit_range_for_scale(lower, upper, minpos)
             lower_t, upper_t = transform.transform([lower, upper])
             delta = (upper_t - lower_t) * view_margin
@@ -935,7 +935,8 @@ class Axes3D(Axes):
         >>> set_xlim(5000, 0)
         """
         return self._set_lim3d(self.xaxis, left, right, emit=emit, auto=auto,
-                               view_margin=view_margin, axmin=xmin, axmax=xmax)
+                               view_margin=view_margin, axmin=xmin, axmax=xmax,
+                               minpos=self.xy_dataLim.minposx)
 
     def set_ylim(self, bottom=None, top=None, *, emit=True, auto=False,
                  view_margin=None, ymin=None, ymax=None):
@@ -1007,7 +1008,8 @@ class Axes3D(Axes):
         >>> set_ylim(5000, 0)
         """
         return self._set_lim3d(self.yaxis, bottom, top, emit=emit, auto=auto,
-                               view_margin=view_margin, axmin=ymin, axmax=ymax)
+                               view_margin=view_margin, axmin=ymin, axmax=ymax,
+                               minpos=self.xy_dataLim.minposy)
 
     def set_zlim(self, bottom=None, top=None, *, emit=True, auto=False,
                  view_margin=None, zmin=None, zmax=None):
@@ -1079,7 +1081,8 @@ class Axes3D(Axes):
         >>> set_zlim(5000, 0)
         """
         return self._set_lim3d(self.zaxis, bottom, top, emit=emit, auto=auto,
-                               view_margin=view_margin, axmin=zmin, axmax=zmax)
+                               view_margin=view_margin, axmin=zmin, axmax=zmax,
+                               minpos=self.zz_dataLim.minposx)
 
     set_xlim3d = set_xlim
     set_ylim3d = set_ylim
@@ -1118,7 +1121,7 @@ class Axes3D(Axes):
     get_zscale = _axis_method_wrapper("zaxis", "get_scale")
 
     # Custom scale setters that handle limit validation for non-linear scales
-    def _set_axis_scale(self, axis, get_lim, set_lim, value, **kwargs):
+    def _set_axis_scale(self, axis, value, **kwargs):
         """
         Set scale for an axis and constrain limits to valid range.
 
@@ -1126,10 +1129,6 @@ class Axes3D(Axes):
         ----------
         axis : Axis
             The axis to set the scale on.
-        get_lim : callable
-            Function to get current axis limits.
-        set_lim : callable
-            Function to set axis limits.
         value : str
             The scale name.
         **kwargs
@@ -1142,8 +1141,7 @@ class Axes3D(Axes):
         # etc.  This must happen before _set_axes_scale because that triggers
         # autoscale_view internally.
         if (axis is self.zaxis and value != 'linear'
-                and np.array_equal(self.zz_dataLim.get_points(),
-                                   [[0, 0], [1, 1]])):
+                and np.array_equal(self.zz_dataLim.get_points(), [[0, 0], [1, 1]])):
             xymargin = 0.05 * 10/11
             self.zz_dataLim = Bbox([[xymargin, xymargin],
                                     [1 - xymargin, 1 - xymargin]])
@@ -1164,8 +1162,7 @@ class Axes3D(Axes):
             Keyword arguments are forwarded to the scale class.
             For example, ``base=2`` can be passed when using a log scale.
         """
-        self._set_axis_scale(self.xaxis, self.get_xlim, self.set_xlim,
-                             value, **kwargs)
+        self._set_axis_scale(self.xaxis, value, **kwargs)
 
     def set_yscale(self, value, **kwargs):
         """
@@ -1181,8 +1178,7 @@ class Axes3D(Axes):
             Keyword arguments are forwarded to the scale class.
             For example, ``base=2`` can be passed when using a log scale.
         """
-        self._set_axis_scale(self.yaxis, self.get_ylim, self.set_ylim,
-                             value, **kwargs)
+        self._set_axis_scale(self.yaxis, value, **kwargs)
 
     def set_zscale(self, value, **kwargs):
         """
@@ -1198,8 +1194,7 @@ class Axes3D(Axes):
             Keyword arguments are forwarded to the scale class.
             For example, ``base=2`` can be passed when using a log scale.
         """
-        self._set_axis_scale(self.zaxis, self.get_zlim, self.set_zlim,
-                             value, **kwargs)
+        self._set_axis_scale(self.zaxis, value, **kwargs)
 
     get_zticks = _axis_method_wrapper("zaxis", "get_ticklocs")
     set_zticks = _axis_method_wrapper("zaxis", "set_ticks")
@@ -1421,10 +1416,7 @@ class Axes3D(Axes):
         # transformation maps transformed coordinates (not data coordinates)
         # to the unit cube
         scaled_limits = self._get_scaled_limits()
-        worldM = proj3d.world_transformation(
-            *scaled_limits,
-            pb_aspect=box_aspect,
-        )
+        worldM = proj3d.world_transformation(*scaled_limits, pb_aspect=box_aspect)
 
         # Look into the middle of the world coordinates:
         R = 0.5 * box_aspect

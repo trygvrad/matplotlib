@@ -22,7 +22,6 @@ def _move_from_center(coord, centers, deltas, axmask=(True, True, True)):
     return coord + axmask * np.copysign(1, coord - centers) * deltas
 
 
-
 def _tick_update_position(tick, tickxs, tickys, labelpos):
     """Update tick line and label position and style."""
 
@@ -274,7 +273,8 @@ class Axis(maxis.XAxis):
         maxs = np.array([xmax, ymax, zmax])
 
         # Get data-space bounds for _transformed_cube
-        bounds = (*self.axes.get_xbound(), *self.axes.get_ybound(),
+        bounds = (*self.axes.get_xbound(),
+                  *self.axes.get_ybound(),
                   *self.axes.get_zbound())
         bounds_proj = self.axes._transformed_cube(bounds)
 
