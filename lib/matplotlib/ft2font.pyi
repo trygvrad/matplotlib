@@ -137,11 +137,16 @@ class _SfntOs2Dict(TypedDict):
     yStrikeoutPosition: int
     sFamilyClass: int
     panose: bytes
-    ulCharRange: tuple[int, int, int, int]
+    ulUnicodeRange: tuple[int, int, int, int]
     achVendID: bytes
     fsSelection: int
-    fsFirstCharIndex: int
-    fsLastCharIndex: int
+    usFirstCharIndex: int
+    usLastCharIndex: int
+    sTypoAscender: int
+    sTypoDescender: int
+    sTypoLineGap: int
+    usWinAscent: int
+    usWinDescent: int
     # version >= 1
     ulCodePageRange: NotRequired[tuple[int, int]]
     # version >= 2
@@ -176,7 +181,7 @@ class _SfntVheaDict(TypedDict):
     vertTypoLineGap: int
     advanceHeightMax: int
     minTopSideBearing: int
-    minBottomSizeBearing: int
+    minBottomSideBearing: int
     yMaxExtent: int
     caretSlopeRise: int
     caretSlopeRun: int
