@@ -3027,32 +3027,42 @@ class _AxesBase(martist.Artist):
         if tight is not None:
             self._tight = bool(tight)
 
+        x_shared = self._shared_axes["x"].get_siblings(self)
+        y_shared = self._shared_axes["y"].get_siblings(self)
+
         x_stickies = y_stickies = np.array([])
         if self.use_sticky_edges:
             if self._xmargin and scalex and self.get_autoscalex_on():
-                edges = []
-                for ax in self._shared_axes["x"].get_siblings(self):
+                # Use ._children and ._sticky_edges directly, because the extra
+                # artists in .get_children() (spines, axes, titles, etc.) never
+                # have sticky edges, so we can skip them for performance.
+                x_sticky_lists = []
+                for ax in x_shared:
                     for artist in ax.get_children():
-                        edges.extend(artist.sticky_edges.x)
-                x_stickies = np.sort(edges)
+                        sticky_edges = artist._sticky_edges
+                        if sticky_edges is not None and sticky_edges.x:
+                            x_sticky_lists.append(sticky_edges.x)
+                if x_sticky_lists:
+                    x_stickies = np.sort(np.concatenate(x_sticky_lists))
             if self._ymargin and scaley and self.get_autoscaley_on():
-                edges = []
-                for ax in self._shared_axes["y"].get_siblings(self):
+                y_sticky_lists = []
+                for ax in y_shared:
                     for artist in ax.get_children():
-                        edges.extend(artist.sticky_edges.y)
-                y_stickies = np.sort(edges)
+                        sticky_edges = artist._sticky_edges
+                        if sticky_edges is not None and sticky_edges.y:
+                            y_sticky_lists.append(sticky_edges.y)
+                if y_sticky_lists:
+                    y_stickies = np.sort(np.concatenate(y_sticky_lists))
         if self.get_xscale() == 'log':
             x_stickies = x_stickies[x_stickies > 0]
         if self.get_yscale() == 'log':
             y_stickies = y_stickies[y_stickies > 0]
 
         def handle_single_axis(
-                scale, shared_axes, name, axis, margin, stickies, set_bound):
+                scale, shared, name, axis, margin, stickies, set_bound):
 
             if not (scale and axis._get_autoscale_on()):
                 return  # nothing to do...
-
-            shared = shared_axes.get_siblings(self)
             # Base autoscaling on finite data limits when there is at least one
             # finite data limit among all the shared_axes and intervals.
             values = [val for ax in shared
@@ -3109,10 +3119,10 @@ class _AxesBase(martist.Artist):
             # End of definition of internal function 'handle_single_axis'.
 
         handle_single_axis(
-            scalex, self._shared_axes["x"], 'x', self.xaxis, self._xmargin,
+            scalex, x_shared, 'x', self.xaxis, self._xmargin,
             x_stickies, self.set_xbound)
         handle_single_axis(
-            scaley, self._shared_axes["y"], 'y', self.yaxis, self._ymargin,
+            scaley, y_shared, 'y', self.yaxis, self._ymargin,
             y_stickies, self.set_ybound)
 
     def _update_title_position(self, renderer):
