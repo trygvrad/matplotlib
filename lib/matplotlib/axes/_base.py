@@ -3033,9 +3033,6 @@ class _AxesBase(martist.Artist):
         x_stickies = y_stickies = np.array([])
         if self.use_sticky_edges:
             if self._xmargin and scalex and self.get_autoscalex_on():
-                # Use ._children and ._sticky_edges directly, because the extra
-                # artists in .get_children() (spines, axes, titles, etc.) never
-                # have sticky edges, so we can skip them for performance.
                 x_sticky_lists = []
                 for ax in x_shared:
                     for artist in ax.get_children():
