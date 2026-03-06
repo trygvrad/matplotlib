@@ -3032,10 +3032,14 @@ class _AxesBase(martist.Artist):
 
         x_stickies = y_stickies = np.array([])
         if self.use_sticky_edges:
+            # Use ._children and ._sticky_edges directly, because most extra
+            # artists in .get_children() (spines, titles, etc.) never have
+            # sticky edges. We also check axis objects since they can have
+            # sticky edges (e.g. polar RadialAxis).
             if self._xmargin and scalex and self.get_autoscalex_on():
                 x_sticky_lists = []
                 for ax in x_shared:
-                    for artist in ax.get_children():
+                    for artist in (*ax._children, *ax._axis_map.values()):
                         sticky_edges = artist._sticky_edges
                         if sticky_edges is not None and sticky_edges.x:
                             x_sticky_lists.append(sticky_edges.x)
@@ -3044,7 +3048,7 @@ class _AxesBase(martist.Artist):
             if self._ymargin and scaley and self.get_autoscaley_on():
                 y_sticky_lists = []
                 for ax in y_shared:
-                    for artist in ax.get_children():
+                    for artist in (*ax._children, *ax._axis_map.values()):
                         sticky_edges = artist._sticky_edges
                         if sticky_edges is not None and sticky_edges.y:
                             y_sticky_lists.append(sticky_edges.y)
