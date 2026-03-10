@@ -2451,7 +2451,7 @@ class _AxesBase(martist.Artist):
         Returns False if the point is outside the data range
         (e.g. negative coordinates with a log scale).
         """
-        for val, axis in [(x, self.xaxis), (y, self.yaxis)]:
+        for val, axis in zip([x, y], self._axis_map.values()):
             vmin, vmax = axis.limit_range_for_scale(val, val)
             if vmin != val or vmax != val:
                 return False
