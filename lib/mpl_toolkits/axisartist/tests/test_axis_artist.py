@@ -83,7 +83,9 @@ def test_axis_artist():
     for loc in ('left', 'right', 'bottom'):
         helper = AxisArtistHelperRectlinear.Fixed(ax, loc=loc)
         axisline = AxisArtist(ax, helper, offset=None, axis_direction=loc)
-        axisline.major_ticks.set_tick_direction("in")
+        axisline.major_ticks.set_tick_direction({
+            "left": "in", "right": "out", "bottom": "inout",
+        }[loc])
         ax.add_artist(axisline)
 
     # Settings for bottom AxisArtist.
