@@ -445,11 +445,15 @@ class TruetypeFonts(Fonts, metaclass=abc.ABCMeta):
             return metrics.advance
 
     def get_xheight(self, fontname: str, fontsize: float, dpi: float) -> float:
-        # Some fonts report the wrong x-height, while some don't store it, so
-        # we do a poor man's x-height.
-        metrics = self.get_metrics(
-            fontname, mpl.rcParams['mathtext.default'], 'x', fontsize, dpi)
-        return metrics.iceberg
+        consts = self.get_font_constants()
+        if consts.x_height is not None:
+            return consts.x_height * fontsize * dpi / 72
+        else:
+            # Some fonts report the wrong x-height, while some don't store it, so
+            # we do a poor man's x-height.
+            metrics = self.get_metrics(
+                fontname, mpl.rcParams['mathtext.default'], 'x', fontsize, dpi)
+            return metrics.iceberg
 
     def get_underline_thickness(self, font: str, fontsize: float, dpi: float) -> float:
         # This function used to grab underline thickness from the font
@@ -1006,6 +1010,10 @@ class FontConstantsBase:
     # The size of a quad space in LaTeX, as a multiple of design size.
     quad: T.ClassVar[float | None] = None
 
+    # The size of x-height in font design units (i.e., divided by units-per-em). If not
+    # provided, then this will be measured from the font itself.
+    x_height: T.ClassVar[float | None] = None
+
 
 class ComputerModernFontConstants(FontConstantsBase):
     # Previously, the x-height of Computer Modern was obtained from the font
@@ -1034,6 +1042,7 @@ class ComputerModernFontConstants(FontConstantsBase):
     # size.
     axis_height = 262144 / 2**20
     quad = 1048579 / 2**20
+    x_height = _x_height / 2**20
 
 
 class STIXFontConstants(FontConstantsBase):
@@ -1041,10 +1050,11 @@ class STIXFontConstants(FontConstantsBase):
     delta = 0.05
     delta_slanted = 0.3
     delta_integral = 0.3
+    _x_height = 450
+    x_height = _x_height / 1000
     # These values are extracted from the TeX table of STIXGeneral.ttf using FontForge,
     # and then divided by design xheight, since we multiply these values by the scaled
     # xheight later.
-    _x_height = 450
     supdrop = 386 / _x_height
     subdrop = 50.0002 / _x_height
     sup1 = 413 / _x_height
@@ -1068,10 +1078,11 @@ class STIXSansFontConstants(STIXFontConstants):
 
 
 class DejaVuSerifFontConstants(FontConstantsBase):
+    _x_height = 1063
+    x_height = _x_height / 2048
     # These values are extracted from the TeX table of DejaVuSerif.ttf using FontForge,
     # and then divided by design xheight, since we multiply these values by the scaled
     # xheight later.
-    _x_height = 1063
     supdrop = 790.527 / _x_height
     subdrop = 102.4 / _x_height
     sup1 = 845.824 / _x_height
@@ -1088,10 +1099,11 @@ class DejaVuSerifFontConstants(FontConstantsBase):
 
 
 class DejaVuSansFontConstants(FontConstantsBase):
+    _x_height = 1120
+    x_height = _x_height / 2048
     # These values are extracted from the TeX table of DejaVuSans.ttf using FontForge,
     # and then divided by design xheight, since we multiply these values by the scaled
     # xheight later.
-    _x_height = 1120
     supdrop = 790.527 / _x_height
     subdrop = 102.4 / _x_height
     sup1 = 845.824 / _x_height
