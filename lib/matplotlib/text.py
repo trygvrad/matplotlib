@@ -1042,6 +1042,8 @@ class Text(Artist):
             return bbox
 
     def get_tightbbox(self, renderer=None):
+        if not self.get_visible() or self.get_text() == "":
+            return Bbox.null()
         # Exclude text at data coordinates outside the valid domain of the axes
         # scales (e.g., negative coordinates with a log scale).
         if (self.axes
