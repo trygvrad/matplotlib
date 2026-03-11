@@ -17,6 +17,9 @@ from mpl_toolkits.axisartist.grid_helper_curvelinear import \
 
 @image_comparison(['custom_transform.png'], style='default', tol=0.2)
 def test_custom_transform():
+    # Remove this line when this test image is regenerated.
+    plt.rcParams.update({"xtick.direction": "in", "ytick.direction": "in"})
+
     class MyTransform(Transform):
         input_dims = output_dims = 2
 
@@ -79,6 +82,8 @@ def test_custom_transform():
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
 @image_comparison(['polar_box.png'], style='default', tol=0.09)
 def test_polar_box():
+    # Remove this line when this test image is regenerated.
+    plt.rcParams.update({"xtick.direction": "in", "ytick.direction": "in"})
     fig = plt.figure(figsize=(5, 5))
 
     # PolarAxes.PolarTransform takes radian. However, we want our coordinate
@@ -136,9 +141,12 @@ def test_polar_box():
     ax1.grid(True)
 
 
-# Remove tol & kerning_factor when this test image is regenerated.
+# Remove tol when this test image is regenerated.
 @image_comparison(['axis_direction.png'], style='default', tol=0.15)
 def test_axis_direction():
+    # Remove this line when this test image is regenerated.
+    plt.rcParams.update({"xtick.direction": "in", "ytick.direction": "in"})
+
     fig = plt.figure(figsize=(5, 5))
 
     # PolarAxes.PolarTransform takes radian. However, we want our coordinate

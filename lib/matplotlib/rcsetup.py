@@ -1116,6 +1116,8 @@ _validators = {
 
     # errorbar props
     "errorbar.capsize": validate_float,
+    "errorbar.capthick": validate_float_or_None,
+    "errorbar.elinewidth": validate_float_or_None,
 
     # axis props
     # alignment of x/y axis title
@@ -1184,6 +1186,7 @@ _validators = {
     "axes3d.mouserotationstyle": ["azel", "trackball", "sphere", "arcball"],
     "axes3d.trackballsize": validate_float,
     "axes3d.trackballborder": validate_float,
+    "axes3d.snap_rotation": validate_float,
 
     # scatter props
     "scatter.marker":     _validate_marker,
@@ -2219,6 +2222,12 @@ _DEFINITION = [
     ),
     _Section("Axis"),
     _Param(
+        "axes3d.snap_rotation",
+        default=5.0,
+        validator=validate_float,
+        description="Snap angle (in degrees) for 3D rotation when holding Control."
+   ),
+    _Param(
         "xaxis.labellocation",
         default="center",
         validator=["left", "center", "right"],
@@ -2944,6 +2953,17 @@ _DEFINITION = [
         default=0.0,
         validator=validate_float,
         description="length of end cap on error bars in pixels"
+    ),
+    _Param(
+        "errorbar.capthick",
+        default=None,
+        validator=validate_float_or_None,
+        description="thickness of end cap on error bars in points."),
+    _Param(
+        "errorbar.elinewidth",
+        default=None,
+        validator=validate_float_or_None,
+        description="line width of the error bar lines in points."
     ),
     _Section("Histogram plots"),
     _Param(
