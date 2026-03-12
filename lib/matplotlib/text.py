@@ -241,7 +241,7 @@ class Text(Artist):
         self._bbox_patch = None  # a FancyBboxPatch instance
         self._renderer = None
         if linespacing is None:
-            linespacing = 1.2  # Maybe use rcParam later.
+            linespacing = 'normal'  # Maybe use rcParam later.
         self.set_linespacing(linespacing)
         self.set_rotation_mode(rotation_mode)
         self.set_antialiased(mpl._val_or_rc(antialiased, 'text.antialiased'))
@@ -439,7 +439,8 @@ class Text(Artist):
             ismath="TeX" if self.get_usetex() else False,
             dpi=self.get_figure(root=True).dpi)
         lp_a = lp_h - lp_d
-        min_dy = lp_a * self._linespacing
+        linespacing = 1.2 if self._linespacing == 'normal' else self._linespacing
+        min_dy = lp_a * linespacing
 
         for i, line in enumerate(lines):
             clean_line, ismath = self._preprocess_math(line)
@@ -462,7 +463,7 @@ class Text(Artist):
             if i == 0:  # position at baseline
                 thisy = -a
             else:  # put baseline a good distance from bottom of previous line
-                thisy -= max(min_dy, a * self._linespacing)
+                thisy -= max(min_dy, a * linespacing)
 
             wads.append((w, a, d))
             xs.append(thisx)  # == 0.
@@ -1122,17 +1123,25 @@ class Text(Artist):
 
     def set_linespacing(self, spacing):
         """
-        Set the line spacing as a multiple of the font size.
-
-        The default line spacing is 1.2.
+        Set the line spacing.
 
         Parameters
         ----------
-        spacing : float (multiple of font size)
+        spacing : 'normal' or float, default: 'normal'
+            If 'normal', then the line spacing is automatically determined by font
+            metrics for each line individually.
+
+            If a float, then line spacing will be fixed to this multiple of the font
+            size for every line.
         """
-        _api.check_isinstance(Real, spacing=spacing)
+        if not cbook._str_equal(spacing, 'normal'):
+            _api.check_isinstance(Real, spacing=spacing)
         self._linespacing = spacing
         self.stale = True
+
+    def get_linespacing(self):
+        """Get the line spacing."""
+        return self._linespacing
 
     def set_fontfamily(self, fontname):
         """
