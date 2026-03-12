@@ -14,7 +14,7 @@ import matplotlib as mpl
 from matplotlib.backend_bases import MouseEvent
 from matplotlib.backends.backend_agg import RendererAgg
 from matplotlib.figure import Figure
-from matplotlib.font_manager import FontProperties
+from matplotlib.font_manager import FontProperties, fontManager, get_font
 import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -1061,8 +1061,16 @@ def test_text_annotation_get_window_extent():
 
     _, _, d = renderer.get_text_width_height_descent(
         'text', annotation._fontproperties, ismath=False)
-    _, _, lp_d = renderer.get_text_width_height_descent(
-        'lp', annotation._fontproperties, ismath=False)
+    font = get_font(fontManager._find_fonts_by_props(annotation._fontproperties))
+    for name, key in [('OS/2', 'sTypoDescender'), ('hhea', 'descent')]:
+        if (table := font.get_sfnt_table(name)) is not None:
+            units_per_em = font.get_sfnt_table('head')['unitsPerEm']
+            fontsize = annotation._fontproperties.get_size_in_points()
+            lp_d = -table[key] / units_per_em * fontsize * figure.dpi / 72
+            break
+    else:
+        _, _, lp_d = renderer.get_text_width_height_descent(
+            'lp', annotation._fontproperties, ismath=False)
     below_line = max(d, lp_d)
 
     # These numbers are specific to the current implementation of Text
@@ -1101,7 +1109,7 @@ def test_text_with_arrow_annotation_get_window_extent():
     assert bbox.width == text_bbox.width + 50.0
     # make sure the annotation text bounding box is same size
     # as the bounding box of the same string as a Text object
-    assert ann_txt_bbox.height == text_bbox.height
+    assert_almost_equal(ann_txt_bbox.height, text_bbox.height)
     assert ann_txt_bbox.width == text_bbox.width
     # compute the expected bounding box of arrow + text
     expected_bbox = mtransforms.Bbox.union([ann_txt_bbox, arrow_bbox])

@@ -481,27 +481,27 @@ def test_figure_legend_outside():
     todos += ['left ' + pos for pos in ['lower', 'center', 'upper']]
     todos += ['right ' + pos for pos in ['lower', 'center', 'upper']]
 
-    upperext = [20.722556, 26.722556, 790.333, 545.999]
-    lowerext = [20.722556, 70.056556, 790.333, 589.333]
-    leftext = [152.056556, 26.722556, 790.333, 589.333]
-    rightext = [20.722556, 26.722556, 658.999, 589.333]
+    upperext = [20.722556, 26.389222, 790.333, 545.16762]
+    lowerext = [20.722556, 70.723222, 790.333, 589.50162]
+    leftext = [152.056556, 26.389222, 790.333, 589.50162]
+    rightext = [20.722556, 26.389222, 658.999, 589.50162]
     axbb = [upperext, upperext, upperext,
             lowerext, lowerext, lowerext,
             leftext, leftext, leftext,
             rightext, rightext, rightext]
 
-    legbb = [[10., 555., 133., 590.],     # upper left
-             [338.5, 555., 461.5, 590.],  # upper center
-             [667, 555., 790.,  590.],    # upper right
-             [10., 10., 133.,  45.],      # lower left
-             [338.5, 10., 461.5,  45.],   # lower center
-             [667., 10., 790.,  45.],     # lower right
-             [10., 10., 133., 45.],       # left lower
-             [10., 282.5, 133., 317.5],   # left center
-             [10., 555., 133., 590.],     # left upper
-             [667, 10., 790., 45.],       # right lower
-             [667., 282.5, 790., 317.5],  # right center
-             [667., 555., 790., 590.]]    # right upper
+    legbb = [[10., 554., 133., 590.],     # upper left
+             [338.5, 554., 461.5, 590.],  # upper center
+             [667, 554., 790.,  590.],    # upper right
+             [10., 10., 133.,  46.],      # lower left
+             [338.5, 10., 461.5,  46.],   # lower center
+             [667., 10., 790.,  46.],     # lower right
+             [10., 10., 133., 46.],       # left lower
+             [10., 282., 133., 318.],     # left center
+             [10., 554., 133., 590.],     # left upper
+             [667, 10., 790., 46.],       # right lower
+             [667., 282., 790., 318.],    # right center
+             [667., 554., 790., 590.]]    # right upper
 
     for nn, todo in enumerate(todos):
         print(todo)

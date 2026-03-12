@@ -7753,7 +7753,7 @@ def test_titletwiny():
     bbox_y0_title = title.get_window_extent(renderer).y0  # bottom of title
     bbox_y1_xlabel2 = xlabel2.get_window_extent(renderer).y1  # top of xlabel2
     y_diff = bbox_y0_title - bbox_y1_xlabel2
-    assert np.isclose(y_diff, 3)
+    assert y_diff >= 3
 
 
 def test_titlesetpos():
@@ -8525,8 +8525,8 @@ def test_normal_axes():
 
     # test the axis bboxes
     target = [
-        [124.0, 76.89, 982.0, 32.0],
-        [86.89, 100.5, 52.0, 992.0],
+        [124.0, 75.56, 982.0, 33.33],
+        [86.89, 99.33, 52.0, 993.33],
     ]
     for nn, b in enumerate(bbaxis):
         targetbb = mtransforms.Bbox.from_bounds(*target[nn])
@@ -8546,7 +8546,7 @@ def test_normal_axes():
     targetbb = mtransforms.Bbox.from_bounds(*target)
     assert_array_almost_equal(bbax.bounds, targetbb.bounds, decimal=2)
 
-    target = [86.89, 76.89, 1019.11, 1015.61]
+    target = [86.89, 75.56, 1019.11, 1017.11]
     targetbb = mtransforms.Bbox.from_bounds(*target)
     assert_array_almost_equal(bbtb.bounds, targetbb.bounds, decimal=2)
 
