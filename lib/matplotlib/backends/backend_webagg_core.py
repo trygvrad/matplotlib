@@ -349,8 +349,11 @@ class FigureCanvasWebAggCore(backend_agg.FigureCanvasAgg):
     handle_key_press = handle_key_release = _handle_key
 
     def handle_toolbar_button(self, event):
-        # TODO: Be more suspicious of the input
-        getattr(self.toolbar, event['name'])()
+        name = event['name']
+        allowed = {item[3] for item in self.toolbar.toolitems if item[3] is not None}
+        if name not in allowed:
+            return
+        getattr(self.toolbar, name)()
 
     def handle_refresh(self, event):
         if self.manager:
