@@ -650,7 +650,6 @@ def test_surface3d():
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
 @image_comparison(['surface3d_label_offset_tick_position.png'], style='mpl20', tol=0.07)
 def test_surface3d_label_offset_tick_position():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     ax = plt.figure().add_subplot(projection="3d")
 
     x, y = np.mgrid[0:6 * np.pi:0.25, 0:4 * np.pi:0.25]
@@ -1733,7 +1732,6 @@ def test_errorbar3d():
 
 @image_comparison(['stem3d.png'], style='mpl20', tol=0.009)
 def test_stem3d():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig, axs = plt.subplots(2, 3, figsize=(8, 6),
                             constrained_layout=True,
                             subplot_kw={'projection': '3d'})

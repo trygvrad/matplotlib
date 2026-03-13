@@ -562,15 +562,6 @@ def test_anchored_artists():
     box.drawing_area.add_artist(el)
     ax.add_artist(box)
 
-    # This block used to test the AnchoredEllipse class, but that was removed. The block
-    # remains, though it duplicates the above ellipse, so that the test image doesn't
-    # need to be regenerated.
-    box = AnchoredAuxTransformBox(ax.transData, loc='lower left', frameon=True,
-                                  pad=0.5, borderpad=0.4)
-    el = Ellipse((0, 0), width=0.1, height=0.25, angle=-60)
-    box.drawing_area.add_artist(el)
-    ax.add_artist(box)
-
     asb = AnchoredSizeBar(ax.transData, 0.2, r"0.2 units", loc='lower right',
                           pad=0.3, borderpad=0.4, sep=4, fill_bar=True,
                           frameon=False, label_top=True, prop={'size': 20},
