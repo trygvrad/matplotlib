@@ -1,6 +1,7 @@
 import os
 import sys
 from unittest.mock import MagicMock
+
 import pytest
 
 import matplotlib.backends.backend_webagg_core

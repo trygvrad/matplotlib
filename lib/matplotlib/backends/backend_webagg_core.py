@@ -350,10 +350,10 @@ class FigureCanvasWebAggCore(backend_agg.FigureCanvasAgg):
 
     def handle_toolbar_button(self, event):
         name = event['name']
-        allowed = {item[3] for item in self.toolbar.toolitems if item[3] is not None}
-        if name not in allowed:
-            return
-        getattr(self.toolbar, name)()
+        for item in self.toolbar.toolitems:
+            if item[3] is not None and name == item[3]:
+                getattr(self.toolbar, name)()
+                break
 
     def handle_refresh(self, event):
         if self.manager:
