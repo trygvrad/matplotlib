@@ -2479,8 +2479,7 @@ class _AxesBase(martist.Artist):
         (e.g. negative coordinates with a log scale).
         """
         for val, axis in zip([x, y], self._axis_map.values()):
-            vmin, vmax = axis.limit_range_for_scale(val, val)
-            if vmin != val or vmax != val:
+            if not axis._scale.val_in_range(val):
                 return False
         return True
 
