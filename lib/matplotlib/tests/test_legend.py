@@ -2,6 +2,7 @@ import collections
 import io
 import itertools
 import platform
+import sys
 import time
 from unittest import mock
 import warnings
@@ -201,10 +202,9 @@ def test_alpha_rcparam():
         leg.legendPatch.set_facecolor([1, 0, 0, 0.5])
 
 
-@image_comparison(['fancy.png'], remove_text=True, style='mpl20', tol=0.05)
+@image_comparison(['fancy.png'], remove_text=True, style='mpl20',
+                  tol=0.01 if sys.platform == 'darwin' else 0)
 def test_fancy():
-    # Tolerance caused by changing default shadow "shade" from 0.3 to 1 - 0.7 =
-    # 0.30000000000000004
     # using subplot triggers some offsetbox functionality untested elsewhere
     plt.subplot(121)
     plt.plot([5] * 10, 'o--', label='XX')
@@ -216,7 +216,7 @@ def test_fancy():
 
 
 @image_comparison(['framealpha'], remove_text=True, style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.024)
+                  tol=0 if platform.machine() == 'x86_64' else 0.021)
 def test_framealpha():
     x = np.linspace(1, 100, 100)
     y = x
@@ -529,8 +529,7 @@ def test_figure_legend_outside():
                         rtol=1e-4)
 
 
-@image_comparison(['legend_stackplot.png'], style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.031)
+@image_comparison(['legend_stackplot.png'], style='mpl20')
 def test_legend_stackplot():
     """Test legend for PolyCollection using stackplot."""
     # related to #1341, #1943, and PR #3303
@@ -666,7 +665,7 @@ def test_empty_bar_chart_with_legend():
 
 
 @image_comparison(['shadow_argument_types.png'], remove_text=True, style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.028)
+                  tol=0.028 if sys.platform == 'darwin' else 0)
 def test_shadow_argument_types():
     # Test that different arguments for shadow work as expected
     fig, ax = plt.subplots()

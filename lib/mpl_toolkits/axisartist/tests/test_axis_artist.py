@@ -24,8 +24,7 @@ def test_ticks():
     ax.add_artist(ticks_out)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['axis_artist_labelbase.png'], style='default', tol=0.02)
+@image_comparison(['axis_artist_labelbase.png'], style='default')
 def test_labelbase():
     fig, ax = plt.subplots()
 
@@ -39,8 +38,7 @@ def test_labelbase():
     ax.add_artist(label)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['axis_artist_ticklabels.png'], style='default', tol=0.03)
+@image_comparison(['axis_artist_ticklabels.png'], style='default')
 def test_ticklabels():
     fig, ax = plt.subplots()
 
@@ -72,8 +70,7 @@ def test_ticklabels():
     ax.set_ylim(0, 1)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['axis_artist.png'], style='default', tol=0.03)
+@image_comparison(['axis_artist.png'], style='default')
 def test_axis_artist():
     fig, ax = plt.subplots()
 

@@ -844,7 +844,7 @@ def test_cmap_and_norm_from_levels_and_colors():
     ax.tick_params(labelleft=False, labelbottom=False)
 
 
-@image_comparison(['boundarynorm_and_colorbar.png'], tol=1.0)
+@image_comparison(['boundarynorm_and_colorbar.png'])
 def test_boundarynorm_and_colorbarbase():
     # Make a figure and axes with dimensions as desired.
     fig = plt.figure()

@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 from numpy.testing import assert_allclose
 import pytest
@@ -9,7 +11,8 @@ from matplotlib.testing.decorators import image_comparison, check_figures_equal
 import matplotlib.ticker as mticker
 
 
-@image_comparison(['polar_axes.png'], style='default', tol=0.012)
+@image_comparison(['polar_axes.png'], style='default',
+                  tol=0.009 if sys.platform == 'darwin' else 0)
 def test_polar_annotations():
     # You can specify the xypoint and the xytext in different positions and
     # coordinate systems, and optionally turn on a connecting line and mark the
@@ -44,7 +47,7 @@ def test_polar_annotations():
 
 
 @image_comparison(['polar_coords.png'], style='default', remove_text=True,
-                  tol=0.014)
+                  tol=0.013 if sys.platform == 'darwin' else 0)
 def test_polar_coord_annotations():
     # You can also use polar notation on a cartesian axes.  Here the native
     # coordinate system ('data') is cartesian, so you need to specify the
@@ -214,8 +217,7 @@ def test_polar_theta_position():
     ax.set_theta_direction('clockwise')
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['polar_rlabel_position.png'], style='default', tol=0.07)
+@image_comparison(['polar_rlabel_position.png'], style='default')
 def test_polar_rlabel_position():
     fig = plt.figure()
     ax = fig.add_subplot(projection='polar')
@@ -230,8 +232,7 @@ def test_polar_title_position():
     ax.set_title('foo')
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['polar_theta_wedge.png'], style='default', tol=0.2)
+@image_comparison(['polar_theta_wedge.png'], style='default')
 def test_polar_theta_limits():
     r = np.arange(0, 3.0, 0.01)
     theta = 2*np.pi*r
