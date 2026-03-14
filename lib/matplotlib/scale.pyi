@@ -3,6 +3,7 @@ from matplotlib.transforms import Transform
 
 from collections.abc import Callable, Iterable
 from typing import Literal
+import numpy as np
 from numpy.typing import ArrayLike
 
 class ScaleBase:
@@ -12,6 +13,7 @@ class ScaleBase:
     def limit_range_for_scale(
         self, vmin: float, vmax: float, minpos: float
     ) -> tuple[float, float]: ...
+    def val_in_range(self, val: ArrayLike) -> bool | np.ndarray: ...
 
 class LinearScale(ScaleBase):
     name: str
