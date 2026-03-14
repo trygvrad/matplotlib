@@ -824,6 +824,13 @@ class Axis(martist.Artist):
         current scale.
         """
         return self._scale.limit_range_for_scale(vmin, vmax, self.get_minpos())
+    
+    def val_in_range(self, val):
+        """
+        Return `True` if the value(s) lie within the domain supported by the 
+        current scale.
+        """
+        return self._scale.val_in_range(val)
 
     def _get_autoscale_on(self):
         """Return whether this Axis is autoscaled."""
