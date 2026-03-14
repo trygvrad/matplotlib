@@ -113,6 +113,17 @@ class ScaleBase:
         This is used by log scales to determine a minimum value.
         """
         return vmin, vmax
+    
+    def val_in_range(self, val):
+        """
+        Return whether the value(s) are within the valid range for this scale.
+        """
+        if np.isscalar(val):
+            vmin, vmax = self.limit_range_for_scale(val, val, minpos=1e-300)
+            return (vmax == val) and (vmin == val)
+
+        val = np.asanyarray(val)
+        return np.array([self.val_in_range(v) for v in val])
 
 
 def _make_axis_parameter_optional(init_func):
@@ -195,6 +206,13 @@ class LinearScale(ScaleBase):
         `~matplotlib.transforms.IdentityTransform`.
         """
         return IdentityTransform()
+    
+    def val_in_range(self, val):
+        """
+        Return `True` for all values.
+        """
+        val = np.asanyarray(val)
+        return np.ones(val.shape, dtype=bool)
 
 
 class FuncTransform(Transform):
@@ -399,6 +417,10 @@ class LogScale(ScaleBase):
 
         return (minpos if vmin <= 0 else vmin,
                 minpos if vmax <= 0 else vmax)
+    
+    def val_in_range(self, val):
+        """Return `True` for positive values."""
+        return np.asanyarray(val) > 0
 
 
 class FuncScaleLog(LogScale):
@@ -819,6 +841,13 @@ class LogitScale(ScaleBase):
             minpos = 1e-7  # Should rarely (if ever) have a visible effect.
         return (minpos if vmin <= 0 else vmin,
                 1 - minpos if vmax >= 1 else vmax)
+    
+    def val_in_range(self, val):
+        """
+        Return `True` if value(s) lie between 0 and 1 (excluded)
+        """
+        val = np.asanyarray(val)
+        return (val > 0) & (val < 1)
 
 
 _scale_mapping = {
