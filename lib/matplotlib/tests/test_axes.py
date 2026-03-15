@@ -8084,6 +8084,14 @@ def test_twinning_default_axes_class():
 def test_zero_linewidth():
     # Check that setting a zero linewidth doesn't error
     plt.plot([0, 1], [0, 1], ls='--', lw=0)
+    plt.gcf().canvas.draw()
+
+
+@mpl.style.context('mpl20')
+def test_stairs_fill_zero_linewidth():
+    fig, ax = plt.subplots()
+    ax.stairs([1, 2, 3, 4], [1, 2, 3, 4, 5], fill=True, ls='--')
+    fig.canvas.draw()
 
 
 def test_empty_errorbar_legend():
