@@ -2,6 +2,7 @@
 Tests specific to the patches module.
 """
 import platform
+import unittest.mock
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_equal
@@ -907,12 +908,20 @@ def test_default_linestyle():
     assert patch.get_linestyle() == 'solid'
 
 
-@check_figures_equal()
-def test_patch_zero_linewidth_dashed_draw(fig_test, fig_ref):
-    fig_test.subplots().add_patch(
-        Rectangle((0, 0), 1, 1, fill=False, linewidth=0, linestyle='--'))
-    fig_ref.subplots().add_patch(
-        Rectangle((0, 0), 1, 1, fill=False, linewidth=0, linestyle='-'))
+@mpl.style.context('mpl20')
+def test_patch_zero_linewidth_dashed_uses_solid_gc_dashes():
+    _, ax = plt.subplots()
+    rect = Rectangle((0, 0), 1, 1, fill=False, linewidth=0, linestyle='--')
+    ax.add_patch(rect)
+    renderer = ax.figure.canvas.get_renderer()
+    with unittest.mock.patch(
+            "matplotlib.backend_bases.GraphicsContextBase.set_dashes",
+            autospec=True,
+            wraps=mpl.backend_bases.GraphicsContextBase.set_dashes,
+    ) as set_dashes:
+        rect.draw(renderer)
+
+    assert set_dashes.call_args_list[-1].args[1:] == (0, None)
 
 
 def test_default_capstyle():

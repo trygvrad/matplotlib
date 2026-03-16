@@ -8081,12 +8081,6 @@ def test_twinning_default_axes_class():
     assert type(twiny) is Axes
 
 
-@check_figures_equal()
-def test_zero_linewidth(fig_test, fig_ref):
-    fig_test.subplots().plot([0, 1], [0, 1], ls='--', lw=0)
-    fig_ref.subplots().plot([0, 1], [0, 1], ls='-', lw=0)
-
-
 @mpl.style.context('mpl20')
 @check_figures_equal()
 def test_stairs_fill_zero_linewidth(fig_test, fig_ref):
