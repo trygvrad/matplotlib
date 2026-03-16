@@ -8081,17 +8081,19 @@ def test_twinning_default_axes_class():
     assert type(twiny) is Axes
 
 
-def test_zero_linewidth():
-    # Check that setting a zero linewidth doesn't error
-    plt.plot([0, 1], [0, 1], ls='--', lw=0)
-    plt.gcf().canvas.draw()
+@check_figures_equal()
+def test_zero_linewidth(fig_test, fig_ref):
+    fig_test.subplots().plot([0, 1], [0, 1], ls='--', lw=0)
+    fig_ref.subplots().plot([0, 1], [0, 1], ls='-', lw=0)
 
 
 @mpl.style.context('mpl20')
-def test_stairs_fill_zero_linewidth():
-    fig, ax = plt.subplots()
-    ax.stairs([1, 2, 3, 4], [1, 2, 3, 4, 5], fill=True, ls='--')
-    fig.canvas.draw()
+@check_figures_equal()
+def test_stairs_fill_zero_linewidth(fig_test, fig_ref):
+    fig_test.subplots().stairs(
+        [1, 2, 3, 4], [1, 2, 3, 4, 5], fill=True, ls='--')
+    fig_ref.subplots().stairs(
+        [1, 2, 3, 4], [1, 2, 3, 4, 5], fill=True, ls='-')
 
 
 def test_empty_errorbar_legend():
