@@ -292,7 +292,7 @@ def test_hatching():
 def test_legend_remove():
     fig, ax = plt.subplots()
     lines = ax.plot(range(10))
-    leg = fig.legend(lines, "test")
+    leg = fig.legend(lines, ["test"])
     leg.remove()
     assert fig.legends == []
     leg = ax.legend("test")
@@ -423,6 +423,15 @@ class TestLegendFunction:
         with mock.patch('matplotlib.legend.Legend') as Legend:
             plt.legend()
         Legend.assert_called_with(host, [p1, p2], ['Density', 'Temperature'])
+
+    def test_legend_warns_on_unequal_number_of_handles_and_labels(self):
+        fig, ax = plt.subplots()
+        line1, = ax.plot([1, 2])
+        line2, = ax.plot([3, 4])
+        with pytest.warns(UserWarning, match="Mismatched number of handles and labels"):
+            ax.legend([line1, line2], ['only_one'])  # 2 handles, 1 label
+        with pytest.warns(UserWarning, match="Mismatched number of handles and labels"):
+            ax.legend([line1], ['label_a', 'label_b'])  # 1 handle, 2 labels
 
 
 class TestLegendFigureFunction:
