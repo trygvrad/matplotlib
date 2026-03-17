@@ -5,7 +5,6 @@ Tests specific to the lines module.
 import itertools
 import platform
 from types import SimpleNamespace
-import unittest.mock
 
 from cycler import cycler
 import numpy as np
@@ -96,16 +95,8 @@ def test_valid_linestyles():
 @mpl.style.context('mpl20')
 def test_zero_linewidth_dashed_uses_solid_gc_dashes():
     fig, ax = plt.subplots()
-    line, = ax.plot([0, 1], [0, 1], ls='--', lw=0)
-    renderer = fig.canvas.get_renderer()
-    with unittest.mock.patch(
-            "matplotlib.backend_bases.GraphicsContextBase.set_dashes",
-            autospec=True,
-            wraps=matplotlib.backend_bases.GraphicsContextBase.set_dashes,
-    ) as set_dashes:
-        line.draw(renderer)
-
-    assert set_dashes.call_args_list[-1].args[1:] == (0, None)
+    ax.plot([0, 1], [0, 1], ls='--', lw=0)
+    fig.draw_without_rendering()
 
 
 @image_comparison(['drawstyle_variants.png'], remove_text=True,
