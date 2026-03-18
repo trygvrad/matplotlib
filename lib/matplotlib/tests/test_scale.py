@@ -380,15 +380,15 @@ def test_val_in_range():
         ('linear', 10.0, True),
         ('linear', -10.0, True),
         ('linear', 0.0, True),
-        ('linear', np.inf, True),
-        ('linear', np.nan, True),
+        ('linear', np.inf, False),
+        ('linear', np.nan, False),
 
         # LogScale: Only positive values (> 0)
         ('log', 1.0, True),
         ('log', 1e-300, True),
         ('log', 0.0, False),
         ('log', -1.0, False),
-        ('log', np.inf, True),
+        ('log', np.inf, False),
         ('log', np.nan, False),
 
         # LogitScale: Strictly between 0 and 1
@@ -405,7 +405,7 @@ def test_val_in_range():
         ('symlog', 10.0, True),
         ('symlog', -10.0, True),
         ('symlog', 0.0, True),
-        ('symlog', np.inf, True),
+        ('symlog', np.inf, False),
         ('symlog', np.nan, False),
     ]
 
@@ -429,5 +429,7 @@ def test_val_in_range_base_fallback():
     assert s.val_in_range(1.0) is True
     assert s.val_in_range(-5.5) is True
 
-    # NaN check: fallback uses 'vmin == vmax'
+    # NaN and Inf returns False since they cannot be drawn in a plot
     assert s.val_in_range(np.nan) is False
+    assert s.val_in_range(np.inf) is False
+    assert s.val_in_range(-np.inf) is False
