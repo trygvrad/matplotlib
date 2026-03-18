@@ -34,6 +34,7 @@ import textwrap
 from functools import wraps
 
 import numpy as np
+import math
 
 import matplotlib as mpl
 from matplotlib import _api, _docstring
@@ -122,8 +123,11 @@ class ScaleBase:
         efficient solutions for their domain.
         """
         try:
-            vmin, vmax = self.limit_range_for_scale(val, val, minpos=1e-300)
-            return vmin == val and vmax == val
+            if not math.isfinite(val):
+                return False
+            else:
+                vmin, vmax = self.limit_range_for_scale(val, val, minpos=1e-300)
+                return vmin == val and vmax == val
         except (TypeError, ValueError):
             return False
 
@@ -213,9 +217,9 @@ class LinearScale(ScaleBase):
         """
         Return whether the value is within the valid range for this scale.
 
-        This is True for all values.
+        This is True for all values, except +-inf and NaN.
         """
-        return True
+        return math.isfinite(val)
 
 
 class FuncTransform(Transform):
@@ -425,9 +429,9 @@ class LogScale(ScaleBase):
         """
         Return whether the value is within the valid range for this scale.
 
-        This is True for value(s) > 0
+        This is True for value(s) > 0 except +inf.
         """
-        if np.isnan(val):
+        if not math.isfinite(val):
             return False
         else:
             return val > 0
@@ -613,6 +617,14 @@ class SymmetricalLogScale(ScaleBase):
         """Return the `.SymmetricalLogTransform` associated with this scale."""
         return self._transform
 
+    def val_in_range(self, val):
+        """
+        Return whether the value is within the valid range for this scale.
+
+        This is True for all values, except +-inf and NaN.
+        """
+        return math.isfinite(val)
+
 
 class AsinhTransform(Transform):
     """Inverse hyperbolic-sine transformation used by `.AsinhScale`"""
@@ -738,6 +750,14 @@ class AsinhScale(ScaleBase):
             axis.set_major_formatter(LogFormatterSciNotation(self._base))
         else:
             axis.set_major_formatter('{x:.3g}')
+
+    def val_in_range(self, val):
+        """
+        Return whether the value is within the valid range for this scale.
+
+        This is True for all values, except +-inf and NaN.
+        """
+        return math.isfinite(val)
 
 
 class LogitTransform(Transform):
