@@ -1677,6 +1677,8 @@ def test__resample_valid_output():
 @pytest.mark.parametrize("data, interpolation, expected",
     [(np.array([[0.1, 0.3, 0.2]]), mimage.NEAREST,
       np.array([[0.1, 0.1, 0.1, 0.3, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]])),
+     (np.array([[0.1, 0.2, 0.3, 0.4, 0.5, 0.6]]), mimage.NEAREST,
+      np.array([[0.1, 0.2, 0.2, 0.3, 0.4, 0.4, 0.5, 0.6, 0.6]])),
      (np.array([[0.1, 0.3, 0.2]]), mimage.BILINEAR,
       np.array([[0.1, 0.1, 0.15, 0.21, 0.27, 0.285, 0.255, 0.225, 0.2, 0.2]])),
      (np.array([[0.1, 0.9]]), mimage.BILINEAR,
