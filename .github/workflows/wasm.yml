@@ -52,6 +52,7 @@ jobs:
       - name: Build wheels for wasm
         uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a  # v3.4.0
         env:
+          CIBW_BUILD: "cp312-*"
           CIBW_PLATFORM: "pyodide"
 
       - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4  # v5.0.0
