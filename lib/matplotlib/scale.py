@@ -30,11 +30,11 @@ Third parties can register their scales by name through `register_scale`.
 """  # noqa: E501
 
 import inspect
+import math
 import textwrap
 from functools import wraps
 
 import numpy as np
-import math
 
 import matplotlib as mpl
 from matplotlib import _api, _docstring
@@ -429,7 +429,7 @@ class LogScale(ScaleBase):
         """
         Return whether the value is within the valid range for this scale.
 
-        This is True for value(s) > 0 except +inf.
+        This is True for value(s) > 0 except +inf and NaN.
         """
         return math.isfinite(val) and val > 0
 
@@ -875,7 +875,7 @@ class LogitScale(ScaleBase):
 
         This is True for value(s) which are between 0 and 1 (excluded).
         """
-        return (val > 0) and (val < 1)
+        return 0 < val < 1
 
 
 _scale_mapping = {
