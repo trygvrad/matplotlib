@@ -410,8 +410,12 @@ class _ImageBase(mcolorizer.ColorizingArtist):
         magnified_extents = clipped_bbox.extents * magnification
         if ((not unsampled) and round_to_pixel_border):
             # Round to the nearest output pixel
-            x0, x1 = np.floor(magnified_extents[0::2] + 0.5)  # round half up
-            y0, y1 = np.ceil(magnified_extents[1::2] - 0.5)  # round half down
+            # Add a tiny fudge amount to account for numerical precision loss
+            # on the two sides away from the Agg anchor point (x0, y1)
+            x0 = np.floor(magnified_extents[0] + 0.5)  # round half up
+            y0 = np.ceil(magnified_extents[1] - 0.5 - 1e-8)  # round half down
+            x1 = np.floor(magnified_extents[2] + 0.5 + 1e-8)  # round half up
+            y1 = np.ceil(magnified_extents[3] - 0.5)  # round half down
             magnified_bbox = Bbox.from_extents([x0, y0, x1, y1])
         else:
             magnified_bbox = Bbox.from_extents(magnified_extents)
