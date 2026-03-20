@@ -601,8 +601,8 @@ def _get_font_alt_names(font, primary_name):
             sfnt.get((*mac_key, subfam_id), b'').decode('latin-1'),
         )
         _try_add(
-            sfnt.get((*ms_key, fam_id), b'').decode('utf_16_be'),
-            sfnt.get((*ms_key, subfam_id), b'').decode('utf_16_be'),
+            sfnt.get((*ms_key, fam_id), b'').decode('utf-16-be'),
+            sfnt.get((*ms_key, subfam_id), b'').decode('utf-16-be'),
         )
 
     return result
