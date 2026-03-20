@@ -15,7 +15,7 @@ import numpy as np
 import matplotlib as mpl
 from . import _api, artist, cbook, _docstring, colors as mcolors
 from .artist import Artist
-from .font_manager import FontProperties
+from .font_manager import FontProperties, fontManager, get_font
 from .patches import FancyArrowPatch, FancyBboxPatch, Rectangle
 from .textpath import TextPath, TextToPath  # noqa # Logically located here
 from .transforms import (
@@ -241,7 +241,7 @@ class Text(Artist):
         self._bbox_patch = None  # a FancyBboxPatch instance
         self._renderer = None
         if linespacing is None:
-            linespacing = 1.2  # Maybe use rcParam later.
+            linespacing = 'normal'  # Maybe use rcParam later.
         self.set_linespacing(linespacing)
         self.set_rotation_mode(rotation_mode)
         self.set_antialiased(mpl._val_or_rc(antialiased, 'text.antialiased'))
@@ -433,15 +433,40 @@ class Text(Artist):
         xs = []
         ys = []
 
-        # Full vertical extent of font, including ascenders and descenders:
-        _, lp_h, lp_d = _get_text_metrics_with_cache(
-            renderer, "lp", self._fontproperties,
-            ismath="TeX" if self.get_usetex() else False,
-            dpi=self.get_figure(root=True).dpi)
-        lp_a = lp_h - lp_d
-        min_dy = lp_a * self._linespacing
+        min_ascent = min_descent = line_gap = None
+        dpi = self.get_figure(root=True).dpi
+        # Determine full vertical extent of font, including ascenders and descenders:
+        if not self.get_usetex():
+            font = get_font(fontManager._find_fonts_by_props(self._fontproperties))
+            possible_metrics = [
+                ('OS/2', 'sTypoLineGap', 'sTypoAscender', 'sTypoDescender'),
+                ('hhea', 'lineGap', 'ascent', 'descent')
+            ]
+            for table_name, linegap_key, ascent_key, descent_key in possible_metrics:
+                table = font.get_sfnt_table(table_name)
+                if table is None:
+                    continue
+                # Rescale to font size/DPI if the metrics were available.
+                fontsize = self._fontproperties.get_size_in_points()
+                units_per_em = font.get_sfnt_table('head')['unitsPerEm']
+                line_gap = table[linegap_key] / units_per_em * fontsize * dpi / 72
+                min_ascent = table[ascent_key] / units_per_em * fontsize * dpi / 72
+                min_descent = -table[descent_key] / units_per_em * fontsize * dpi / 72
+                break
+        if None in (min_ascent, min_descent):
+            # Fallback to font measurement.
+            _, h, min_descent = _get_text_metrics_with_cache(
+                renderer, "lp", self._fontproperties,
+                ismath="TeX" if self.get_usetex() else False,
+                dpi=dpi)
+            min_ascent = h - min_descent
+            line_gap = 0
 
-        for i, line in enumerate(lines):
+        # Don't increase text height too much if it's not multiple lines.
+        if len(lines) == 1:
+            line_gap = 0
+
+        for line in lines:
             clean_line, ismath = self._preprocess_math(line)
             if clean_line:
                 w, h, d = _get_text_metrics_with_cache(
@@ -451,18 +476,24 @@ class Text(Artist):
                 w = h = d = 0
 
             a = h - d
-            # To ensure good linespacing, pretend that the ascent (resp.
-            # descent) of all lines is at least as large as "l" (resp. "p").
-            a = max(a, lp_a)
-            d = max(d, lp_d)
+
+            if self.get_usetex() or self._linespacing == 'normal':
+                # To ensure good linespacing, pretend that the ascent / descent of all
+                # lines is at least as large as the measured sizes.
+                a = max(a, min_ascent) + line_gap / 2
+                d = max(d, min_descent) + line_gap / 2
+            else:
+                # If using a fixed line spacing, then every line's spacing will be
+                # determined by the font metrics of the first available font.
+                line_height = self._linespacing * (min_ascent + min_descent)
+                leading = line_height - (a + d)
+                a += leading / 2
+                d += leading / 2
 
             # Metrics of the last line that are needed later:
             baseline = a - thisy
 
-            if i == 0:  # position at baseline
-                thisy = -a
-            else:  # put baseline a good distance from bottom of previous line
-                thisy -= max(min_dy, a * self._linespacing)
+            thisy -= a
 
             wads.append((w, a, d))
             xs.append(thisx)  # == 0.
@@ -1122,17 +1153,25 @@ class Text(Artist):
 
     def set_linespacing(self, spacing):
         """
-        Set the line spacing as a multiple of the font size.
-
-        The default line spacing is 1.2.
+        Set the line spacing.
 
         Parameters
         ----------
-        spacing : float (multiple of font size)
+        spacing : 'normal' or float, default: 'normal'
+            If 'normal', then the line spacing is automatically determined by font
+            metrics for each line individually.
+
+            If a float, then line spacing will be fixed to this multiple of the font
+            size for every line.
         """
-        _api.check_isinstance(Real, spacing=spacing)
+        if not cbook._str_equal(spacing, 'normal'):
+            _api.check_isinstance(Real, spacing=spacing)
         self._linespacing = spacing
         self.stale = True
+
+    def get_linespacing(self):
+        """Get the line spacing."""
+        return self._linespacing
 
     def set_fontfamily(self, fontname):
         """
