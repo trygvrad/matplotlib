@@ -8100,6 +8100,50 @@ def test_twinning_default_axes_class():
     assert type(twiny) is Axes
 
 
+def test_twinning_patch_visibility_default():
+    _, ax = plt.subplots()
+    ax2 = ax.twinx()
+    assert ax.patch.get_visible()
+    assert not ax2.patch.get_visible()
+
+
+def test_twinning_patch_visibility_respects_delta_zorder():
+    _, ax = plt.subplots()
+    ax2 = ax.twinx(delta_zorder=-1)
+    assert ax2.get_zorder() == ax.get_zorder() - 1
+    assert ax2.patch.get_visible()
+    assert not ax.patch.get_visible()
+
+
+def test_twinning_patch_visibility_multiple_twins_same_zorder():
+    _, ax = plt.subplots()
+    ax2 = ax.twinx()
+    ax3 = ax.twinx()
+    assert ax.patch.get_visible()
+    assert not ax2.patch.get_visible()
+    assert not ax3.patch.get_visible()
+
+
+def test_twinning_patch_visibility_updates_for_new_bottom():
+    _, ax = plt.subplots()
+    ax2 = ax.twinx()
+    ax3 = ax.twinx(delta_zorder=-1)
+    assert ax3.patch.get_visible()
+    assert not ax2.patch.get_visible()
+    assert not ax.patch.get_visible()
+
+
+def test_twinning_patch_visibility_updates_after_set_zorder():
+    _, ax = plt.subplots()
+    ax2 = ax.twinx()
+    assert ax.patch.get_visible()
+    assert not ax2.patch.get_visible()
+
+    ax2.set_zorder(ax.get_zorder() - 1)
+    assert ax2.patch.get_visible()
+    assert not ax.patch.get_visible()
+
+
 @mpl.style.context('mpl20')
 @check_figures_equal()
 def test_stairs_fill_zero_linewidth(fig_test, fig_ref):
