@@ -431,10 +431,7 @@ class LogScale(ScaleBase):
 
         This is True for value(s) > 0 except +inf.
         """
-        if not math.isfinite(val):
-            return False
-        else:
-            return val > 0
+        return math.isfinite(val) and val > 0
 
 
 class FuncScaleLog(LogScale):
