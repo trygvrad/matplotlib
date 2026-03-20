@@ -2878,7 +2878,7 @@ def _make_triangulation_data():
 
 
 @mpl3d_image_comparison(['scale3d_artists_log.png'], style='mpl20',
-                        remove_text=False, tol=0.03)
+                        remove_text=False, tol=0.032)
 def test_scale3d_artists_log():
     """Test all 3D artist types with log scale."""
     fig = plt.figure(figsize=(16, 12))

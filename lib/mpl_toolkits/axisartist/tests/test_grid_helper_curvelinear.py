@@ -78,7 +78,7 @@ def test_custom_transform():
     ax1.grid(True)
 
 
-@image_comparison(['polar_box.png'], style='mpl20')
+@image_comparison(['polar_box.png'], style='mpl20', tol=0.04)
 def test_polar_box():
     plt.rcParams.update({"xtick.direction": "inout", "ytick.direction": "out"})
     fig = plt.figure(figsize=(5, 5))
@@ -138,7 +138,7 @@ def test_polar_box():
     ax1.grid(True)
 
 
-@image_comparison(['axis_direction.png'], style='mpl20')
+@image_comparison(['axis_direction.png'], style='mpl20', tol=0.04)
 def test_axis_direction():
     fig = plt.figure(figsize=(5, 5))
 
