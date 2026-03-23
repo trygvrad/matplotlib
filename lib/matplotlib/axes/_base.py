@@ -4657,6 +4657,9 @@ class _AxesBase(martist.Artist):
         twin.set_zorder(self.zorder)
 
         self._twinned_axes.join(self, twin)
+
+        twin.set_position(self.get_position())
+
         return twin
 
     def twinx(self, axes_class=None, **kwargs):

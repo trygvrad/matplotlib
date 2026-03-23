@@ -477,6 +477,16 @@ def test_twin_inherit_autoscale_setting():
     assert not ax_y_off.get_autoscaley_on()
 
 
+@pytest.mark.parametrize("twin", ("x", "y"))
+def test_twin_respects_position_after_set_position(twin):
+    fig, ax = plt.subplots()
+
+    ax.set_position([0.2, 0.2, 0.5, 0.5])
+    ax2 = getattr(ax, f"twin{twin}")()
+
+    assert_allclose(ax.bbox.bounds, ax2.bbox.bounds)
+
+
 def test_inverted_cla():
     # GitHub PR #5450. Setting autoscale should reset
     # axes to be non-inverted.
