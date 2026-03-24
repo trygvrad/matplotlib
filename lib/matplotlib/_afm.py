@@ -478,9 +478,17 @@ class AFM:
         """Return the fontangle as float."""
         return self._header['ItalicAngle']
 
+    def get_ascender(self) -> float:
+        """Return the ascent as float."""
+        return self._header['Ascender']
+
     def get_capheight(self) -> float:
         """Return the cap height as float."""
         return self._header['CapHeight']
+
+    def get_descender(self) -> float:
+        """Return the descent as float."""
+        return self._header['Descender']
 
     def get_xheight(self) -> float:
         """Return the xheight as float."""
