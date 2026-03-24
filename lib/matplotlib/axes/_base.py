@@ -4657,8 +4657,8 @@ class _AxesBase(martist.Artist):
         twin.set_zorder(self.zorder)
 
         self._twinned_axes.join(self, twin)
-
-        twin.set_position(self.get_position())
+        if not self.get_in_layout():
+            twin.set_position(self.get_position()) 
 
         return twin
 
