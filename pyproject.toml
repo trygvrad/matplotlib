@@ -124,7 +124,7 @@ doc = [
 
 # pip requirements for all the CI builds
 test = [
-    "black<26",
+    "black<27",
     "certifi",
     "coverage!=6.3",
     "psutil; sys_platform != 'cygwin'",
