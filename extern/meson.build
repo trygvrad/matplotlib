@@ -25,7 +25,7 @@ else
 endif
 
 if get_option('system-libraqm')
-  libraqm_dep = dependency('raqm', version: '>=0.10.3')
+  libraqm_dep = dependency('raqm', version: '>=0.10.4')
 else
   subproject('harfbuzz',
     default_options: [
@@ -52,10 +52,11 @@ else
     ]
   )
   subproject('sheenbidi', default_options: ['default_library=static'])
-  libraqm_proj = subproject('libraqm-0.10.3',
+  libraqm_proj = subproject('libraqm-0.10.4',
     default_options: [
       'default_library=static',
       'sheenbidi=true',
+      'tests=false',
     ]
   )
   libraqm_dep = libraqm_proj.get_variable('libraqm_dep')
