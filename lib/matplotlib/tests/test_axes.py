@@ -484,7 +484,7 @@ def test_twin_respects_position_after_set_position(twin):
     ax.set_position([0.2, 0.2, 0.5, 0.5])
     ax2 = getattr(ax, f"twin{twin}")()
 
-    assert_allclose(ax.bbox.bounds, ax2.bbox.bounds)
+    assert_allclose(ax.get_position().bounds, ax2.get_position().bounds)
 
 
 def test_inverted_cla():
