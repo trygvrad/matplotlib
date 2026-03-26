@@ -24,6 +24,7 @@ def get_font_properties():
     if 'calibri' in matplotlib.font_manager.findfont('Calibri:bold').lower():
         return matplotlib.font_manager.FontProperties(family='Calibri',
                                                       weight='bold')
+    # Our website documentation uses Carlito because Calibri is proprietary.
     if 'carlito' in matplotlib.font_manager.findfont('Carlito:bold').lower():
         print('Original font not found. Falling back to Carlito. '
               'The logo text will not be in the correct font.')
