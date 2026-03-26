@@ -206,13 +206,18 @@ class Formatter(TickHelper):
 
     def __call__(self, x, pos=None):
         """
-        Return the format for tick value *x* at position pos.
+        Return the format for tick value *x* at index *pos*.
         ``pos=None`` indicates an unspecified location.
         """
         raise NotImplementedError('Derived must override')
 
     def format_ticks(self, values):
-        """Return the tick labels for all the ticks at once."""
+        """
+        Return the tick labels strings for all *values*.
+
+        This method is the public API to generate a meaningful format for a set
+        of values, e.g. by ensuring an appropriate precision.
+        """
         self.set_locs(values)
         return [self(value, i) for i, value in enumerate(values)]
 
@@ -225,9 +230,13 @@ class Formatter(TickHelper):
 
     def format_data_short(self, value):
         """
-        Return a short string version of the tick value.
+        Return the mouseover-text representation of a value.
 
-        Defaults to the position-independent long value.
+        This defaults to the representation returned by `.Formatter.format_data`,
+        but subclasses may override this.
+
+        Note: The mouseover text can be customized by setting the
+        ``Axes.fmt_xdata`` and ``Axes.fmt_ydata`` attributes.
         """
         return self.format_data(value)
 
