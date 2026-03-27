@@ -2390,11 +2390,13 @@ class Axes(_AxesBase):
 
         label : str or list of str, optional
             A single label is attached to the resulting `.BarContainer` as a
-            label for the whole dataset.
+            legend label for the whole dataset.
             If a list is provided, it must be the same length as *x* and
             labels the individual bars. Repeated labels are not de-duplicated
             and will cause repeated label entries, so this is best used when
-            bars also differ in style (e.g., by passing a list to *color*.)
+            bars also differ in style (e.g., by passing a list to *color*).
+
+            Tip: Use `.bar_label` to place labels on the bars.
 
         xerr, yerr : float or array-like of shape(N,) or shape(2, N), optional
             If not *None*, add horizontal / vertical errorbars to the bar tips.
@@ -2435,6 +2437,7 @@ class Axes(_AxesBase):
         --------
         barh : Plot a horizontal bar plot.
         grouped_bar : Plot multiple datasets as grouped bar plot.
+        bar_label : Add labels to bars.
 
         Notes
         -----
@@ -2730,11 +2733,13 @@ class Axes(_AxesBase):
 
         label : str or list of str, optional
             A single label is attached to the resulting `.BarContainer` as a
-            label for the whole dataset.
-            If a list is provided, it must be the same length as *y* and
+            legend label for the whole dataset.
+            If a list is provided, it must be the same length as *x* and
             labels the individual bars. Repeated labels are not de-duplicated
             and will cause repeated label entries, so this is best used when
-            bars also differ in style (e.g., by passing a list to *color*.)
+            bars also differ in style (e.g., by passing a list to *color*).
+
+            Tip: Use `.bar_label` to place labels on the bars.
 
         xerr, yerr : float or array-like of shape(N,) or shape(2, N), optional
             If not *None*, add horizontal / vertical errorbars to the bar tips.
@@ -2775,6 +2780,7 @@ class Axes(_AxesBase):
         See Also
         --------
         bar : Plot a vertical bar plot.
+        bar_label : Add labels to bars.
 
         Notes
         -----
