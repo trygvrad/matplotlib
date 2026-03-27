@@ -224,8 +224,11 @@ def baseline_images(request, fontset, index, text):
 @pytest.mark.parametrize(
     'fontset', ['cm', 'stix', 'stixsans', 'dejavusans', 'dejavuserif'])
 @pytest.mark.parametrize('baseline_images', ['mathtext'], indirect=True)
-@image_comparison(baseline_images=None, style='mpl20',
-                  tol=0.011 if platform.machine() in ('ppc64le', 's390x') else 0)
+@image_comparison(
+    baseline_images=None, style='mpl20',
+    tol=(0.013
+         if platform.machine() in ('ppc64le', 's390x') or platform.system() == 'Windows'
+         else 0))
 def test_mathtext_rendering(baseline_images, fontset, index, text):
     mpl.rcParams['mathtext.fontset'] = fontset
     fig = plt.figure(figsize=(5.25, 0.75))

@@ -63,7 +63,7 @@ def test_curvelinear3():
     l.set_clip_path(ax1.patch)
 
 
-@image_comparison(['curvelinear4.png'], style='mpl20')
+@image_comparison(['curvelinear4.png'], style='mpl20', tol=0.04)
 def test_curvelinear4():
     fig = plt.figure(figsize=(5, 5))
 

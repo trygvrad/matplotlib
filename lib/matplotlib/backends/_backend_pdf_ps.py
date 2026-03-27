@@ -348,6 +348,32 @@ class RendererPDFPSBase(RendererBase):
         # docstring inherited
         return self.width * 72.0, self.height * 72.0
 
+    def _get_font_height_metrics(self, prop):
+        """
+        Return the ascent, descent, and line gap for font described by *prop*.
+
+        TODO: This is a temporary method until we design a proper API for the backends.
+
+        Parameters
+        ----------
+        prop : `.font_manager.FontProperties`
+            The properties describing the font to measure.
+
+        Returns
+        -------
+        ascent, descent, line_gap : float or None
+            The ascent, descent and line gap of the determined font, or None to fall
+            back to normal measurements.
+        """
+        if not mpl.rcParams[self._use_afm_rc_name]:
+            return None, None, None
+        font = self._get_font_afm(prop)
+        scale = prop.get_size_in_points() / 1000
+        a = font.get_ascender() * scale
+        d = -font.get_descender() * scale
+        g = (a + d) * 0.2  # Preserve previous line spacing of 1.2.
+        return a, d, g
+
     def get_text_width_height_descent(self, s, prop, ismath):
         # docstring inherited
         if ismath == "TeX":

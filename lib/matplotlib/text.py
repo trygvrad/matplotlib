@@ -437,22 +437,29 @@ class Text(Artist):
         dpi = self.get_figure(root=True).dpi
         # Determine full vertical extent of font, including ascenders and descenders:
         if not self.get_usetex():
-            font = get_font(fontManager._find_fonts_by_props(self._fontproperties))
-            possible_metrics = [
-                ('OS/2', 'sTypoLineGap', 'sTypoAscender', 'sTypoDescender'),
-                ('hhea', 'lineGap', 'ascent', 'descent')
-            ]
-            for table_name, linegap_key, ascent_key, descent_key in possible_metrics:
-                table = font.get_sfnt_table(table_name)
-                if table is None:
-                    continue
-                # Rescale to font size/DPI if the metrics were available.
-                fontsize = self._fontproperties.get_size_in_points()
-                units_per_em = font.get_sfnt_table('head')['unitsPerEm']
-                line_gap = table[linegap_key] / units_per_em * fontsize * dpi / 72
-                min_ascent = table[ascent_key] / units_per_em * fontsize * dpi / 72
-                min_descent = -table[descent_key] / units_per_em * fontsize * dpi / 72
-                break
+            if hasattr(renderer, '_get_font_height_metrics'):
+                # TODO: This is a temporary internal method call (for _backend_pdf_ps to
+                # support AFM files) until we design a proper API for the backends.
+                min_ascent, min_descent, line_gap = renderer._get_font_height_metrics(
+                    self._fontproperties)
+            if min_ascent is None:
+                font = get_font(fontManager._find_fonts_by_props(self._fontproperties))
+                possible = [
+                    ('OS/2', 'sTypoLineGap', 'sTypoAscender', 'sTypoDescender'),
+                    ('hhea', 'lineGap', 'ascent', 'descent')
+                ]
+                for table_name, linegap_key, ascent_key, descent_key in possible:
+                    table = font.get_sfnt_table(table_name)
+                    if table is None:
+                        continue
+                    # Rescale to font size/DPI if the metrics were available.
+                    fontsize = self._fontproperties.get_size_in_points()
+                    units_per_em = font.get_sfnt_table('head')['unitsPerEm']
+                    scale = 1 / units_per_em * fontsize * dpi / 72
+                    line_gap = table[linegap_key] * scale
+                    min_ascent = table[ascent_key] * scale
+                    min_descent = -table[descent_key] * scale
+                    break
         if None in (min_ascent, min_descent):
             # Fallback to font measurement.
             _, h, min_descent = _get_text_metrics_with_cache(

@@ -22,5 +22,5 @@ packaging>=20.0
 pillow>=9
 pyparsing>=3
 python-dateutil>=2.7
-setuptools_scm>=7
+setuptools_scm>=7,<10
 setuptools>=64
