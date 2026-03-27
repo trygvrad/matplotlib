@@ -484,7 +484,21 @@ def test_twin_respects_position_after_set_position(twin):
     ax.set_position([0.2, 0.2, 0.5, 0.5])
     ax2 = getattr(ax, f"twin{twin}")()
 
-    assert_allclose(ax.get_position().bounds, ax2.get_position().bounds)
+    assert_allclose(ax.get_position(original=True).bounds,
+                    ax2.get_position(original=True).bounds)
+
+    assert_allclose(ax.get_position(original=False).bounds,
+                    ax2.get_position(original=False).bounds)
+
+
+@pytest.mark.parametrize("twin", ("x", "y"))
+def test_twin_keeps_layout_participation_for_layout_managed_axes(twin):
+    fig, ax = plt.subplots()
+
+    ax2 = getattr(ax, f"twin{twin}")()
+
+    assert ax.get_in_layout()
+    assert ax2.get_in_layout()
 
 
 def test_inverted_cla():
