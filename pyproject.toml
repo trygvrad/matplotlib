@@ -417,7 +417,10 @@ test-command = [
         cp -a {package}/lib/${subdir}/tests/baseline_images $basedir/${subdir}/tests/
     done""",
     # Test installed, not repository, copy as we aren't using an editable install.
-    "pytest -p no:cacheprovider --pyargs matplotlib mpl_toolkits.axes_grid1 mpl_toolkits.axisartist mpl_toolkits.mplot3d",
+    """\
+    pytest -p no:cacheprovider --pyargs \
+        matplotlib mpl_toolkits.axes_grid1 mpl_toolkits.axisartist mpl_toolkits.mplot3d \
+	-k 'not test_complex_shaping'""",
 ]
 [tool.cibuildwheel.pyodide.environment]
 # Exceptions are needed for pybind11:

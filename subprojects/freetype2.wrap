@@ -8,8 +8,9 @@ source_fallback_url = https://downloads.sourceforge.net/project/freetype/freetyp
 source_filename = freetype-2.14.3.tar.xz
 source_hash = 36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f
 
-# This patch allows using our bundled HarfBuzz.
-diff_files = freetype-2.14.1-static-harfbuzz.patch
+# First patch allows using our bundled HarfBuzz.
+# Second patch fixes symbol problems on wasm.
+diff_files = freetype-2.14.1-static-harfbuzz.patch, freetype-2.14.1-wasm-visibility.patch
 
 [provide]
 freetype2 = freetype_dep
