@@ -388,6 +388,12 @@ class StrMethodFormatter(Formatter):
     It is typically unnecessary to explicitly construct `.StrMethodFormatter`
     objects, as `~.Axis.set_major_formatter` directly accepts the format string
     itself.
+
+    Examples
+    --------
+    >>> formatter = StrMethodFormatter("{x} km")
+    >>> formatter(10)
+    "10 km"
     """
 
     def __init__(self, fmt):
