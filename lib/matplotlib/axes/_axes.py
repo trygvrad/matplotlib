@@ -556,8 +556,8 @@ class Axes(_AxesBase):
         """
         Add a second x-axis to this `~.axes.Axes`.
 
-        For example if we want to have a second scale for the data plotted on
-        the xaxis.
+        This axis is typically used to display a second x-scale for the data
+        plotted on the Axes.
 
         %(_secax_docstring)s
 
@@ -610,8 +610,8 @@ class Axes(_AxesBase):
         """
         Add a second y-axis to this `~.axes.Axes`.
 
-        For example if we want to have a second scale for the data plotted on
-        the yaxis.
+        This axis is typically used to display a second y-scale for the data
+        plotted on the Axes.
 
         %(_secax_docstring)s
 
