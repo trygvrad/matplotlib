@@ -501,6 +501,16 @@ def test_twin_keeps_layout_participation_for_layout_managed_axes(twin):
     assert ax2.get_in_layout()
 
 
+@pytest.mark.parametrize("twin", ("x", "y"))
+def test_twin_stays_aligned_after_tight_layout(twin):
+    fig,ax = plt.subplots()
+    ax2 = getattr(ax, f"twin{twin}")()
+
+    fig.tight_layout()
+
+    assert_allclose(ax.get_position().bounds, ax2.get_position().bounds)
+
+
 def test_inverted_cla():
     # GitHub PR #5450. Setting autoscale should reset
     # axes to be non-inverted.
