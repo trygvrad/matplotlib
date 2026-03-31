@@ -1883,6 +1883,24 @@ def test_figsize(figsize, figsize_inches):
     assert tuple(fig.get_size_inches()) == figsize_inches
 
 
+def test_figsize_partial_none():
+    default_w, default_h = mpl.rcParams["figure.figsize"]
+
+    fig = plt.figure(figsize=(None, 4))
+    w, h = fig.get_size_inches()
+    assert (w, h) == (default_w, 4)
+
+    fig = plt.figure(figsize=(6, None))
+    w, h = fig.get_size_inches()
+    assert (w, h) == (6, default_h)
+
+
+def test_figsize_both_none():
+    with pytest.raises(ValueError,
+                       match=r"figsize=\(None, None\) is invalid"):
+        plt.figure(figsize=(None, None))
+
+
 def test_figsize_invalid_unit():
     with pytest.raises(ValueError, match="Invalid unit 'um'"):
         plt.figure(figsize=(6, 4, "um"))
