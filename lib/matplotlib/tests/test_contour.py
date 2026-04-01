@@ -876,3 +876,18 @@ def test_contour_aliases(fig_test, fig_ref):
 def test_contour_singular_color():
     with pytest.raises(TypeError):
         plt.figure().add_subplot().contour([[0, 1], [2, 3]], color="r")
+
+def test_contour_remove_after_label_removed():
+    # Test that CS.remove() works even if labels were manually removed first
+    # Regression test for https://github.com/matplotlib/matplotlib/issues/31404
+    fig, ax = plt.subplots()
+    x = np.linspace(-3.0, 3.0, 20)
+    y = np.linspace(-2.0, 2.0, 20)
+    X, Y = np.meshgrid(x, y)
+    Z = np.exp(-X**2 - Y**2)
+    CS = ax.contour(X, Y, Z)
+    labels = ax.clabel(CS, colors='k')
+    for label in labels:
+        label.remove()
+    ax.clabel(CS, colors='r')
+    CS.remove()  # Should not raise ValueError
