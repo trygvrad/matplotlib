@@ -877,6 +877,8 @@ def test_contour_singular_color():
     with pytest.raises(TypeError):
         plt.figure().add_subplot().contour([[0, 1], [2, 3]], color="r")
 
+
+
 def test_contour_remove_after_label_removed():
     # Test that CS.remove() works even if labels were manually removed first
     # Regression test for https://github.com/matplotlib/matplotlib/issues/31404
