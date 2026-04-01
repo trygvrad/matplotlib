@@ -804,6 +804,16 @@ def test_contour_remove():
     assert ax.get_children() == orig_children
 
 
+def test_contour_remove_with_labels():
+    ax = plt.figure().add_subplot()
+    cs = ax.contour(np.arange(16).reshape((4, 4)))
+    labels = cs.clabel()
+    for label in labels:
+        label.remove()
+    cs.clabel()
+    cs.remove()
+
+
 def test_contour_no_args():
     fig, ax = plt.subplots()
     data = [[0, 1], [1, 0]]
@@ -877,19 +887,3 @@ def test_contour_singular_color():
     with pytest.raises(TypeError):
         plt.figure().add_subplot().contour([[0, 1], [2, 3]], color="r")
 
-
-
-def test_contour_remove_after_label_removed():
-    # Test that CS.remove() works even if labels were manually removed first
-    # Regression test for https://github.com/matplotlib/matplotlib/issues/31404
-    fig, ax = plt.subplots()
-    x = np.linspace(-3.0, 3.0, 20)
-    y = np.linspace(-2.0, 2.0, 20)
-    X, Y = np.meshgrid(x, y)
-    Z = np.exp(-X**2 - Y**2)
-    CS = ax.contour(X, Y, Z)
-    labels = ax.clabel(CS, colors='k')
-    for label in labels:
-        label.remove()
-    ax.clabel(CS, colors='r')
-    CS.remove()  # Should not raise ValueError
