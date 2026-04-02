@@ -282,7 +282,7 @@ class LatexManager:
         # it.
         try:
             self.latex = subprocess.Popen(
-                [mpl.rcParams["pgf.texsystem"], "-halt-on-error"],
+                [mpl.rcParams["pgf.texsystem"], "-halt-on-error", "-no-shell-escape"],
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                 encoding="utf-8", cwd=self.tmpdir)
         except FileNotFoundError as err:
@@ -849,7 +849,7 @@ class FigureCanvasPgf(FigureCanvasBase):
             texcommand = mpl.rcParams["pgf.texsystem"]
             cbook._check_and_log_subprocess(
                 [texcommand, "-interaction=nonstopmode", "-halt-on-error",
-                 "figure.tex"], _log, cwd=tmpdir)
+                 "-no-shell-escape", "figure.tex"], _log, cwd=tmpdir)
             with ((tmppath / "figure.pdf").open("rb") as orig,
                   cbook.open_file_cm(fname_or_fh, "wb") as dest):
                 shutil.copyfileobj(orig, dest)  # copy file contents to target
@@ -966,7 +966,7 @@ class PdfPages:
             tex_source.write_bytes(self._file.getvalue())
             cbook._check_and_log_subprocess(
                 [texcommand, "-interaction=nonstopmode", "-halt-on-error",
-                 tex_source],
+                 "-no-shell-escape", tex_source],
                 _log, cwd=tmpdir)
             shutil.move(tex_source.with_suffix(".pdf"), self._output_name)
 

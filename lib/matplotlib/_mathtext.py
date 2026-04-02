@@ -357,20 +357,15 @@ class TruetypeFonts(Fonts, metaclass=abc.ABCMeta):
         # Per-instance cache.
         self._get_info = functools.cache(self._get_info)  # type: ignore[method-assign]
         self._fonts = {}
-        self.fontmap: dict[str | int, str] = {}
+        self.fontmap: dict[str, str] = {}
 
         filename = findfont(self.default_font_prop)
         default_font = get_font(filename)
         self._fonts['default'] = default_font
         self._fonts['regular'] = default_font
 
-    def _get_font(self, font: str | int) -> FT2Font:
-        if font in self.fontmap:
-            basename = self.fontmap[font]
-        else:
-            # NOTE: An int is only passed by subclasses which have placed int keys into
-            # `self.fontmap`, so we must cast this to confirm it to typing.
-            basename = T.cast(str, font)
+    def _get_font(self, font: str) -> FT2Font:
+        basename = self.fontmap.get(font, font)
         cached_font = self._fonts.get(basename)
         if cached_font is None and os.path.exists(basename):
             cached_font = get_font(basename)
@@ -613,12 +608,13 @@ class UnicodeFonts(TruetypeFonts):
         # include STIX sized alternatives for glyphs if fallback is STIX
         if isinstance(self._fallback_font, StixFonts):
             stixsizedaltfonts = {
-                 0: 'STIXGeneral',
-                 1: 'STIXSizeOneSym',
-                 2: 'STIXSizeTwoSym',
-                 3: 'STIXSizeThreeSym',
-                 4: 'STIXSizeFourSym',
-                 5: 'STIXSizeFiveSym'}
+                '0': 'STIXGeneral',
+                '1': 'STIXSizeOneSym',
+                '2': 'STIXSizeTwoSym',
+                '3': 'STIXSizeThreeSym',
+                '4': 'STIXSizeFourSym',
+                '5': 'STIXSizeFiveSym',
+            }
 
             for size, name in stixsizedaltfonts.items():
                 fullpath = findfont(name)
@@ -678,7 +674,7 @@ class UnicodeFonts(TruetypeFonts):
 
                 g = self._fallback_font._get_glyph(fontname, font_class, sym)
                 family = g[0].family_name
-                if family in list(BakomaFonts._fontmap.values()):
+                if family in BakomaFonts._fontmap.values():
                     family = "Computer Modern"
                 _log.info("Substituting symbol %s from %s", sym, family)
                 return g
@@ -699,13 +695,12 @@ class UnicodeFonts(TruetypeFonts):
     def get_sized_alternatives_for_symbol(self, fontname: str,
                                           sym: str) -> list[tuple[str, str]]:
         if self._fallback_font:
-            return self._fallback_font.get_sized_alternatives_for_symbol(
-                fontname, sym)
+            return self._fallback_font.get_sized_alternatives_for_symbol(fontname, sym)
         return [(fontname, sym)]
 
 
 class DejaVuFonts(UnicodeFonts, metaclass=abc.ABCMeta):
-    _fontmap: dict[str | int, str] = {}
+    _fontmap: dict[str, str] = {}
 
     def __init__(self, default_font_prop: FontProperties, load_glyph_flags: LoadFlags):
         # This must come first so the backend's owner is set correctly
@@ -717,11 +712,11 @@ class DejaVuFonts(UnicodeFonts, metaclass=abc.ABCMeta):
         TruetypeFonts.__init__(self, default_font_prop, load_glyph_flags)
         # Include Stix sized alternatives for glyphs
         self._fontmap.update({
-            1: 'STIXSizeOneSym',
-            2: 'STIXSizeTwoSym',
-            3: 'STIXSizeThreeSym',
-            4: 'STIXSizeFourSym',
-            5: 'STIXSizeFiveSym',
+            '1': 'STIXSizeOneSym',
+            '2': 'STIXSizeTwoSym',
+            '3': 'STIXSizeThreeSym',
+            '4': 'STIXSizeFourSym',
+            '5': 'STIXSizeFiveSym',
         })
         for key, name in self._fontmap.items():
             fullpath = findfont(name)
@@ -759,7 +754,7 @@ class DejaVuSerifFonts(DejaVuFonts):
         'sf': 'DejaVu Sans',
         'tt': 'DejaVu Sans Mono',
         'ex': 'DejaVu Serif Display',
-        0:    'DejaVu Serif',
+        '0': 'DejaVu Serif',
     }
 
     def get_font_constants(self) -> type[FontConstantsBase]:
@@ -780,7 +775,7 @@ class DejaVuSansFonts(DejaVuFonts):
         'sf': 'DejaVu Sans',
         'tt': 'DejaVu Sans Mono',
         'ex': 'DejaVu Sans Display',
-        0:    'DejaVu Sans',
+        '0': 'DejaVu Sans',
     }
 
     def get_font_constants(self) -> type[FontConstantsBase]:
@@ -799,7 +794,7 @@ class StixFonts(UnicodeFonts):
 
     - handles sized alternative characters for the STIXSizeX fonts.
     """
-    _fontmap: dict[str | int, str] = {
+    _fontmap = {
         'rm': 'STIXGeneral',
         'it': 'STIXGeneral:italic',
         'bf': 'STIXGeneral:weight=bold',
@@ -807,12 +802,12 @@ class StixFonts(UnicodeFonts):
         'nonunirm': 'STIXNonUnicode',
         'nonuniit': 'STIXNonUnicode:italic',
         'nonunibf': 'STIXNonUnicode:weight=bold',
-        0: 'STIXGeneral',
-        1: 'STIXSizeOneSym',
-        2: 'STIXSizeTwoSym',
-        3: 'STIXSizeThreeSym',
-        4: 'STIXSizeFourSym',
-        5: 'STIXSizeFiveSym',
+        '0': 'STIXGeneral',
+        '1': 'STIXSizeOneSym',
+        '2': 'STIXSizeTwoSym',
+        '3': 'STIXSizeThreeSym',
+        '4': 'STIXSizeFourSym',
+        '5': 'STIXSizeFiveSym',
     }
     _fallback_font = None
     _sans = False
@@ -879,10 +874,8 @@ class StixFonts(UnicodeFonts):
         return fontname, uniindex
 
     @functools.cache
-    def get_sized_alternatives_for_symbol(  # type: ignore[override]
-            self,
-            fontname: str,
-            sym: str) -> list[tuple[str, str]] | list[tuple[int, str]]:
+    def get_sized_alternatives_for_symbol(self, fontname: str,
+                                          sym: str) -> list[tuple[str, str]]:
         fixes = {
             '\\{': '{', '\\}': '}', '\\[': '[', '\\]': ']',
             '<': '\N{MATHEMATICAL LEFT ANGLE BRACKET}',
@@ -893,8 +886,8 @@ class StixFonts(UnicodeFonts):
             uniindex = get_unicode_index(sym)
         except ValueError:
             return [(fontname, sym)]
-        alternatives = [(i, chr(uniindex)) for i in range(6)
-                        if self._get_font(i).get_char_index(uniindex) != 0]
+        alternatives = [(str(i), chr(uniindex)) for i in range(6)
+                        if self._get_font(str(i)).get_char_index(uniindex) != 0]
         # The largest size of the radical symbol in STIX has incorrect
         # metrics that cause it to be disconnected from the stem.
         if sym == r'\__sqrt__':
@@ -1672,7 +1665,7 @@ class AutoHeightChar(Hlist):
                 break
 
         shift = 0.0
-        if state.font != 0 or len(alternatives) == 1:
+        if state.font != '0' or len(alternatives) == 1:
             if factor is None:
                 factor = target_total / (char.height + char.depth)
             state.fontsize *= factor
@@ -2679,7 +2672,7 @@ class Parser:
         # Handle regular sub/superscripts
         consts = state.fontset.get_font_constants()
         lc_height   = last_char.height
-        lc_baseline = 0
+        lc_baseline = 0.0
         if self.is_dropsub(last_char):
             lc_baseline = last_char.depth
 
