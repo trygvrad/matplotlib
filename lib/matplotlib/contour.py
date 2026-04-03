@@ -146,7 +146,8 @@ class ContourLabeler:
 
             Note: The returned Text instances should not be individually
             removed or have their geometry modified, e.g. by changing text or font size.
-            If you need such a modification, remove the entire `.ContourSet` and recreate it.
+            If you need such a modification, remove the entire
+            `.ContourSet` and recreate it.
         """
 
         if self.filled:
