@@ -143,6 +143,10 @@ class ContourLabeler:
         -------
         labels
             A list of `.Text` instances for the labels.
+
+            Note: The returned .Text instances should not be individually
+            removed or have their geometry modified. To remove all labels,
+            remove the entire .ContourSet and recreate it.
         """
 
         if self.filled:
@@ -518,7 +522,12 @@ class ContourLabeler:
             try:
                 text.remove()
             except ValueError:
-                pass
+                import warnings
+                warnings.warn(
+                    "Some labels were manually removed before the ContourSet. "
+                    "To remove labels cleanly, remove the entire ContourSet "
+                    "and recreate it.",
+                    UserWarning, stacklevel=2)
         self.labelTexts.clear()
 
 
