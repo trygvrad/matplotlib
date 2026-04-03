@@ -144,9 +144,9 @@ class ContourLabeler:
         labels
             A list of `.Text` instances for the labels.
 
-            Note: The returned .Text instances should not be individually
-            removed or have their geometry modified. To remove all labels,
-            remove the entire .ContourSet and recreate it.
+            Note: The returned Text instances should not be individually
+            removed or have their geometry modified, e.g. by changing text or font size.
+            If you need such a modification, remove the entire `.ContourSet` and recreate it.
         """
 
         if self.filled:
@@ -518,16 +518,14 @@ class ContourLabeler:
 
     def remove(self):
         super().remove()
-        for text in list(self.labelTexts):
+        for text in self.labelTexts:
             try:
                 text.remove()
             except ValueError:
-                import warnings
-                warnings.warn(
+                _api.warn_external(
                     "Some labels were manually removed before the ContourSet. "
                     "To remove labels cleanly, remove the entire ContourSet "
-                    "and recreate it.",
-                    UserWarning, stacklevel=2)
+                    "and recreate it.")
         self.labelTexts.clear()
 
 
