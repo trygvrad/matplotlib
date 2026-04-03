@@ -811,7 +811,8 @@ def test_contour_remove_with_labels():
     for label in labels:
         label.remove()
     cs.clabel()
-    cs.remove()
+    with pytest.warns(UserWarning, match="Some labels were manually removed"):
+        cs.remove()
 
 
 def test_contour_no_args():
