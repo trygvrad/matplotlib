@@ -524,7 +524,7 @@ class ContourLabeler:
                 text.remove()
             except ValueError:
                 _api.warn_external(
-                    "Some labels were manually removed before the ContourSet. "
+                    "Some labels were manually removed from the ContourSet. "
                     "To remove labels cleanly, remove the entire ContourSet "
                     "and recreate it.")
         self.labelTexts.clear()
