@@ -1030,9 +1030,6 @@ def test_hexbin_pickable():
 def test_hexbin_log():
     # Issue #1636 (and also test log scaled colorbar)
 
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['pcolormesh.snap'] = False
-
     np.random.seed(19680801)
     n = 100000
     x = np.random.standard_normal(n)
@@ -1520,9 +1517,6 @@ def test_pcolormesh_log_scale(fig_test, fig_ref):
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
 @image_comparison(['pcolormesh_datetime_axis.png'], style='mpl20', tol=0.3)
 def test_pcolormesh_datetime_axis():
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['pcolormesh.snap'] = False
-
     fig = plt.figure()
     fig.subplots_adjust(hspace=0.4, top=0.98, bottom=.15)
     base = datetime.datetime(2013, 1, 1)
@@ -5159,7 +5153,7 @@ def test_hist_stacked_bar():
     colors = [(0.5759849696758961, 1.0, 0.0), (0.0, 1.0, 0.350624650815206),
               (0.0, 1.0, 0.6549834156005998), (0.0, 0.6569064625276622, 1.0),
               (0.28302699607823545, 0.0, 1.0), (0.6849123462299822, 0.0, 1.0)]
-    labels = ['green', 'orange', ' yellow', 'magenta', 'black']
+    labels = ['first', 'second', 'third', 'fourth', 'fifth']
     fig, ax = plt.subplots()
     ax.hist(d, bins=10, histtype='barstacked', align='mid', color=colors,
             label=labels)

@@ -411,9 +411,6 @@ def test_colorbar_location():
     Test that colorbar handling is as expected for various complicated
     cases...
     """
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['pcolormesh.snap'] = False
-
     fig, axs = plt.subplots(4, 5, layout="constrained")
     for ax in axs.flat:
         pcm = example_pcolor(ax)
