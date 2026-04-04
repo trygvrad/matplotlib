@@ -2484,7 +2484,8 @@ class LogLocator(Locator):
                 vmin = self.axis.get_minpos()
 
             if vmin <= 0.0 or not np.isfinite(vmin):
-                raise ValueError("Data cannot be log-scaled because all values are <= 0.")
+                raise ValueError(
+                    "Data cannot be log-scaled because all values are <= 0.")
 
         if vmax < vmin:
             vmin, vmax = vmax, vmin
