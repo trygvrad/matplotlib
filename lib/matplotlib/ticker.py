@@ -2485,7 +2485,7 @@ class LogLocator(Locator):
 
             if vmin <= 0.0 or not np.isfinite(vmin):
                 raise ValueError(
-                    "Data has no positive values, and therefore cannot be log-scaled.")
+                    "Data cannot be log-scaled because all values are <= 0.")
 
         if vmax < vmin:
             vmin, vmax = vmax, vmin
