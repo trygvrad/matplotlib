@@ -11,7 +11,7 @@ from matplotlib.backend_bases import RendererBase
 from matplotlib.patheffects import PathEffectRenderer
 
 
-@image_comparison(['patheffect1'], remove_text=True)
+@image_comparison(['patheffect1'], remove_text=True, style='mpl20')
 def test_patheffect1():
     ax1 = plt.subplot()
     ax1.imshow([[1, 2], [2, 3]])
@@ -45,9 +45,10 @@ def test_patheffect2():
                                                    foreground="w")])
 
 
-@image_comparison(['patheffect3'],
+@image_comparison(['patheffect3'], style='mpl20',
                   tol=0 if platform.machine() == 'x86_64' else 0.019)
 def test_patheffect3():
+    plt.figure(figsize=(8, 6))
     p1, = plt.plot([1, 3, 5, 4, 3], 'o-b', lw=4)
     p1.set_path_effects([path_effects.SimpleLineShadow(),
                          path_effects.Normal()])
@@ -74,7 +75,7 @@ def test_patheffect3():
     t.set_path_effects(pe)
 
 
-@image_comparison(['stroked_text.png'])
+@image_comparison(['stroked_text.png'], style='mpl20')
 def test_patheffects_stroked_text():
     text_chunks = [
         'A B C D E F G H I J K L',
@@ -87,7 +88,7 @@ def test_patheffects_stroked_text():
     ]
     font_size = 50
 
-    ax = plt.axes((0, 0, 1, 1))
+    ax = plt.figure(figsize=(8, 6)).add_axes((0, 0, 1, 1))
     for i, chunk in enumerate(text_chunks):
         text = ax.text(x=0.01, y=(0.9 - i * 0.13), s=chunk,
                        fontdict={'ha': 'left', 'va': 'center',
@@ -186,7 +187,7 @@ def test_tickedstroke(text_placeholders):
     ax3.set_ylim(0, 4)
 
 
-@image_comparison(['spaces_and_newlines.png'], remove_text=True)
+@image_comparison(['spaces_and_newlines.png'], remove_text=True, style='mpl20')
 def test_patheffects_spaces_and_newlines():
     ax = plt.subplot()
     s1 = "         "

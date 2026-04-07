@@ -26,7 +26,7 @@ from matplotlib.text import Text, Annotation, OffsetFrom
 pyparsing_version = parse_version(pyparsing.__version__)
 
 
-@image_comparison(['font_styles'])
+@image_comparison(['font_styles'], style='mpl20')
 def test_font_styles():
 
     def find_matplotlib_font(**kw):
@@ -115,7 +115,7 @@ def test_font_styles():
     ax.set_yticks([])
 
 
-@image_comparison(['complex'], extensions=['png', 'pdf', 'svg', 'eps'])
+@image_comparison(['complex'], extensions=['png', 'pdf', 'svg', 'eps'], style='mpl20')
 def test_complex_shaping():
     # Raqm is Arabic for writing; note that because Arabic is RTL, the characters here
     # may seem to be in a different order than expected, but libraqm will order them
@@ -135,7 +135,7 @@ def test_complex_shaping():
              family=['cmr10', 'DejaVu Sans Display', 'DejaVu Sans'])
 
 
-@image_comparison(['multiline'])
+@image_comparison(['multiline'], style='mpl20')
 def test_multiline():
     plt.figure()
     ax = plt.subplot(1, 1, 1)
@@ -229,9 +229,9 @@ def test_antialiasing():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['text_contains.png'], tol=0.05)
+@image_comparison(['text_contains.png'], style='mpl20', tol=0.05)
 def test_contains():
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     ax = plt.axes()
 
     mevent = MouseEvent('button_press_event', fig.canvas, 0.5, 0.5, 1, None)
@@ -287,7 +287,7 @@ def test_annotate_errors(err, xycoords, match):
         fig.canvas.draw()
 
 
-@image_comparison(['titles'])
+@image_comparison(['titles'], style='mpl20')
 def test_titles():
     # left and right side titles
     plt.figure()
@@ -339,7 +339,7 @@ def test_rotation_mode_anchor():
                 verticalalignment='center_baseline')
 
 
-@image_comparison(['axes_titles.png'])
+@image_comparison(['axes_titles.png'], style='mpl20')
 def test_axes_titles():
     # Related to issue #3327
     plt.figure()
@@ -465,14 +465,14 @@ def test_null_rotation_with_rotation_mode(ha, va):
                         t1.get_window_extent(fig.canvas.renderer).get_points())
 
 
-@image_comparison(['text_bboxclip'])
+@image_comparison(['text_bboxclip'], style='mpl20')
 def test_bbox_clipping():
     plt.text(0.9, 0.2, 'Is bbox clipped?', backgroundcolor='r', clip_on=True)
     t = plt.text(0.9, 0.5, 'Is fancy bbox clipped?', clip_on=True)
     t.set_bbox({"boxstyle": "round, pad=0.1"})
 
 
-@image_comparison(['annotation_negative_ax_coords.png'])
+@image_comparison(['annotation_negative_ax_coords.png'], style='mpl20')
 def test_annotation_negative_ax_coords():
     fig, ax = plt.subplots()
 
@@ -500,31 +500,31 @@ def test_annotation_negative_ax_coords():
                 va='top')
 
 
-@image_comparison(['annotation_negative_fig_coords.png'])
+@image_comparison(['annotation_negative_fig_coords.png'], style='mpl20')
 def test_annotation_negative_fig_coords():
     fig, ax = plt.subplots()
 
     ax.annotate('+ pts',
-                xytext=[10, 120], textcoords='figure points',
-                xy=[10, 120], xycoords='figure points', fontsize=32)
+                xytext=[10, 250], textcoords='figure points',
+                xy=[10, 250], xycoords='figure points', fontsize=32)
     ax.annotate('- pts',
-                xytext=[-10, 180], textcoords='figure points',
-                xy=[-10, 180], xycoords='figure points', fontsize=32,
+                xytext=[-10, 310], textcoords='figure points',
+                xy=[-10, 310], xycoords='figure points', fontsize=32,
                 va='top')
     ax.annotate('+ frac',
-                xytext=[0.05, 0.55], textcoords='figure fraction',
-                xy=[0.05, 0.55], xycoords='figure fraction', fontsize=32)
+                xytext=[0.05, 0.5], textcoords='figure fraction',
+                xy=[0.05, 0.5], xycoords='figure fraction', fontsize=32)
     ax.annotate('- frac',
-                xytext=[-0.05, 0.5], textcoords='figure fraction',
-                xy=[-0.05, 0.5], xycoords='figure fraction', fontsize=32,
+                xytext=[-0.05, 0.45], textcoords='figure fraction',
+                xy=[-0.05, 0.45], xycoords='figure fraction', fontsize=32,
                 va='top')
 
     ax.annotate('+ pixels',
                 xytext=[50, 50], textcoords='figure pixels',
                 xy=[50, 50], xycoords='figure pixels', fontsize=32)
     ax.annotate('- pixels',
-                xytext=[-50, 100], textcoords='figure pixels',
-                xy=[-50, 100], xycoords='figure pixels', fontsize=32,
+                xytext=[-50, 150], textcoords='figure pixels',
+                xy=[-50, 150], xycoords='figure pixels', fontsize=32,
                 va='top')
 
 
@@ -551,7 +551,7 @@ def test_text_stale():
     assert not fig.stale
 
 
-@image_comparison(['agg_text_clip.png'])
+@image_comparison(['agg_text_clip.png'], style='mpl20')
 def test_agg_text_clip():
     np.random.seed(1)
     fig, (ax1, ax2) = plt.subplots(2)
@@ -569,7 +569,7 @@ def test_text_size_binding():
     assert sz1 == fp.get_size_in_points()
 
 
-@image_comparison(['font_scaling.pdf'])
+@image_comparison(['font_scaling.pdf'], style='mpl20')
 def test_font_scaling():
     mpl.rcParams['pdf.fonttype'] = 42
     fig, ax = plt.subplots(figsize=(6.4, 12.4))
@@ -1142,9 +1142,9 @@ def test_empty_annotation_get_window_extent():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['basictext_wrap.png'], tol=0.3)
+@image_comparison(['basictext_wrap.png'], style='mpl20', tol=0.3)
 def test_basic_wrap():
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     plt.axis([0, 10, 0, 10])
     t = "This is a really long string that I'd rather have wrapped so that" \
         " it doesn't go outside of the figure, but if it's long enough it" \
@@ -1159,9 +1159,9 @@ def test_basic_wrap():
 
 
 # TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['fonttext_wrap.png'], tol=0.3)
+@image_comparison(['fonttext_wrap.png'], style='mpl20', tol=0.3)
 def test_font_wrap():
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     plt.axis([0, 10, 0, 10])
     t = "This is a really long string that I'd rather have wrapped so that" \
         " it doesn't go outside of the figure, but if it's long enough it" \

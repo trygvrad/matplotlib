@@ -55,7 +55,7 @@ def test_spine_class():
         spines['top':]
 
 
-@image_comparison(['spines_axes_positions.png'])
+@image_comparison(['spines_axes_positions.png'], style='mpl20')
 def test_spines_axes_positions():
     # SF bug 2852168
     fig = plt.figure()
@@ -72,7 +72,7 @@ def test_spines_axes_positions():
     ax.spines.bottom.set_color('none')
 
 
-@image_comparison(['spines_data_positions.png'])
+@image_comparison(['spines_data_positions.png'], style='mpl20')
 def test_spines_data_positions():
     fig, ax = plt.subplots()
     ax.spines.left.set_position(('data', -1.5))
@@ -81,6 +81,8 @@ def test_spines_data_positions():
     ax.spines.bottom.set_position('zero')
     ax.set_xlim([-2, 2])
     ax.set_ylim([-2, 2])
+    ax.xaxis.set_ticks_position('both')
+    ax.yaxis.set_ticks_position('both')
 
 
 @check_figures_equal()
