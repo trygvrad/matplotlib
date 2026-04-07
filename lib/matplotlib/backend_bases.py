@@ -540,9 +540,9 @@ class RendererBase:
         rendering backends, and indeed many builtin backends do not support
         this.  Rather, TeX rendering is provided by `~.RendererBase.draw_tex`.
         """
-        self._draw_text_as_path(gc, x, y, s, prop, angle, ismath)
+        self._draw_text_as_path(gc, x, y, s, prop, angle, ismath, mtext)
 
-    def _draw_text_as_path(self, gc, x, y, s, prop, angle, ismath):
+    def _draw_text_as_path(self, gc, x, y, s, prop, angle, ismath, mtext):
         """
         Draw the text by converting them to paths using `.TextToPath`.
 
@@ -550,9 +550,15 @@ class RendererBase:
         `~.RendererBase.draw_text`; setting *ismath* to "TeX" triggers TeX
         rendering.
         """
+        if mtext is not None:
+            features = mtext.get_fontfeatures()
+            language = mtext.get_language()
+        else:
+            features = language = None
         text2path = self._text2path
         fontsize = self.points_to_pixels(prop.get_size_in_points())
-        verts, codes = text2path.get_text_path(prop, s, ismath=ismath)
+        verts, codes = text2path.get_text_path(prop, s, ismath=ismath,
+                                               features=features, language=language)
         path = Path(verts, codes)
         if self.flipy():
             width, height = self.get_canvas_width_height()
