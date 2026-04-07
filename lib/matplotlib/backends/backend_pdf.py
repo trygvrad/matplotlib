@@ -2288,13 +2288,8 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         return b''.join(glyph.to_bytes(2, 'big') for glyph in subset)
 
     def encode_string(self, s, fonttype):
-        match fonttype:
-            case 1:
-                return s.encode('cp1252', 'replace')
-            case 3:
-                return s.encode('latin-1', 'replace')
-            case _:
-                return s.encode('utf-16be', 'replace')
+        encoding = {1: 'cp1252', 3: 'latin-1', 42: 'utf-16be'}[fonttype]
+        return s.encode(encoding, 'replace')
 
     def draw_text(self, gc, x, y, s, prop, angle, ismath=False, mtext=None):
         # docstring inherited
@@ -2312,29 +2307,13 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         else:
             features = language = None
 
+        # For Type-1 fonts, emit the whole string at once without manual kerning.
         if mpl.rcParams['pdf.use14corefonts']:
             font = self._get_font_afm(prop)
-            fonttype = 1
-        else:
-            font = self._get_font_ttf(prop)
-            fonttype = mpl.rcParams['pdf.fonttype']
-
-        if gc.get_url() is not None:
-            font.set_text(s, features=features, language=language)
-            width, height = font.get_width_height()
-            self.file._annotations[-1][1].append(_get_link_annotation(
-                gc, x, y, width / 64, height / 64, angle))
-
-        # If fonttype is neither 3 nor 42, emit the whole string at once
-        # without manual kerning.
-        if fonttype not in [3, 42]:
-            if not mpl.rcParams['pdf.use14corefonts']:
-                self.file._character_tracker.track(font, s,
-                                                   features=features, language=language)
             self.file.output(Op.begin_text,
                              self.file.fontName(prop), fontsize, Op.selectfont)
             self._setup_textpos(x, y, angle)
-            self.file.output(self.encode_string(s, fonttype),
+            self.file.output(self.encode_string(s, fonttype=1),
                              Op.show, Op.end_text)
 
         # A sequence of characters is broken into multiple chunks. The chunking
@@ -2350,6 +2329,9 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
         # Each chunk is emitted with the regular text show command (TJ) with appropriate
         # kerning between chunks.
         else:
+            font = self._get_font_ttf(prop)
+            fonttype = mpl.rcParams['pdf.fonttype']
+
             def output_singlebyte_chunk(kerns_or_chars):
                 if not kerns_or_chars:
                     return
@@ -2399,6 +2381,12 @@ class RendererPdf(_backend_pdf_ps.RendererPDFPSBase):
             output_singlebyte_chunk(singlebyte_chunk)
             self.file.output(Op.end_text)
             self.file.output(Op.grestore)
+
+        if gc.get_url() is not None:
+            font.set_text(s, features=features, language=language)
+            width, height = font.get_width_height()
+            self.file._annotations[-1][1].append(_get_link_annotation(
+                gc, x, y, width / 64, height / 64, angle))
 
     def new_gc(self):
         # docstring inherited
