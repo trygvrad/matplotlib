@@ -579,10 +579,10 @@ def to_hex(c, keep_alpha=False):
 ### Backwards-compatible color-conversion API
 
 
-cnames = CSS4_COLORS
-hexColorPattern = re.compile(r"\A#[a-fA-F0-9]{6}\Z")
-rgb2hex = to_hex
-hex2color = to_rgb
+cnames = CSS4_COLORS  #: :meta private:
+hexColorPattern = re.compile(r"\A#[a-fA-F0-9]{6}\Z")  #: :meta private:
+rgb2hex = to_hex  #: :meta private:
+hex2color = to_rgb  #: :meta private:
 
 
 class ColorConverter:
@@ -590,6 +590,8 @@ class ColorConverter:
     A class only kept for backwards compatibility.
 
     Its functionality is entirely provided by module-level functions.
+
+    :meta private:
     """
     colors = _colors_full_map
     cache = _colors_full_map.cache

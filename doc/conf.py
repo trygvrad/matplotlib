@@ -134,7 +134,6 @@ extensions = [
     'sphinxext.mock_gui_toolkits',
     'sphinxext.rcparams',
     'sphinxext.redirect_from',
-    'sphinxext.skip_deprecated',
     'sphinx_copybutton',
     'sphinx_design',
     'sphinx_tags',
