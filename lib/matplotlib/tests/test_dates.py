@@ -152,8 +152,7 @@ def test_date_axhspan():
     fig.subplots_adjust(left=0.25)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['date_axvspan.png'], style='mpl20', tol=0.07)
+@image_comparison(['date_axvspan.png'], style='mpl20')
 def test_date_axvspan():
     # test axvspan with date inputs
     t0 = datetime.datetime(2000, 1, 20)
@@ -177,8 +176,7 @@ def test_date_axhline():
     fig.subplots_adjust(left=0.25)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['date_axvline.png'], style='mpl20', tol=0.09)
+@image_comparison(['date_axvline.png'], style='mpl20')
 def test_date_axvline():
     # test axvline with date inputs
     t0 = datetime.datetime(2000, 1, 20)
@@ -228,8 +226,7 @@ def _new_epoch_decorator(thefunc):
     return wrapper
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['RRuleLocator_bounds.png'], style='mpl20', tol=0.07)
+@image_comparison(['RRuleLocator_bounds.png'], style='mpl20')
 def test_RRuleLocator():
     import matplotlib.testing.jpl_units as units
     units.register()
@@ -273,8 +270,7 @@ def test_RRuleLocator_close_minmax():
     assert list(map(str, mdates.num2date(loc.tick_values(d1, d2)))) == expected
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['DateFormatter_fractionalSeconds.png'], style='mpl20', tol=0.11)
+@image_comparison(['DateFormatter_fractionalSeconds.png'], style='mpl20')
 def test_DateFormatter():
     import matplotlib.testing.jpl_units as units
     units.register()

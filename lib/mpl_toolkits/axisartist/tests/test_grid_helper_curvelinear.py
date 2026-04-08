@@ -1,3 +1,5 @@
+import platform
+
 import numpy as np
 
 import matplotlib.pyplot as plt
@@ -15,7 +17,8 @@ from mpl_toolkits.axisartist.grid_helper_curvelinear import \
     GridHelperCurveLinear
 
 
-@image_comparison(['custom_transform.png'], style='mpl20', tol=0.2)
+@image_comparison(['custom_transform.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.04)
 def test_custom_transform():
     plt.rcParams.update({"xtick.direction": "in", "ytick.direction": "inout"})
 

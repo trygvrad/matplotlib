@@ -239,9 +239,8 @@ def test_matshow(fig_test, fig_ref):
     ax_ref.xaxis.set_ticks_position('both')
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
 @image_comparison([f'formatter_ticker_{i:03d}.png' for i in range(1, 6)], style='mpl20',
-                  tol=0.02 if platform.machine() == 'x86_64' else 0.04)
+                  tol=0.03 if sys.platform == 'darwin' else 0)
 def test_formatter_ticker():
     import matplotlib.testing.jpl_units as units
     units.register()
@@ -811,8 +810,7 @@ def test_annotate_signature():
         assert p1 == p2
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['fill_units.png'], savefig_kwarg={'dpi': 60}, style='mpl20', tol=0.2)
+@image_comparison(['fill_units.png'], savefig_kwarg={'dpi': 60}, style='mpl20')
 def test_fill_units():
     import matplotlib.testing.jpl_units as units
     units.register()
@@ -951,7 +949,7 @@ def test_axvspan_epoch():
     ax.set_xlim(t0 - 5.0*dt, tf + 5.0*dt)
 
 
-@image_comparison(['axhspan_epoch.png'], style='mpl20', tol=0.02)
+@image_comparison(['axhspan_epoch.png'], style='mpl20')
 def test_axhspan_epoch():
     import matplotlib.testing.jpl_units as units
     units.register()
@@ -1515,8 +1513,7 @@ def test_pcolormesh_log_scale(fig_test, fig_ref):
     ax.set_xscale('log')
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['pcolormesh_datetime_axis.png'], style='mpl20', tol=0.3)
+@image_comparison(['pcolormesh_datetime_axis.png'], style='mpl20')
 def test_pcolormesh_datetime_axis():
     fig = plt.figure()
     fig.subplots_adjust(hspace=0.4, top=0.98, bottom=.15)
@@ -1541,8 +1538,7 @@ def test_pcolormesh_datetime_axis():
             label.set_rotation(30)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['pcolor_datetime_axis.png'], style='mpl20', tol=0.3)
+@image_comparison(['pcolor_datetime_axis.png'], style='mpl20')
 def test_pcolor_datetime_axis():
     fig = plt.figure()
     fig.subplots_adjust(hspace=0.4, top=0.98, bottom=.15)
@@ -1852,12 +1848,8 @@ def test_markevery():
     ax.legend()
 
 
-@image_comparison(['markevery_line.png'], remove_text=True, style='mpl20', tol=0.005)
+@image_comparison(['markevery_line.png'], remove_text=True, style='mpl20')
 def test_markevery_line():
-    # TODO: a slight change in rendering between Inkscape versions may explain
-    # why one had to introduce a small non-zero tolerance for the SVG test
-    # to pass. One may try to remove this hack once Travis' Inkscape version
-    # is modern enough. FWIW, no failure with 0.92.3 on my computer (#11358).
     x = np.linspace(0, 10, 100)
     y = np.sin(x) * np.sqrt(x/10 + 0.5)
 
@@ -2778,8 +2770,7 @@ def test_stairs_options():
     ax.legend(loc=0)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['test_stairs_datetime.png'], style='mpl20', tol=0.2)
+@image_comparison(['test_stairs_datetime.png'], style='mpl20')
 def test_stairs_datetime():
     f, ax = plt.subplots(constrained_layout=True)
     ax.stairs(np.arange(36),
@@ -3403,8 +3394,7 @@ def test_log_scales_invalid():
 
 
 @image_comparison(['stackplot_test_image.png', 'stackplot_test_image.png'],
-                  style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.031)
+                  style='mpl20')
 def test_stackplot():
     fig = plt.figure()
     x = np.linspace(0, 10, 10)
@@ -3565,10 +3555,7 @@ def test_bxp_horizontal():
     _bxp_test_helper(bxp_kwargs=dict(orientation='horizontal'))
 
 
-@image_comparison(['bxp_with_ylabels.png'],
-                  savefig_kwarg={'dpi': 40},
-                  style='default',
-                  tol=0.1)
+@image_comparison(['bxp_with_ylabels.png'], savefig_kwarg={'dpi': 40}, style='default')
 def test_bxp_with_ylabels():
     def transform(stats):
         for s, label in zip(stats, list('ABCD')):
@@ -3769,7 +3756,7 @@ def test_bxp_bad_capwidths():
         _bxp_test_helper(bxp_kwargs=dict(capwidths=[1]))
 
 
-@image_comparison(['boxplot.png', 'boxplot.png'], tol=1.28, style='default')
+@image_comparison(['boxplot.png', 'boxplot.png'], tol=0.43, style='default')
 def test_boxplot():
     # Randomness used for bootstrapping.
     np.random.seed(937)
@@ -5551,7 +5538,7 @@ def test_marker_styles():
 
 
 @image_comparison(['rc_markerfill.png'], style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.037)
+                  tol=0.033 if sys.platform == 'darwin' else 0)
 def test_markers_fillstyle_rcparams():
     fig, ax = plt.subplots()
     x = np.arange(7)
@@ -5574,7 +5561,7 @@ def test_vertex_markers():
 
 
 @image_comparison(['vline_hline_zorder.png', 'errorbar_zorder.png'], style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.026)
+                  tol=0.02 if sys.platform == 'darwin' else 0)
 def test_eb_line_zorder():
     x = list(range(10))
 
@@ -6487,12 +6474,7 @@ def test_text_labelsize():
     ax.tick_params(direction='out')
 
 
-# Note: The `pie` image tests were affected by Numpy 2.0 changing promotions
-# (NEP 50). While the changes were only marginal, tolerances were introduced.
-# These tolerances could likely go away when numpy 2.0 is the minimum supported
-# numpy and the images are regenerated.
-
-@image_comparison(['pie_default.png'], style='mpl20', tol=0.01)
+@image_comparison(['pie_default.png'], style='mpl20')
 def test_pie_default():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
@@ -6505,7 +6487,7 @@ def test_pie_default():
 
 
 @image_comparison(['pie_linewidth_0.png', 'pie_linewidth_0.png', 'pie_linewidth_0.png'],
-                  style='mpl20', tol=0.01)
+                  style='mpl20')
 def test_pie_linewidth_0():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
@@ -6537,7 +6519,8 @@ def test_pie_linewidth_0():
     plt.axis('equal')
 
 
-@image_comparison(['pie_center_radius.png'], style='mpl20', tol=0.011)
+@image_comparison(['pie_center_radius.png'], style='mpl20',
+                  tol=0.01 if sys.platform == 'darwin' else 0)
 def test_pie_center_radius():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
@@ -6557,7 +6540,7 @@ def test_pie_center_radius():
     plt.axis('equal')
 
 
-@image_comparison(['pie_linewidth_2.png'], style='mpl20', tol=0.01)
+@image_comparison(['pie_linewidth_2.png'], style='mpl20')
 def test_pie_linewidth_2():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
@@ -6572,7 +6555,7 @@ def test_pie_linewidth_2():
     plt.axis('equal')
 
 
-@image_comparison(['pie_ccw_true.png'], style='mpl20', tol=0.01)
+@image_comparison(['pie_ccw_true.png'], style='mpl20')
 def test_pie_ccw_true():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
@@ -6587,7 +6570,7 @@ def test_pie_ccw_true():
     plt.axis('equal')
 
 
-@image_comparison(['pie_frame_grid.png'], style='mpl20', tol=0.002)
+@image_comparison(['pie_frame_grid.png'], style='mpl20')
 def test_pie_frame_grid():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
@@ -6614,8 +6597,7 @@ def test_pie_frame_grid():
     plt.axis('equal')
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['pie_rotatelabels_true.png'], style='mpl20', tol=0.1)
+@image_comparison(['pie_rotatelabels_true.png'], style='mpl20')
 def test_pie_rotatelabels_true():
     # The slices will be ordered and plotted counter-clockwise.
     labels = 'Hogwarts', 'Frogs', 'Dogs', 'Logs'
@@ -6630,7 +6612,7 @@ def test_pie_rotatelabels_true():
     plt.axis('equal')
 
 
-@image_comparison(['pie_no_label.png'], style='mpl20', tol=0.01)
+@image_comparison(['pie_no_label.png'], style='mpl20')
 def test_pie_nolabel_but_legend():
     labels = 'Frogs', 'Hogs', 'Dogs', 'Logs'
     sizes = [15, 30, 45, 10]
@@ -8356,7 +8338,7 @@ class _Translation(mtransforms.Transform):
 
 
 @image_comparison(['secondary_xy.png'], style='mpl20',
-                  tol=0 if platform.machine() == 'x86_64' else 0.027)
+                  tol=0 if platform.machine() == 'x86_64' else 0.024)
 def test_secondary_xy():
     fig, axs = plt.subplots(1, 2, figsize=(10, 5), constrained_layout=True)
 
@@ -9648,7 +9630,7 @@ def test_zorder_and_explicit_rasterization():
 
 
 @image_comparison(["preset_clip_paths.png"], remove_text=True, style="mpl20",
-                  tol=0 if platform.machine() == 'x86_64' else 0.027)
+                  tol=0.01 if sys.platform == 'darwin' else 0)
 def test_preset_clip_paths():
     fig, ax = plt.subplots()
 

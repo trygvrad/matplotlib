@@ -1487,7 +1487,7 @@ def test_nonuniform_logscale():
         ax.add_image(im)
 
 
-@image_comparison(['rgba_antialias.png'], style='mpl20', remove_text=True, tol=0.02)
+@image_comparison(['rgba_antialias.png'], style='mpl20', remove_text=True)
 def test_rgba_antialias():
     fig, axs = plt.subplots(2, 2, figsize=(3.5, 3.5), sharex=False,
                             sharey=False, constrained_layout=True)
@@ -1741,8 +1741,8 @@ def test_non_transdata_image_does_not_touch_aspect():
     assert ax.get_aspect() == 2
 
 
-@image_comparison(
-    ['downsampling.png'], style='mpl20', remove_text=True, tol=0.09)
+@image_comparison(['downsampling.png'], style='mpl20', remove_text=True,
+                  tol=0 if platform.machine() == 'x86_64' else 0.07)
 def test_downsampling():
     N = 450
     x = np.arange(N) / N - 0.5
@@ -1776,8 +1776,7 @@ def test_downsampling():
         ax.set_title(f"interpolation='{interp}'\nspace='{space}'")
 
 
-@image_comparison(
-    ['downsampling_speckle.png'], style='mpl20', remove_text=True, tol=0.09)
+@image_comparison(['downsampling_speckle.png'], style='mpl20', remove_text=True)
 def test_downsampling_speckle():
     fig, axs = plt.subplots(1, 2, figsize=(5, 2.7), sharex=True, sharey=True,
                             layout="compressed")

@@ -1,6 +1,7 @@
 from itertools import product
 import io
 import platform
+import sys
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -61,7 +62,7 @@ def test_divider_append_axes():
     assert bboxes["top"].x1 == bboxes["main"].x1 == bboxes["bottom"].x1
 
 
-@image_comparison(['twin_axes_empty_and_removed.png'], tol=1, style='mpl20')
+@image_comparison(['twin_axes_empty_and_removed.png'], style='mpl20')
 def test_twin_axes_empty_and_removed():
     # Purely cosmetic font changes (avoid overlap)
     mpl.rcParams.update({"font.size": 8, "xtick.labelsize": 8, "ytick.labelsize": 8})
@@ -357,9 +358,8 @@ def test_zooming_with_inverted_axes():
     inset_ax.axis([1.4, 1.1, 1.4, 1.1])
 
 
-@image_comparison(['anchored_direction_arrows.png'],
-                  tol=0 if platform.machine() == 'x86_64' else 0.01,
-                  style='mpl20')
+@image_comparison(['anchored_direction_arrows.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.006)
 def test_anchored_direction_arrows():
     fig, ax = plt.subplots()
     ax.imshow(np.zeros((10, 10)), interpolation='nearest')
@@ -368,7 +368,8 @@ def test_anchored_direction_arrows():
     ax.add_artist(simple_arrow)
 
 
-@image_comparison(['anchored_direction_arrows_many_args.png'], style='mpl20')
+@image_comparison(['anchored_direction_arrows_many_args.png'], style='mpl20',
+                  tol=0.002 if sys.platform == 'win32' else 0)
 def test_anchored_direction_arrows_many_args():
     fig, ax = plt.subplots()
     ax.imshow(np.ones((10, 10)))
