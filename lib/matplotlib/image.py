@@ -1787,12 +1787,14 @@ def _pil_png_to_float_array(pil_png):
     raise ValueError(f"Unknown PIL rawmode: {rawmode}")
 
 
+@_api.deprecated('3.11', alternative="Pillow's `PIL.Image.Image.thumbnail`")
 def thumbnail(infile, thumbfile, scale=0.1, interpolation='bilinear',
               preview=False):
     """
     Make a thumbnail of image in *infile* with output filename *thumbfile*.
 
-    See :doc:`/gallery/misc/image_thumbnail_sgskip`.
+    See `Pillow for a replacement
+    <https://pillow.readthedocs.io/en/stable/handbook/tutorial.html#create-jpeg-thumbnails>`_.
 
     Parameters
     ----------
