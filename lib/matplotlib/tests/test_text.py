@@ -115,26 +115,6 @@ def test_font_styles():
     ax.set_yticks([])
 
 
-@image_comparison(['complex'], extensions=['png', 'pdf', 'svg', 'eps'], style='mpl20')
-def test_complex_shaping():
-    # Raqm is Arabic for writing; note that because Arabic is RTL, the characters here
-    # may seem to be in a different order than expected, but libraqm will order them
-    # correctly for us.
-    text = (
-        'Arabic: \N{Arabic Letter REH}\N{Arabic FATHA}\N{Arabic Letter QAF}'
-        '\N{Arabic SUKUN}\N{Arabic Letter MEEM}')
-    math_signs = '\N{N-ary Product}\N{N-ary Coproduct}\N{N-ary summation}\N{Integral}'
-    text = math_signs + text + math_signs
-    fig = plt.figure(figsize=(6, 2))
-    fig.text(0.5, 0.75, text, size=32, ha='center', va='center')
-    # Also check fallback behaviour:
-    # - English should use cmr10
-    # - Math signs should use DejaVu Sans Display (and thus be larger than the rest)
-    # - Arabic should use DejaVu Sans
-    fig.text(0.5, 0.25, text, size=32, ha='center', va='center',
-             family=['cmr10', 'DejaVu Sans Display', 'DejaVu Sans'])
-
-
 @image_comparison(['multiline'], style='mpl20')
 def test_multiline():
     plt.figure()
@@ -1235,10 +1215,31 @@ def test_text_tightbbox_outside_scale_domain():
     assert not np.isfinite(invalid_bbox.width)
 
 
-@image_comparison(['features'], remove_text=False, style='mpl20',
-                  extensions=['png', 'pdf', 'svg', 'eps'])
-def test_text_features():
-    fig = plt.figure(figsize=(5, 1.5))
+def _test_complex_shaping(fig):
+    # Raqm is Arabic for writing; note that because Arabic is RTL, the characters here
+    # may seem to be in a different order than expected, but libraqm will order them
+    # correctly for us.
+    text = (
+        'Arabic: \N{Arabic Letter REH}\N{Arabic FATHA}\N{Arabic Letter QAF}'
+        '\N{Arabic SUKUN}\N{Arabic Letter MEEM}')
+    math_signs = '\N{N-ary Product}\N{N-ary Coproduct}\N{N-ary summation}\N{Integral}'
+    text = math_signs + text + math_signs
+    fig.text(0.5, 0.75, text, size=32, ha='center', va='center')
+    # Also check fallback behaviour:
+    # - English should use cmr10
+    # - Math signs should use DejaVu Sans Display (and thus be larger than the rest)
+    # - Arabic should use DejaVu Sans
+    fig.text(0.5, 0.25, text, size=32, ha='center', va='center',
+             family=['cmr10', 'DejaVu Sans Display', 'DejaVu Sans'])
+
+
+@image_comparison(['complex'], extensions=['png', 'pdf', 'svg', 'eps'], style='mpl20')
+def test_complex_shaping():
+    fig = plt.figure(figsize=(6, 2))
+    _test_complex_shaping(fig)
+
+
+def _test_text_features(fig):
     t = fig.text(1, 0.7, 'Default: fi ffi fl st',
                  fontsize=32, horizontalalignment='right')
     assert t.get_fontfeatures() is None
@@ -1250,6 +1251,13 @@ def test_text_features():
                  fontsize=32, horizontalalignment='right')
     t.set_fontfeatures(['dlig'])
     assert t.get_fontfeatures() == ('dlig', )
+
+
+@image_comparison(['features'], remove_text=False, style='mpl20',
+                  extensions=['png', 'pdf', 'svg', 'eps'])
+def test_text_features():
+    fig = plt.figure(figsize=(5, 1.5))
+    _test_text_features(fig)
 
 
 @pytest.mark.parametrize(
@@ -1266,11 +1274,7 @@ def test_text_language_invalid(input, match):
         Text(0, 0, 'foo', language=input)
 
 
-@image_comparison(['language'], remove_text=False, style='mpl20',
-                  extensions=['png', 'pdf', 'svg', 'eps'])
-def test_text_language():
-    fig = plt.figure(figsize=(5, 3))
-
+def _test_text_language(fig):
     t = fig.text(0, 0.8, 'Default', fontsize=32)
     assert t.get_language() is None
     t = fig.text(0, 0.55, 'Lang A', fontsize=32)
@@ -1308,3 +1312,22 @@ def test_text_language():
     t.set_language((('en', 0, 1), ('smn', 1, 2), ('en', 2, 3), ('smn', 3, 4)))
     assert t.get_language() == (
         ('en', 0, 1), ('smn', 1, 2), ('en', 2, 3), ('smn', 3, 4))
+
+
+@image_comparison(['language'], remove_text=False, style='mpl20',
+                  extensions=['png', 'pdf', 'svg', 'eps'])
+def test_text_language():
+    fig = plt.figure(figsize=(5, 3))
+    _test_text_language(fig)
+
+
+@image_comparison(['draw_text_fallback.png'], style='mpl20')
+def test_draw_text_as_path_fallback(monkeypatch):
+    # Delete RendererAgg.draw_text so that we use the RendererBase.draw_text fallback.
+    monkeypatch.delattr('matplotlib.backends.backend_agg.RendererAgg.draw_text')
+    heights = [2, 1.5, 3]
+    fig = plt.figure(figsize=(6, sum(heights)))
+    subfig = fig.subfigures(3, 1, height_ratios=heights)
+    _test_complex_shaping(subfig[0])
+    _test_text_features(subfig[1])
+    _test_text_language(subfig[2])
