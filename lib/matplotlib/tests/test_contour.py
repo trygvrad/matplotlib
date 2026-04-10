@@ -803,6 +803,15 @@ def test_contour_remove():
     assert ax.get_children() == orig_children
 
 
+def test_contour_remove_with_labels():
+    ax = plt.figure().add_subplot()
+    cs = ax.contour(np.arange(16).reshape((4, 4)))
+    labels = cs.clabel()
+    labels[0].remove()
+    with pytest.warns(UserWarning, match="Some labels were manually removed"):
+        cs.remove()
+
+
 def test_contour_no_args():
     fig, ax = plt.subplots()
     data = [[0, 1], [1, 0]]

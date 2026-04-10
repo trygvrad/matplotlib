@@ -143,6 +143,11 @@ class ContourLabeler:
         -------
         labels
             A list of `.Text` instances for the labels.
+
+            Note: The returned Text instances should not be individually
+            removed or have their geometry modified, e.g. by changing text or font size.
+            If you need such a modification, remove the entire
+            `.ContourSet` and recreate it.
         """
 
         if self.filled:
@@ -515,7 +520,14 @@ class ContourLabeler:
     def remove(self):
         super().remove()
         for text in self.labelTexts:
-            text.remove()
+            try:
+                text.remove()
+            except ValueError:
+                _api.warn_external(
+                    "Some labels were manually removed from the ContourSet. "
+                    "To remove labels cleanly, remove the entire ContourSet "
+                    "and recreate it.")
+        self.labelTexts.clear()
 
 
 def _find_closest_point_on_path(xys, p):
