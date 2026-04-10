@@ -300,6 +300,8 @@ def test_embed_limit(method_name, caplog, anim):
             and record.levelname == "WARNING")
 
 
+@pytest.mark.skipif(sys.platform == 'emscripten',
+                    reason='emscripten does not support subprocesses')
 @pytest.mark.skipif(shutil.which("/bin/sh") is None, reason="requires a POSIX OS")
 def test_failing_ffmpeg(tmp_path, monkeypatch, anim):
     """

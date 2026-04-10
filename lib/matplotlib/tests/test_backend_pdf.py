@@ -2,6 +2,7 @@ import datetime
 import decimal
 import io
 from pathlib import Path
+import string
 
 import numpy as np
 import pytest
@@ -345,7 +346,7 @@ def test_empty_rasterized():
     fig.savefig(io.BytesIO(), format="pdf")
 
 
-@image_comparison(['kerning.pdf'])
+@image_comparison(['kerning.pdf'], style='mpl20')
 def test_kerning():
     fig = plt.figure()
     s = "AVAVAVAVAVAVAVAV€AAVV"
@@ -360,13 +361,13 @@ def test_glyphs_subset():
     # non-subsetted FT2Font
     nosubfont = FT2Font(fpath)
     nosubfont.set_text(chars)
+    nosubcmap = nosubfont.get_charmap()
 
     # subsetted FT2Font
-    with get_glyphs_subset(fpath, chars) as subset:
+    glyph_indices = {nosubcmap[ord(c)] for c in chars}
+    with get_glyphs_subset(fm.FontPath(fpath, 0), glyph_indices) as subset:
         subfont = FT2Font(font_as_file(subset))
     subfont.set_text(chars)
-
-    nosubcmap = nosubfont.get_charmap()
     subcmap = subfont.get_charmap()
 
     # all unique chars must be available in subsetted font
@@ -379,26 +380,58 @@ def test_glyphs_subset():
     assert subfont.get_num_glyphs() == nosubfont.get_num_glyphs()
 
 
-@image_comparison(["multi_font_type3.pdf"])
+@image_comparison(["multi_font_type3.pdf"], style='mpl20')
 def test_multi_font_type3():
     fonts, test_str = _gen_multi_font_text()
     plt.rc('font', family=fonts, size=16)
     plt.rc('pdf', fonttype=3)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     fig.text(0.5, 0.5, test_str,
              horizontalalignment='center', verticalalignment='center')
 
 
-@image_comparison(["multi_font_type42.pdf"])
+@image_comparison(["multi_font_type42.pdf"], style='mpl20')
 def test_multi_font_type42():
     fonts, test_str = _gen_multi_font_text()
     plt.rc('font', family=fonts, size=16)
     plt.rc('pdf', fonttype=42)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     fig.text(0.5, 0.5, test_str,
              horizontalalignment='center', verticalalignment='center')
+
+
+@image_comparison(['ttc_type3.pdf'], style='mpl20')
+def test_ttc_type3():
+    fp = fm.FontProperties(family=['WenQuanYi Zen Hei'])
+    if Path(fm.findfont(fp)).name != 'wqy-zenhei.ttc':
+        pytest.skip('Font wqy-zenhei.ttc may be missing')
+
+    fonts = ['WenQuanYi Zen Hei', 'WenQuanYi Zen Hei Mono']
+    plt.rc('font', size=16)
+    plt.rc('pdf', fonttype=3)
+
+    figs = plt.figure(figsize=(7, len(fonts) / 2)).subfigures(len(fonts))
+    for font, fig in zip(fonts, figs):
+        fig.text(0.5, 0.5, f'{font}: {string.ascii_uppercase}', font=font,
+                 horizontalalignment='center', verticalalignment='center')
+
+
+@image_comparison(['ttc_type42.pdf'], style='mpl20')
+def test_ttc_type42():
+    fp = fm.FontProperties(family=['WenQuanYi Zen Hei'])
+    if Path(fm.findfont(fp)).name != 'wqy-zenhei.ttc':
+        pytest.skip('Font wqy-zenhei.ttc may be missing')
+
+    fonts = ['WenQuanYi Zen Hei', 'WenQuanYi Zen Hei Mono']
+    plt.rc('font', size=16)
+    plt.rc('pdf', fonttype=42)
+
+    figs = plt.figure(figsize=(7, len(fonts) / 2)).subfigures(len(fonts))
+    for font, fig in zip(fonts, figs):
+        fig.text(0.5, 0.5, f'{font}: {string.ascii_uppercase}', font=font,
+                 horizontalalignment='center', verticalalignment='center')
 
 
 @pytest.mark.parametrize('family_name, file_name',
@@ -417,14 +450,14 @@ def test_otf_font_smoke(family_name, file_name):
     fig.savefig(io.BytesIO(), format="pdf")
 
 
-@image_comparison(["truetype-conversion.pdf"])
+@image_comparison(["truetype-conversion.pdf"], style='mpl20')
 # mpltest.ttf does not have "l"/"p" glyphs so we get a warning when trying to
 # get the font extents.
 def test_truetype_conversion(recwarn):
     mpl.rcParams['pdf.fonttype'] = 3
     fig, ax = plt.subplots()
     ax.text(0, 0, "ABCDE",
-            font=Path(__file__).parent / "data/mpltest.ttf", fontsize=80)
+            font=Path(__file__).parent / "data/mpltest.ttf", fontsize=72)
     ax.set_xticks([])
     ax.set_yticks([])
 

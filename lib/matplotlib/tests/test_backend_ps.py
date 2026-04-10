@@ -1,12 +1,14 @@
 from collections import Counter
 import io
+from pathlib import Path
 import re
+import string
 import tempfile
 
 import numpy as np
 import pytest
 
-from matplotlib import cbook, path, patheffects
+from matplotlib import cbook, font_manager, path, patheffects
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
 from matplotlib.testing import _gen_multi_font_text
@@ -217,11 +219,6 @@ def test_useafm():
     ax.text(.5, .5, "qk")
 
 
-@image_comparison(["type3.eps"])
-def test_type3_font():
-    plt.figtext(.5, .5, "I/J")
-
-
 @image_comparison(["coloredhatcheszerolw.eps"])
 def test_colored_hatch_zero_linewidth():
     ax = plt.gca()
@@ -318,26 +315,58 @@ def test_no_duplicate_definition():
     assert max(Counter(wds).values()) == 1
 
 
-@image_comparison(["multi_font_type3.eps"])
+@image_comparison(["multi_font_type3.eps"], style='mpl20')
 def test_multi_font_type3():
     fonts, test_str = _gen_multi_font_text()
     plt.rc('font', family=fonts, size=16)
     plt.rc('ps', fonttype=3)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     fig.text(0.5, 0.5, test_str,
              horizontalalignment='center', verticalalignment='center')
 
 
-@image_comparison(["multi_font_type42.eps"])
+@image_comparison(["multi_font_type42.eps"], style='mpl20')
 def test_multi_font_type42():
     fonts, test_str = _gen_multi_font_text()
     plt.rc('font', family=fonts, size=16)
     plt.rc('ps', fonttype=42)
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     fig.text(0.5, 0.5, test_str,
              horizontalalignment='center', verticalalignment='center')
+
+
+@image_comparison(['ttc_type3.eps'], style='mpl20')
+def test_ttc_type3():
+    fp = font_manager.FontProperties(family=['WenQuanYi Zen Hei'])
+    if Path(font_manager.findfont(fp)).name != 'wqy-zenhei.ttc':
+        pytest.skip('Font wqy-zenhei.ttc may be missing')
+
+    fonts = ['WenQuanYi Zen Hei', 'WenQuanYi Zen Hei Mono']
+    plt.rc('font', size=16)
+    plt.rc('pdf', fonttype=3)
+
+    figs = plt.figure(figsize=(7, len(fonts) / 2)).subfigures(len(fonts))
+    for font, fig in zip(fonts, figs):
+        fig.text(0.5, 0.5, f'{font}: {string.ascii_uppercase}', font=font,
+                 horizontalalignment='center', verticalalignment='center')
+
+
+@image_comparison(['ttc_type42.eps'], style='mpl20')
+def test_ttc_type42():
+    fp = font_manager.FontProperties(family=['WenQuanYi Zen Hei'])
+    if Path(font_manager.findfont(fp)).name != 'wqy-zenhei.ttc':
+        pytest.skip('Font wqy-zenhei.ttc may be missing')
+
+    fonts = ['WenQuanYi Zen Hei', 'WenQuanYi Zen Hei Mono']
+    plt.rc('font', size=16)
+    plt.rc('pdf', fonttype=42)
+
+    figs = plt.figure(figsize=(7, len(fonts) / 2)).subfigures(len(fonts))
+    for font, fig in zip(fonts, figs):
+        fig.text(0.5, 0.5, f'{font}: {string.ascii_uppercase}', font=font,
+                 horizontalalignment='center', verticalalignment='center')
 
 
 @image_comparison(["scatter.eps"])

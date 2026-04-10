@@ -117,7 +117,7 @@ def test_axes3d_repr():
 
 
 @mpl3d_image_comparison(['axes3d_primary_views.png'], style='mpl20',
-                        tol=0.05 if sys.platform == "darwin" else 0)
+                        tol=0.045 if sys.platform == 'darwin' else 0)
 def test_axes3d_primary_views():
     # (elev, azim, roll)
     views = [(90, -90, 0),  # XY
@@ -647,10 +647,8 @@ def test_surface3d():
     fig.colorbar(surf, shrink=0.5, aspect=5)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['surface3d_label_offset_tick_position.png'], style='mpl20', tol=0.07)
+@image_comparison(['surface3d_label_offset_tick_position.png'], style='mpl20')
 def test_surface3d_label_offset_tick_position():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     ax = plt.figure().add_subplot(projection="3d")
 
     x, y = np.mgrid[0:6 * np.pi:0.25, 0:4 * np.pi:0.25]
@@ -744,8 +742,7 @@ def test_surface3d_masked_strides():
     ax.view_init(60, -45, 0)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@mpl3d_image_comparison(['text3d.png'], remove_text=False, style='mpl20', tol=0.1)
+@mpl3d_image_comparison(['text3d.png'], remove_text=False, style='mpl20')
 def test_text3d():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
@@ -1124,9 +1121,7 @@ def test_poly3dCollection_autoscaling():
     assert np.allclose(ax.get_zlim3d(), (-0.0833333333333333, 4.083333333333333))
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@mpl3d_image_comparison(['axes3d_labelpad.png'],
-                        remove_text=False, style='mpl20', tol=0.06)
+@mpl3d_image_comparison(['axes3d_labelpad.png'], remove_text=False, style='mpl20')
 def test_axes3d_labelpad():
     fig = plt.figure()
     ax = fig.add_axes(Axes3D(fig))
@@ -1501,8 +1496,8 @@ class TestVoxels:
             assert voxels[coord], "faces returned for absent voxel"
             assert isinstance(poly, art3d.Poly3DCollection)
 
-    @mpl3d_image_comparison(['voxels-xyz.png'],
-                            tol=0.01, remove_text=False, style='mpl20')
+    @mpl3d_image_comparison(['voxels-xyz.png'], remove_text=False, style='mpl20',
+                            tol=0.002 if sys.platform == 'win32' else 0)
     def test_xyz(self):
         fig, ax = plt.subplots(subplot_kw={"projection": "3d"})
 
@@ -1715,7 +1710,7 @@ def test_errorbar3d_errorevery():
 
 
 @mpl3d_image_comparison(['errorbar3d.png'], style='mpl20',
-                        tol=0 if platform.machine() == 'x86_64' else 0.02)
+                        tol=0.015 if sys.platform == 'darwin' else 0)
 def test_errorbar3d():
     """Tests limits, color styling, and legend for 3D errorbars."""
     fig = plt.figure()
@@ -1731,9 +1726,9 @@ def test_errorbar3d():
     ax.legend()
 
 
-@image_comparison(['stem3d.png'], style='mpl20', tol=0.009)
+@image_comparison(['stem3d.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.008)
 def test_stem3d():
-    plt.rcParams['axes3d.automargin'] = True  # Remove when image is regenerated
     fig, axs = plt.subplots(2, 3, figsize=(8, 6),
                             constrained_layout=True,
                             subplot_kw={'projection': '3d'})
@@ -2878,7 +2873,7 @@ def _make_triangulation_data():
 
 
 @mpl3d_image_comparison(['scale3d_artists_log.png'], style='mpl20',
-                        remove_text=False, tol=0.03)
+                        remove_text=False, tol=0.016)
 def test_scale3d_artists_log():
     """Test all 3D artist types with log scale."""
     fig = plt.figure(figsize=(16, 12))

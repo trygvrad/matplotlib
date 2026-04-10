@@ -68,7 +68,7 @@ def test_text_urls():
     assert expected in buf
 
 
-@image_comparison(['bold_font_output.svg'])
+@image_comparison(['bold_font_output.svg'], style='mpl20')
 def test_bold_font_output():
     fig, ax = plt.subplots()
     ax.plot(np.arange(10), np.arange(10))
@@ -218,7 +218,7 @@ def test_unicode_won():
 
     tree = xml.etree.ElementTree.fromstring(buf)
     ns = 'http://www.w3.org/2000/svg'
-    won_id = 'SFSS1728-8e'
+    won_id = 'SFSS1728-232'
     assert len(tree.findall(f'.//{{{ns}}}path[@d][@id="{won_id}"]')) == 1
     assert f'#{won_id}' in tree.find(f'.//{{{ns}}}use').attrib.values()
 
@@ -527,24 +527,24 @@ def test_svg_metadata():
     assert values == metadata['Keywords']
 
 
-@image_comparison(["multi_font_aspath.svg"])
-def test_multi_font_type3():
+@image_comparison(["multi_font_aspath.svg"], style='mpl20')
+def test_multi_font_aspath():
     fonts, test_str = _gen_multi_font_text()
     plt.rc('font', family=fonts, size=16)
     plt.rc('svg', fonttype='path')
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     fig.text(0.5, 0.5, test_str,
              horizontalalignment='center', verticalalignment='center')
 
 
-@image_comparison(["multi_font_astext.svg"])
-def test_multi_font_type42():
+@image_comparison(["multi_font_astext.svg"], style='mpl20')
+def test_multi_font_astext():
     fonts, test_str = _gen_multi_font_text()
     plt.rc('font', family=fonts, size=16)
     plt.rc('svg', fonttype='none')
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 6))
     fig.text(0.5, 0.5, test_str,
              horizontalalignment='center', verticalalignment='center')
 

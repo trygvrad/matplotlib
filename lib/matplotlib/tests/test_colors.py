@@ -828,11 +828,8 @@ def _mask_tester(norm_instance, vals):
     assert_array_equal(masked_array.mask, norm_instance(masked_array).mask)
 
 
-@image_comparison(['levels_and_colors.png'])
+@image_comparison(['levels_and_colors.png'], style='mpl20')
 def test_cmap_and_norm_from_levels_and_colors():
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['pcolormesh.snap'] = False
-
     data = np.linspace(-2, 4, 49).reshape(7, 7)
     levels = [-1, 2, 2.5, 3]
     colors = ['red', 'green', 'blue', 'yellow', 'black']
@@ -847,11 +844,8 @@ def test_cmap_and_norm_from_levels_and_colors():
     ax.tick_params(labelleft=False, labelbottom=False)
 
 
-@image_comparison(['boundarynorm_and_colorbar.png'], tol=1.0)
+@image_comparison(['boundarynorm_and_colorbar.png'])
 def test_boundarynorm_and_colorbarbase():
-    # Remove this line when this test image is regenerated.
-    plt.rcParams['pcolormesh.snap'] = False
-
     # Make a figure and axes with dimensions as desired.
     fig = plt.figure()
     ax1 = fig.add_axes((0.05, 0.80, 0.9, 0.15))

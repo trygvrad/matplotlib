@@ -26,9 +26,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['figure_align_labels'], extensions=['png', 'svg'],
-                  tol=0.1 if platform.machine() == 'x86_64' else 0.1)
+@image_comparison(['figure_align_labels'], extensions=['png', 'svg'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.01)
 def test_align_labels():
     fig = plt.figure(layout='tight')
     gs = gridspec.GridSpec(3, 3)
@@ -68,11 +67,9 @@ def test_align_labels():
     fig.align_labels()
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
 @image_comparison(['figure_align_titles_tight.png',
                    'figure_align_titles_constrained.png'],
-                  tol=0.3 if platform.machine() == 'x86_64' else 0.04,
-                  style='mpl20')
+                  style='mpl20', tol=0 if platform.machine() == 'x86_64' else 0.021)
 def test_align_titles():
     for layout in ['tight', 'constrained']:
         fig, axs = plt.subplots(1, 2, layout=layout, width_ratios=[2, 1])
@@ -210,8 +207,8 @@ def test_clf_keyword():
     assert [t.get_text() for t in fig2.texts] == []
 
 
-@image_comparison(['figure_today.png'],
-                  tol=0 if platform.machine() == 'x86_64' else 0.015)
+@image_comparison(['figure_today.png'], style='mpl20',
+                  tol=0 if platform.machine() == 'x86_64' else 0.022)
 def test_figure():
     # named figure support
     fig = plt.figure('today')
@@ -226,7 +223,7 @@ def test_figure():
     plt.close('tomorrow')
 
 
-@image_comparison(['figure_legend.png'])
+@image_comparison(['figure_legend.png'], style='mpl20')
 def test_figure_legend():
     fig, axs = plt.subplots(2)
     axs[0].plot([0, 1], [1, 0], label='x', color='g')
@@ -323,8 +320,7 @@ def test_add_subplot_invalid():
         fig.add_subplot(ax)
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
-@image_comparison(['figure_suptitle.png'], tol=0.02)
+@image_comparison(['figure_suptitle.png'], style='mpl20')
 def test_suptitle():
     fig, _ = plt.subplots()
     fig.suptitle('hello', color='r')
@@ -838,7 +834,7 @@ def test_tightbbox():
     ax.set_xlim(0, 1)
     t = ax.text(1., 0.5, 'This dangles over end')
     renderer = fig.canvas.get_renderer()
-    x1Nom0 = 9.035  # inches
+    x1Nom0 = 8.9875  # inches
     assert abs(t.get_tightbbox(renderer).x1 - x1Nom0 * fig.dpi) < 2
     assert abs(ax.get_tightbbox(renderer).x1 - x1Nom0 * fig.dpi) < 2
     assert abs(fig.get_tightbbox(renderer).x1 - x1Nom0) < 0.05
@@ -1400,7 +1396,8 @@ def test_subfigure_dpi():
 
 
 @image_comparison(['test_subfigure_ss.png'], style='mpl20',
-                  savefig_kwarg={'facecolor': 'teal'}, tol=0.02)
+                  savefig_kwarg={'facecolor': 'teal'},
+                  tol=0.022 if sys.platform == 'darwin' else 0)
 def test_subfigure_ss():
     # test assigning the subfigure via subplotspec
     np.random.seed(19680801)
@@ -1422,9 +1419,8 @@ def test_subfigure_ss():
     fig.suptitle('Figure suptitle', fontsize='xx-large')
 
 
-# TODO: tighten tolerance after baseline image is regenerated for text overhaul
 @image_comparison(['test_subfigure_double.png'], style='mpl20',
-                  savefig_kwarg={'facecolor': 'teal'}, tol=0.02)
+                  savefig_kwarg={'facecolor': 'teal'})
 def test_subfigure_double():
     # test assigning the subfigure via subplotspec
     np.random.seed(19680801)
