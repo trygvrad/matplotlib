@@ -4725,6 +4725,20 @@ class _AxesBase(martist.Artist):
         twin.set_zorder(self.zorder)
 
         self._twinned_axes.join(self, twin)
+
+        # If the parent Axes has been manually positioned (set_position() sets
+        # in_layout=False), the SubplotSpec-based add_subplot(...) path ignores
+        # that manual position when creating a twin. In that case, explicitly
+        # copy both the original and active positions to the twin so they start
+        # aligned.
+        #
+        # For layout-managed Axes (in_layout=True), we keep the existing
+        # SubplotSpec-driven behavior, so layout engines such as tight_layout
+        # and constrained_layout continue to control positioning.
+        if not self.get_in_layout():
+            twin._set_position(self.get_position(original=True), which="original")
+            twin._set_position(self.get_position(original=False), which="active")
+
         return twin
 
     def twinx(self, axes_class=None, **kwargs):
