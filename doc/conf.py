@@ -292,6 +292,7 @@ for gd in gallery_dirs:
 
 sphinx_gallery_conf = {
     'backreferences_dir': Path('api', '_as_gen'),
+    'minigallery_sort_order': 'sphinxext.gallery_order.preserve_order',
     # Compression is a significant effort that we skip for local and CI builds.
     'compress_images': ('thumbnails', 'images') if is_release_build else (),
     'doc_module': ('matplotlib', 'mpl_toolkits'),
