@@ -1032,7 +1032,7 @@ def delete_masked_points(*args):
                 mask = np.isfinite(xd)
                 if isinstance(mask, np.ndarray):
                     masks.append(mask)
-            except Exception:  # Fixme: put in tuple of possible exceptions?
+            except (TypeError, ValueError):  # Fixme: put in tuple of possible exceptions?
                 pass
     if len(masks):
         mask = np.logical_and.reduce(masks)
