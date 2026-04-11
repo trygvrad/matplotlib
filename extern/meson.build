@@ -42,17 +42,24 @@ else
       'gdi=disabled',
       'glib=disabled',
       'gobject=disabled',
+      'gpu=disabled',
+      'gpu_demo=disabled',
       'harfrust=disabled',
       'icu=disabled',
       'introspection=disabled',
       'kbts=disabled',
+      'png=disabled',
+      'raster=disabled',
+      'subset=disabled',
       'tests=disabled',
       'utilities=disabled',
+      'vector=disabled',
       'wasm=disabled',
+      'zlib=disabled',
     ]
   )
   subproject('sheenbidi', default_options: ['default_library=static'])
-  libraqm_proj = subproject('libraqm-0.10.4',
+  libraqm_proj = subproject('libraqm',
     default_options: [
       'default_library=static',
       'sheenbidi=true',
