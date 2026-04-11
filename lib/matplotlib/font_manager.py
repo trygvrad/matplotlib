@@ -277,17 +277,31 @@ def _get_macos_fonts():
 
 def findSystemFonts(fontpaths=None, fontext='ttf'):
     """
-    Search for fonts in the specified font paths.  If no paths are
-    given, will use a standard set of system paths, as well as the
-    list of fonts tracked by fontconfig if fontconfig is installed and
-    available.  A list of TrueType fonts are returned by default with
-    AFM fonts as an option.
+    Find fonts in a search path, system paths, or some other platform-specific method.
+
+    Parameters
+    ----------
+    fontpaths : list of str, optional
+        Search for fonts in these specified font paths. If no paths are given and the
+        :envvar:`MPL_IGNORE_SYSTEM_FONTS` is not set, use a standard set of system
+        paths, as well as the list of fonts tracked by fontconfig if fontconfig is
+        installed and available.
+    fontext : {'ttf', 'afm'}, default: 'ttf'
+        If 'ttf', search for TrueType fonts; if 'afm', search for with AFM fonts.
+
+    Returns
+    -------
+    list of str
+        A list of file paths with fonts of the given type.
     """
     fontfiles = set()
     fontexts = get_fontext_synonyms(fontext)
 
     if fontpaths is None:
-        if sys.platform == 'win32':
+        if os.getenv('MPL_IGNORE_SYSTEM_FONTS'):
+            installed_fonts = []
+            fontpaths = []
+        elif sys.platform == 'win32':
             installed_fonts = _get_win32_installed_fonts()
             fontpaths = []
         elif sys.platform == 'emscripten':
@@ -1465,6 +1479,8 @@ class FontManager:
 
         directory : str, optional
             If given, only search this directory and its subdirectories.
+            If :envvar:`MPL_IGNORE_SYSTEM_FONTS` is set, then this defaults to
+            Matplotlib's internal font directory.
 
         fallback_to_default : bool
             If True, will fall back to the default font family (usually
@@ -1506,6 +1522,8 @@ class FontManager:
             "serif", "sans-serif", "cursive", "fantasy", "monospace"]]
         rc_params = tuple(tuple(e) if isinstance(e, list) else e
                           for e in rc_params)  # Make this hashable.
+        if directory is None and os.getenv('MPL_IGNORE_SYSTEM_FONTS'):
+            directory = cbook._get_data_path('fonts')
         ret = self._findfont_cached(
             prop, fontext, directory, fallback_to_default, rebuild_if_missing,
             rc_params)
