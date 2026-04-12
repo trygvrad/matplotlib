@@ -19,15 +19,8 @@ _log = logging.getLogger(__name__)
 
 def set_font_settings_for_testing():
     mpl.rcParams['font.family'] = 'DejaVu Sans'
-    # We've changed the default for ourselves here, but for backwards-compatibility, use
-    # the old setting if not called in our own tests (which would set
-    # `_called_from_pytest` from our `conftest.py`).
-    if getattr(mpl, '_called_from_pytest', False):
-        mpl.rcParams['text.hinting'] = 'default'
-        mpl.rcParams['text.hinting_factor'] = 1
-    else:
-        mpl.rcParams['text.hinting'] = 'none'
-        mpl.rcParams['text.hinting_factor'] = 8
+    mpl.rcParams['text.hinting'] = 'default'
+    mpl.rcParams['text.hinting_factor'] = 1
 
 
 def set_reproducibility_for_testing():
