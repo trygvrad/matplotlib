@@ -1,0 +1,20 @@
+---
+name: 'Update PR Triage Board'
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Run every hour
+  workflow_dispatch:
+
+jobs:
+  pr-triage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update PR Triage Board
+        uses: yuvipanda/pr-triage-board-bot@main
+        with:
+          organization: 'matplotlib'
+          project-number: '11'
+          gh-app-id: '3339145'
+          gh-app-installation-id: '122963236'
+          gh-app-private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
