@@ -487,11 +487,10 @@ def test_webagg():
               "\n_test_interactive_impl()")
     rc = '{"backend": "webagg"}'
     with _WaitForStringPopen([sys.executable, "-c", source, rc]) as proc:
-        timeout = time.perf_counter() + _test_timeout
         try:
             buf = proc.wait_for('Press Ctrl+C')
             url = re.search(r'visit (https?:\/\/\S+)', buf).group(1)
-            print(url)
+            timeout = time.perf_counter() + _test_timeout
             while True:
                 try:
                     retcode = proc.poll()
