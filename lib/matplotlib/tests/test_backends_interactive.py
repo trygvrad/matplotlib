@@ -737,18 +737,17 @@ def test_sigint(env, target, kwargs):
     backend = env.get("MPLBACKEND")
     if not backend.startswith(("qt", "macosx")):
         pytest.skip("SIGINT currently only tested on qt and macosx")
-    proc = _WaitForStringPopen(
-        [sys.executable, "-c",
-         inspect.getsource(_test_sigint_impl) +
-         f"\n_test_sigint_impl({backend!r}, {target!r}, {kwargs!r})"])
-    try:
-        proc.wait_for('DRAW')
-        stdout, _ = proc.communicate(timeout=_test_timeout)
-    except Exception:
-        proc.kill()
-        stdout, _ = proc.communicate()
-        raise
-    assert 'SUCCESS' in stdout
+    source = (inspect.getsource(_test_sigint_impl) +
+              f"\n_test_sigint_impl({backend!r}, {target!r}, {kwargs!r})")
+    with _WaitForStringPopen([sys.executable, "-c", source]) as proc:
+        try:
+            proc.wait_for('DRAW')
+            stdout, _ = proc.communicate(timeout=_test_timeout)
+        except Exception:
+            proc.kill()
+            stdout, _ = proc.communicate()
+            raise
+        assert 'SUCCESS' in stdout
 
 
 def _test_other_signal_before_sigint_impl(backend, target_name, kwargs):
@@ -796,20 +795,19 @@ def test_other_signal_before_sigint(env, target, kwargs, request):
         # https://github.com/matplotlib/matplotlib/issues/27984
         request.node.add_marker(
             pytest.mark.xfail(reason="Qt backend is buggy on macOS"))
-    proc = _WaitForStringPopen(
-        [sys.executable, "-c",
-         inspect.getsource(_test_other_signal_before_sigint_impl) +
-         "\n_test_other_signal_before_sigint_impl("
-            f"{backend!r}, {target!r}, {kwargs!r})"])
-    try:
-        proc.wait_for('DRAW')
-        os.kill(proc.pid, signal.SIGUSR1)
-        proc.wait_for('SIGUSR1')
-        os.kill(proc.pid, signal.SIGINT)
-        stdout, _ = proc.communicate(timeout=_test_timeout)
-    except Exception:
-        proc.kill()
-        stdout, _ = proc.communicate()
-        raise
+    source = (inspect.getsource(_test_other_signal_before_sigint_impl) +
+              "\n_test_other_signal_before_sigint_impl("
+              f"{backend!r}, {target!r}, {kwargs!r})")
+    with _WaitForStringPopen([sys.executable, "-c", source]) as proc:
+        try:
+            proc.wait_for('DRAW')
+            os.kill(proc.pid, signal.SIGUSR1)
+            proc.wait_for('SIGUSR1')
+            os.kill(proc.pid, signal.SIGINT)
+            stdout, _ = proc.communicate(timeout=_test_timeout)
+        except Exception:
+            proc.kill()
+            stdout, _ = proc.communicate()
+            raise
     print(stdout)
     assert 'SUCCESS' in stdout
