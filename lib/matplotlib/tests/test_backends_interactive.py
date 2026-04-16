@@ -5,6 +5,7 @@ import inspect
 import json
 import os
 import platform
+import re
 import signal
 import subprocess
 import sys
@@ -16,7 +17,6 @@ from PIL import Image
 
 import pytest
 
-import matplotlib as mpl
 from matplotlib import _c_internal_utils
 from matplotlib.backend_tools import ToolToggleBase
 from matplotlib.testing import subprocess_run_helper as _run_helper, is_ci_environment
@@ -46,7 +46,7 @@ class _WaitForStringPopen(subprocess.Popen):
                     f'Subprocess died before emitting expected {terminator!r}')
             buf += c
             if buf.endswith(terminator):
-                return
+                return buf
 
 
 # Minimal smoke-testing of the backends for which the dependencies are
@@ -160,7 +160,6 @@ def _test_interactive_impl():
     from matplotlib.backend_bases import KeyEvent, FigureCanvasBase
     mpl.rcParams.update({
         "webagg.open_in_browser": False,
-        "webagg.port_retries": 1,
     })
 
     mpl.rcParams.update(json.loads(sys.argv[1]))
@@ -484,32 +483,32 @@ def test_cross_Qt_imports(host, mpl):
 @pytest.mark.skipif(sys.platform == "win32", reason="Cannot send SIGINT on Windows.")
 def test_webagg():
     pytest.importorskip("tornado")
-    proc = subprocess.Popen(
-        [sys.executable, "-c",
-         inspect.getsource(_test_interactive_impl)
-         + "\n_test_interactive_impl()", "{}"],
-        env={**os.environ, "MPLBACKEND": "webagg", "SOURCE_DATE_EPOCH": "0"})
-    url = f'http://{mpl.rcParams["webagg.address"]}:{mpl.rcParams["webagg.port"]}'
-    timeout = time.perf_counter() + _test_timeout
-    try:
-        while True:
-            try:
-                retcode = proc.poll()
-                # check that the subprocess for the server is not dead
-                assert retcode is None
-                conn = urllib.request.urlopen(url)
-                break
-            except urllib.error.URLError:
-                if time.perf_counter() > timeout:
-                    pytest.fail("Failed to connect to the webagg server.")
-                else:
-                    continue
-        conn.close()
-        proc.send_signal(signal.SIGINT)
-        assert proc.wait(timeout=_test_timeout) == 0
-    finally:
-        if proc.poll() is None:
-            proc.kill()
+    source = (inspect.getsource(_test_interactive_impl) +
+              "\n_test_interactive_impl()")
+    rc = '{"backend": "webagg"}'
+    with _WaitForStringPopen([sys.executable, "-c", source, rc]) as proc:
+        try:
+            buf = proc.wait_for('Press Ctrl+C')
+            url = re.search(r'visit (https?:\/\/\S+)', buf).group(1)
+            timeout = time.perf_counter() + _test_timeout
+            while True:
+                try:
+                    retcode = proc.poll()
+                    # check that the subprocess for the server is not dead
+                    assert retcode is None
+                    with urllib.request.urlopen(url):
+                        # Do nothing; we've just confirmed that we can connect.
+                        break
+                except urllib.error.URLError:
+                    if time.perf_counter() > timeout:
+                        pytest.fail("Failed to connect to the webagg server.")
+                    else:
+                        continue
+            proc.send_signal(signal.SIGINT)
+            assert proc.wait(timeout=_test_timeout) == 0
+        finally:
+            if proc.poll() is None:
+                proc.kill()
 
 
 def _lazy_headless():
@@ -737,18 +736,17 @@ def test_sigint(env, target, kwargs):
     backend = env.get("MPLBACKEND")
     if not backend.startswith(("qt", "macosx")):
         pytest.skip("SIGINT currently only tested on qt and macosx")
-    proc = _WaitForStringPopen(
-        [sys.executable, "-c",
-         inspect.getsource(_test_sigint_impl) +
-         f"\n_test_sigint_impl({backend!r}, {target!r}, {kwargs!r})"])
-    try:
-        proc.wait_for('DRAW')
-        stdout, _ = proc.communicate(timeout=_test_timeout)
-    except Exception:
-        proc.kill()
-        stdout, _ = proc.communicate()
-        raise
-    assert 'SUCCESS' in stdout
+    source = (inspect.getsource(_test_sigint_impl) +
+              f"\n_test_sigint_impl({backend!r}, {target!r}, {kwargs!r})")
+    with _WaitForStringPopen([sys.executable, "-c", source]) as proc:
+        try:
+            proc.wait_for('DRAW')
+            stdout, _ = proc.communicate(timeout=_test_timeout)
+        except Exception:
+            proc.kill()
+            stdout, _ = proc.communicate()
+            raise
+        assert 'SUCCESS' in stdout
 
 
 def _test_other_signal_before_sigint_impl(backend, target_name, kwargs):
@@ -796,20 +794,19 @@ def test_other_signal_before_sigint(env, target, kwargs, request):
         # https://github.com/matplotlib/matplotlib/issues/27984
         request.node.add_marker(
             pytest.mark.xfail(reason="Qt backend is buggy on macOS"))
-    proc = _WaitForStringPopen(
-        [sys.executable, "-c",
-         inspect.getsource(_test_other_signal_before_sigint_impl) +
-         "\n_test_other_signal_before_sigint_impl("
-            f"{backend!r}, {target!r}, {kwargs!r})"])
-    try:
-        proc.wait_for('DRAW')
-        os.kill(proc.pid, signal.SIGUSR1)
-        proc.wait_for('SIGUSR1')
-        os.kill(proc.pid, signal.SIGINT)
-        stdout, _ = proc.communicate(timeout=_test_timeout)
-    except Exception:
-        proc.kill()
-        stdout, _ = proc.communicate()
-        raise
+    source = (inspect.getsource(_test_other_signal_before_sigint_impl) +
+              "\n_test_other_signal_before_sigint_impl("
+              f"{backend!r}, {target!r}, {kwargs!r})")
+    with _WaitForStringPopen([sys.executable, "-c", source]) as proc:
+        try:
+            proc.wait_for('DRAW')
+            os.kill(proc.pid, signal.SIGUSR1)
+            proc.wait_for('SIGUSR1')
+            os.kill(proc.pid, signal.SIGINT)
+            stdout, _ = proc.communicate(timeout=_test_timeout)
+        except Exception:
+            proc.kill()
+            stdout, _ = proc.communicate()
+            raise
     print(stdout)
     assert 'SUCCESS' in stdout
