@@ -497,14 +497,14 @@ def test_webagg():
                     retcode = proc.poll()
                     # check that the subprocess for the server is not dead
                     assert retcode is None
-                    conn = urllib.request.urlopen(url)
-                    break
+                    with urllib.request.urlopen(url):
+                        # Do nothing; we've just confirmed that we can connect.
+                        break
                 except urllib.error.URLError:
                     if time.perf_counter() > timeout:
                         pytest.fail("Failed to connect to the webagg server.")
                     else:
                         continue
-            conn.close()
             proc.send_signal(signal.SIGINT)
             assert proc.wait(timeout=_test_timeout) == 0
         finally:
