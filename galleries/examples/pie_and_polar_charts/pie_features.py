@@ -99,8 +99,8 @@ plt.show()
 # slices are rotated counter-clockwise by 90 degrees, and the frog slice starts
 # on the positive y-axis.
 #
-# Controlling the size
-# --------------------
+# Grow or shrink pie
+# ------------------
 #
 # By changing the *radius* parameter, and often the text size for better visual
 # appearance, the pie chart can be scaled.
@@ -112,8 +112,8 @@ ax.pie(sizes, labels=labels, autopct='%.0f%%',
 plt.show()
 
 # %%
-# Modifying the shadow
-# --------------------
+# Modify shadow
+# -------------
 #
 # The *shadow* parameter may optionally take a dictionary with arguments to
 # the `.Shadow` patch. This can be used to modify the default shadow.
