@@ -90,7 +90,8 @@ def test_bbox_inches_tight_layout_notconstrained(tmp_path):
 
 
 @image_comparison(['bbox_inches_tight_clipping'],
-                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'})
+                  remove_text=True, savefig_kwarg={'bbox_inches': 'tight'},
+                  style='_classic_test')
 def test_bbox_inches_tight_clipping():
     # tests bbox clipping on scatter points, and path clipping on a patch
     # to generate an appropriately tight bbox

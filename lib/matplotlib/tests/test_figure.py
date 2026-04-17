@@ -388,8 +388,8 @@ def test_remove_suptitle_supxlabel_supylabel():
                   # only test png and svg. The PDF output appears correct,
                   # but Ghostscript does not preserve the background color.
                   extensions=['png', 'svg'],
-                  savefig_kwarg={'facecolor': (0, 1, 0.4),
-                                 'edgecolor': 'none'})
+                  savefig_kwarg={'facecolor': (0, 1, 0.4), 'edgecolor': 'none'},
+                  style='_classic_test')
 def test_alpha():
     # We want an image which has a background color and an alpha of 0.4.
     fig = plt.figure(figsize=[2, 1])

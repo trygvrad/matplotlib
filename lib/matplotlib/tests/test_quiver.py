@@ -123,7 +123,8 @@ def test_quiver_with_key():
                  fontproperties={'weight': 'bold', 'size': 'large'})
 
 
-@image_comparison(['quiver_single_test_image.png'], remove_text=True)
+@image_comparison(['quiver_single_test_image.png'], remove_text=True,
+                  style='_classic_test')
 def test_quiver_single():
     fig, ax = plt.subplots()
     ax.margins(0.1)
@@ -153,7 +154,7 @@ def test_quiver_key_pivot():
     ax.quiverkey(q, 0, 0.5, 1, 'W', labelpos='W')
 
 
-@image_comparison(['quiver_key_xy.png'], remove_text=True)
+@image_comparison(['quiver_key_xy.png'], remove_text=True, style='_classic_test')
 def test_quiver_key_xy():
     # With scale_units='xy', ensure quiverkey still matches its quiver.
     # Note that the quiver and quiverkey lengths depend on the axes aspect
@@ -177,7 +178,7 @@ def test_quiver_key_xy():
             ax.quiverkey(q, X=x, Y=0.8, U=1, angle=angle, label='', color='b')
 
 
-@image_comparison(['barbs_test_image.png'], remove_text=True)
+@image_comparison(['barbs_test_image.png'], remove_text=True, style='_classic_test')
 def test_barbs():
     x = np.linspace(-5, 5, 5)
     X, Y = np.meshgrid(x, x)
@@ -188,7 +189,8 @@ def test_barbs():
              cmap='viridis')
 
 
-@image_comparison(['barbs_pivot_test_image.png'], remove_text=True)
+@image_comparison(['barbs_pivot_test_image.png'], remove_text=True,
+                  style='_classic_test')
 def test_barbs_pivot():
     x = np.linspace(-5, 5, 5)
     X, Y = np.meshgrid(x, x)
@@ -199,7 +201,7 @@ def test_barbs_pivot():
     ax.scatter(X, Y, s=49, c='black')
 
 
-@image_comparison(['barbs_test_flip.png'], remove_text=True)
+@image_comparison(['barbs_test_flip.png'], remove_text=True, style='_classic_test')
 def test_barbs_flip():
     """Test barbs with an array for flip_barb."""
     x = np.linspace(-5, 5, 5)
@@ -244,7 +246,7 @@ def test_angles_and_scale():
     ax.quiver(X, Y, U, V, angles=phi, scale_units='xy')
 
 
-@image_comparison(['quiver_xy.png'], remove_text=True)
+@image_comparison(['quiver_xy.png'], remove_text=True, style='_classic_test')
 def test_quiver_xy():
     # simple arrow pointing from SW to NE
     fig, ax = plt.subplots(subplot_kw=dict(aspect='equal'))

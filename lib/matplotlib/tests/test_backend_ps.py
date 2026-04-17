@@ -143,7 +143,7 @@ def test_tilde_in_tempfilename(tmp_path):
         plt.savefig(base_tempdir / 'tex_demo.eps', format="ps")
 
 
-@image_comparison(["empty.eps"])
+@image_comparison(["empty.eps"], style='_classic_test')
 def test_transparency():
     fig, ax = plt.subplots()
     ax.set_axis_off()
@@ -152,7 +152,7 @@ def test_transparency():
 
 
 @needs_usetex
-@image_comparison(["empty.eps"])
+@image_comparison(["empty.eps"], style='_classic_test')
 def test_transparency_tex():
     mpl.rcParams['text.usetex'] = True
     fig, ax = plt.subplots()
@@ -210,7 +210,7 @@ def test_usetex_preamble(caplog):
     plt.savefig(io.BytesIO(), format="ps")
 
 
-@image_comparison(["useafm.eps"])
+@image_comparison(["useafm.eps"], style='_classic_test')
 def test_useafm():
     mpl.rcParams["ps.useafm"] = True
     fig, ax = plt.subplots()
@@ -219,7 +219,7 @@ def test_useafm():
     ax.text(.5, .5, "qk")
 
 
-@image_comparison(["coloredhatcheszerolw.eps"])
+@image_comparison(["coloredhatcheszerolw.eps"], style='_classic_test')
 def test_colored_hatch_zero_linewidth():
     ax = plt.gca()
     ax.add_patch(Ellipse((0, 0), 1, 1, hatch='/', facecolor='none',
@@ -369,7 +369,7 @@ def test_ttc_type42():
                  horizontalalignment='center', verticalalignment='center')
 
 
-@image_comparison(["scatter.eps"])
+@image_comparison(["scatter.eps"], style='_classic_test')
 def test_path_collection():
     rng = np.random.default_rng(19680801)
     xvals = rng.uniform(0, 1, 10)

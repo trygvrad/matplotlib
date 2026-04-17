@@ -441,7 +441,7 @@ def test_twin_logscale(fig_test, fig_ref, twin):
     remove_ticks_and_titles(fig_ref)
 
 
-@image_comparison(['twin_autoscale.png'],
+@image_comparison(['twin_autoscale.png'], style='_classic_test',
                   tol=0 if platform.machine() == 'x86_64' else 0.009)
 def test_twinx_axis_scales():
     x = np.array([0, 0.5, 1])
@@ -635,7 +635,7 @@ def test_minorticks_on_rcParams_both(fig_test, fig_ref):
     ax_ref.minorticks_on()
 
 
-@image_comparison(["autoscale_tiny_range.png"], remove_text=True)
+@image_comparison(["autoscale_tiny_range.png"], remove_text=True, style='_classic_test')
 def test_autoscale_tiny_range():
     # github pull #904
     fig, axs = plt.subplots(2, 2)
@@ -787,7 +787,7 @@ def test_basic_annotate():
                 xytext=(3, 3), textcoords='offset points')
 
 
-@image_comparison(['arrow_simple.png'], remove_text=True)
+@image_comparison(['arrow_simple.png'], remove_text=True, style='_classic_test')
 def test_arrow_simple():
     # Simple image test for ax.arrow
     # kwargs that take discrete values
@@ -1000,7 +1000,8 @@ def test_axhspan_epoch():
     ax.set_ylim(t0 - 5.0*dt, tf + 5.0*dt)
 
 
-@image_comparison(['hexbin_extent.png', 'hexbin_extent.png'], remove_text=True)
+@image_comparison(['hexbin_extent.png', 'hexbin_extent.png'], remove_text=True,
+                  style='_classic_test')
 def test_hexbin_extent():
     # this test exposes sf bug 2856228
     fig, ax = plt.subplots()
@@ -1037,7 +1038,7 @@ def test_hexbin_string_norm():
     assert hex.norm.vmax == 5
 
 
-@image_comparison(['hexbin_empty.png'], remove_text=True)
+@image_comparison(['hexbin_empty.png'], remove_text=True, style='_classic_test')
 def test_hexbin_empty():
     # From #3886: creating hexbin from empty dataset raises ValueError
     fig, ax = plt.subplots()
@@ -1266,7 +1267,7 @@ def test_imshow_norm_vminvmax():
         ax.imshow(a, norm=mcolors.Normalize(-10, 10), vmin=0, vmax=5)
 
 
-@image_comparison(['polycollection_joinstyle'], remove_text=True)
+@image_comparison(['polycollection_joinstyle'], remove_text=True, style='_classic_test')
 def test_polycollection_joinstyle():
     # Bug #2890979 reported by Matthew West
     fig, ax = plt.subplots()
@@ -1312,6 +1313,7 @@ def test_fill_betweenx_input(y, x1, x2):
 
 
 @image_comparison(['fill_between_interpolate.png'], remove_text=True,
+                  style='_classic_test',
                   tol=0 if platform.machine() == 'x86_64' else 0.012)
 def test_fill_between_interpolate():
     x = np.arange(0.0, 2, 0.02)
@@ -1357,7 +1359,8 @@ def test_fill_between_interpolate_decreasing():
     ax.set_ylim(800, 600)
 
 
-@image_comparison(['fill_between_interpolate_nan.png'], remove_text=True)
+@image_comparison(['fill_between_interpolate_nan.png'], remove_text=True,
+                  style='_classic_test')
 def test_fill_between_interpolate_nan():
     # Tests fix for issue #18986.
     x = np.arange(10)
@@ -1389,7 +1392,7 @@ def test_symlog():
     ax.set_ylim(-1, 10000000)
 
 
-@image_comparison(['symlog2.pdf'], remove_text=True)
+@image_comparison(['symlog2.pdf'], remove_text=True, style='_classic_test')
 def test_symlog2():
     # Numbers from -50 to 50, with 0.1 as step
     x = np.arange(-50, 50, 0.001)
@@ -1416,7 +1419,7 @@ def test_pcolorargs_5205():
     plt.pcolor(X, Y, list(Z[:-1, :-1]))
 
 
-@image_comparison(['pcolormesh'], remove_text=True,
+@image_comparison(['pcolormesh'], remove_text=True, style='_classic_test',
                   tol=0.11 if platform.machine() == 'aarch64' else 0)
 def test_pcolormesh():
     # Remove this line when this test image is regenerated.
@@ -1441,7 +1444,7 @@ def test_pcolormesh():
     ax3.pcolormesh(Qx, Qz, Zm, shading="gouraud")
 
 
-@image_comparison(['pcolormesh_small.eps'])
+@image_comparison(['pcolormesh_small.eps'], style='_classic_test')
 def test_pcolormesh_small():
     n = 3
     x = np.linspace(-1.5, 1.5, n)
@@ -1467,8 +1470,8 @@ def test_pcolormesh_small():
         ax.set_axis_off()
 
 
-@image_comparison(['pcolormesh_alpha'], extensions=["png", "pdf"],
-                  remove_text=True,
+@image_comparison(['pcolormesh_alpha'], extensions=["png", "pdf"], remove_text=True,
+                  style='_classic_test',
                   tol=0.4 if platform.machine() == "aarch64" else 0)
 def test_pcolormesh_alpha():
     # Remove this line when this test image is regenerated.
@@ -1825,7 +1828,7 @@ def test_arc_angles():
         scale *= 10
 
 
-@image_comparison(['arc_ellipse'], remove_text=True)
+@image_comparison(['arc_ellipse'], remove_text=True, style='_classic_test')
 def test_arc_ellipse():
     xcenter, ycenter = 0.38, 0.52
     width, height = 1e-1, 3e-1
@@ -1898,7 +1901,8 @@ def test_markevery_line():
     ax.legend()
 
 
-@image_comparison(['markevery_linear_scales.png'], remove_text=True, tol=0.001)
+@image_comparison(['markevery_linear_scales.png'], remove_text=True,
+                  style='_classic_test', tol=0.001)
 def test_markevery_linear_scales():
     cases = [None,
              8,
@@ -1923,7 +1927,8 @@ def test_markevery_linear_scales():
         plt.plot(x, y, 'o', ls='-', ms=4,  markevery=case)
 
 
-@image_comparison(['markevery_linear_scales_zoomed.png'], remove_text=True)
+@image_comparison(['markevery_linear_scales_zoomed.png'], remove_text=True,
+                  style='_classic_test')
 def test_markevery_linear_scales_zoomed():
     cases = [None,
              8,
@@ -1950,7 +1955,7 @@ def test_markevery_linear_scales_zoomed():
         plt.ylim((1.1, 1.7))
 
 
-@image_comparison(['markevery_log_scales.png'], remove_text=True)
+@image_comparison(['markevery_log_scales.png'], remove_text=True, style='_classic_test')
 def test_markevery_log_scales():
     cases = [None,
              8,
@@ -2001,7 +2006,8 @@ def test_markevery_polar():
         plt.plot(theta, r, 'o', ls='-', ms=4,  markevery=case)
 
 
-@image_comparison(['markevery_linear_scales_nans.png'], remove_text=True)
+@image_comparison(['markevery_linear_scales_nans.png'], remove_text=True,
+                  style='_classic_test')
 def test_markevery_linear_scales_nans():
     cases = [None,
              8,
@@ -2027,7 +2033,7 @@ def test_markevery_linear_scales_nans():
         plt.plot(x, y, 'o', ls='-', ms=4,  markevery=case)
 
 
-@image_comparison(['marker_edges'], remove_text=True)
+@image_comparison(['marker_edges'], remove_text=True, style='_classic_test')
 def test_marker_edges():
     x = np.linspace(0, 1, 10)
     fig, ax = plt.subplots()
@@ -2451,7 +2457,7 @@ def test_pandas_minimal_plot(pd):
     plt.plot(df, df)
 
 
-@image_comparison(['hist_log.png'], remove_text=True)
+@image_comparison(['hist_log.png'], remove_text=True, style='_classic_test')
 def test_hist_log():
     data0 = np.linspace(0, 1, 200)**3
     data = np.concatenate([1 - data0, 1 + data0])
@@ -2500,7 +2506,7 @@ def test_hist_timedelta_raises():
         ax.hist(arr_py)
 
 
-@image_comparison(['hist_bar_empty.png'], remove_text=True)
+@image_comparison(['hist_bar_empty.png'], remove_text=True, style='_classic_test')
 def test_hist_bar_empty():
     # From #3886: creating hist from empty dataset raises ValueError
     ax = plt.gca()
@@ -2522,14 +2528,14 @@ def test_hist_float16():
         assert rleft[1][0] <= rright[0][0]
 
 
-@image_comparison(['hist_step_empty.png'], remove_text=True)
+@image_comparison(['hist_step_empty.png'], remove_text=True, style='_classic_test')
 def test_hist_step_empty():
     # From #3886: creating hist from empty dataset raises ValueError
     ax = plt.gca()
     ax.hist([], histtype='step')
 
 
-@image_comparison(['hist_step_filled.png'], remove_text=True)
+@image_comparison(['hist_step_filled.png'], remove_text=True, style='_classic_test')
 def test_hist_step_filled():
     np.random.seed(0)
     x = np.random.randn(1000, 3)
@@ -2927,7 +2933,7 @@ class TestScatter:
         ax.scatter(data["x"] + 1., data["y"] + 1., c=data["c2"], s=data["s"])
         ax.scatter("x", "y", c="c", s="s", data=data)
 
-    @image_comparison(['scatter_marker.png'], remove_text=True)
+    @image_comparison(['scatter_marker.png'], remove_text=True, style='_classic_test')
     def test_scatter_marker(self):
         fig, (ax0, ax1, ax2) = plt.subplots(ncols=3)
         ax0.scatter([3, 4, 2, 6], [2, 5, 2, 3],
@@ -2952,7 +2958,7 @@ class TestScatter:
                     edgecolors=['k', 'r', 'g', 'b'],
                     marker=verts)
 
-    @image_comparison(['scatter_2D.png'], remove_text=True)
+    @image_comparison(['scatter_2D.png'], remove_text=True, style='_classic_test')
     def test_scatter_2D(self):
         x = np.arange(3)
         y = np.arange(2)
@@ -3451,7 +3457,8 @@ def test_stackplot():
     ax.set_ylim(0, 70)
 
 
-@image_comparison(['stackplot_test_baseline.png'], remove_text=True)
+@image_comparison(['stackplot_test_baseline.png'], remove_text=True,
+                  style='_classic_test')
 def test_stackplot_baseline():
     np.random.seed(0)
 
@@ -4546,7 +4553,8 @@ def test_errorbar():
     ax.set_title("Simplest errorbars, 0.2 in x, 0.4 in y")
 
 
-@image_comparison(['mixed_errorbar_polar_caps.png'], remove_text=True)
+@image_comparison(['mixed_errorbar_polar_caps.png'], remove_text=True,
+                  style='_classic_test')
 def test_mixed_errorbar_polar_caps():
     """
     Mix several polar errorbar use cases in a single test figure.
@@ -4903,7 +4911,7 @@ def test_hist_offset():
     ax.hist(d2, bottom=15)
 
 
-@image_comparison(['hist_step.png'], remove_text=True)
+@image_comparison(['hist_step.png'], remove_text=True, style='_classic_test')
 def test_hist_step():
     # make some data
     d1 = np.linspace(1, 3, 20)
@@ -5091,7 +5099,7 @@ def test_hist_stacked_density():
     ax.hist((d1, d2), stacked=True, density=True)
 
 
-@image_comparison(['hist_step_bottom.png'], remove_text=True)
+@image_comparison(['hist_step_bottom.png'], remove_text=True, style='_classic_test')
 def test_hist_step_bottom():
     # make some data
     d1 = np.linspace(1, 3, 20)
@@ -5281,7 +5289,7 @@ def test_hist_labels():
     assert bars[0].get_label() == '00'
 
 
-@image_comparison(['transparent_markers'], remove_text=True)
+@image_comparison(['transparent_markers'], remove_text=True, style='_classic_test')
 def test_transparent_markers():
     np.random.seed(0)
     data = np.random.random(50)
@@ -5290,7 +5298,7 @@ def test_transparent_markers():
     ax.plot(data, 'D', mfc='none', markersize=100)
 
 
-@image_comparison(['rgba_markers'], remove_text=True)
+@image_comparison(['rgba_markers'], remove_text=True, style='_classic_test')
 def test_rgba_markers():
     fig, axs = plt.subplots(ncols=2)
     rcolors = [(1, 0, 0, 1), (1, 0, 0, 0.5)]
@@ -5307,7 +5315,7 @@ def test_rgba_markers():
         ax.axis([-1, 4, 0, 5])
 
 
-@image_comparison(['mollweide_grid.png'], remove_text=True)
+@image_comparison(['mollweide_grid.png'], remove_text=True, style='_classic_test')
 def test_mollweide_grid():
     # test that both horizontal and vertical gridlines appear on the Mollweide
     # projection
@@ -5360,7 +5368,7 @@ def test_mollweide_inverse_forward_closure():
     np.testing.assert_array_almost_equal(xy, xy2, 3)
 
 
-@image_comparison(['test_alpha'], remove_text=True)
+@image_comparison(['test_alpha'], remove_text=True, style='_classic_test')
 def test_alpha():
     np.random.seed(0)
     data = np.random.random(50)
@@ -5390,7 +5398,8 @@ def test_alpha():
             markersize=20, lw=10)
 
 
-@image_comparison(['eventplot.png', 'eventplot.png'], remove_text=True)
+@image_comparison(['eventplot.png', 'eventplot.png'], remove_text=True,
+                  style='_classic_test')
 def test_eventplot():
     np.random.seed(0)
 
@@ -5434,7 +5443,8 @@ def test_eventplot():
     assert num_collections == num_datasets
 
 
-@image_comparison(['test_eventplot_defaults.png'], remove_text=True)
+@image_comparison(['test_eventplot_defaults.png'], remove_text=True,
+                  style='_classic_test')
 def test_eventplot_defaults():
     """
     test that eventplot produces the correct output given the default params
@@ -5497,7 +5507,8 @@ def test_eventplot_alpha():
         ax.eventplot([0, 2, 4], alpha=[0.5, 0.7])
 
 
-@image_comparison(['test_eventplot_problem_kwargs.png'], remove_text=True)
+@image_comparison(['test_eventplot_problem_kwargs.png'], remove_text=True,
+                  style='_classic_test')
 def test_eventplot_problem_kwargs(recwarn):
     """
     test that 'singular' versions of LineCollection props raise an
@@ -5557,7 +5568,7 @@ def test_eventplot_units_list(fig_test, fig_ref):
     ax.eventplot([ts_1, ts_2])
 
 
-@image_comparison(['marker_styles.png'], remove_text=True)
+@image_comparison(['marker_styles.png'], remove_text=True, style='_classic_test')
 def test_marker_styles():
     fig, ax = plt.subplots()
     # Since generation of the test image, None was removed but 'none' was
@@ -5584,7 +5595,7 @@ def test_markers_fillstyle_rcparams():
         ax.plot(x+idx, marker=marker)
 
 
-@image_comparison(['vertex_markers.png'], remove_text=True)
+@image_comparison(['vertex_markers.png'], remove_text=True, style='_classic_test')
 def test_vertex_markers():
     data = list(range(10))
     marker_as_tuple = ((-1, -1), (1, -1), (1, 1), (-1, 1))
@@ -5845,7 +5856,7 @@ def test_vlines_hlines_blended_transform():
 
 
 @image_comparison(['step_linestyle', 'step_linestyle'], remove_text=True,
-                  tol=0.2)
+                  style='_classic_test', tol=0.2)
 def test_step_linestyle():
     # Tolerance caused by reordering of floating-point operations
     # Remove when regenerating the images
@@ -5877,7 +5888,7 @@ def test_step_linestyle():
         ax.set_ylim(-1, 7)
 
 
-@image_comparison(['mixed_collection'], remove_text=True)
+@image_comparison(['mixed_collection'], remove_text=True, style='_classic_test')
 def test_mixed_collection():
     # First illustrate basic pyplot interface, using defaults where possible.
     fig, ax = plt.subplots()
@@ -6056,7 +6067,7 @@ def test_specgram_origin_kwarg():
 
 @image_comparison(
     ["psd_freqs.png", "csd_freqs.png", "psd_noise.png", "csd_noise.png"],
-    remove_text=True, tol=0.002)
+    remove_text=True, style='_classic_test', tol=0.002)
 def test_psd_csd():
     n = 10000
     Fs = 100.
@@ -6097,7 +6108,7 @@ def test_psd_csd():
      "magnitude_spectrum_noise_dB.png",
      "angle_spectrum_noise.png",
      "phase_spectrum_noise.png"],
-    remove_text=True)
+    remove_text=True, style='_classic_test')
 def test_spectrum():
     n = 10000
     Fs = 100.
@@ -6155,7 +6166,7 @@ def test_twin_remove(fig_test, fig_ref):
     ax_ref.yaxis.tick_left()
 
 
-@image_comparison(['twin_spines.png'], remove_text=True,
+@image_comparison(['twin_spines.png'], remove_text=True, style='_classic_test',
                   tol=0 if platform.machine() == 'x86_64' else 0.022)
 def test_twin_spines():
 
@@ -6202,7 +6213,7 @@ def test_twin_spines():
 
 
 @image_comparison(['twin_spines_on_top.png', 'twin_spines_on_top.png'],
-                  remove_text=True)
+                  remove_text=True, style='_classic_test')
 def test_twin_spines_on_top():
     matplotlib.rcParams['axes.linewidth'] = 48.0
     matplotlib.rcParams['lines.linewidth'] = 48.0
@@ -7344,7 +7355,7 @@ def test_errorbar_inputs_shotgun(kwargs):
     eb.remove()
 
 
-@image_comparison(["dash_offset"], remove_text=True)
+@image_comparison(["dash_offset"], remove_text=True, style='_classic_test')
 def test_dash_offset():
     fig, ax = plt.subplots()
     x = np.linspace(0, 10)
@@ -7398,7 +7409,7 @@ def test_title_location_shared(sharex):
     assert y1 == y2 == 1.0
 
 
-@image_comparison(["loglog.png"], remove_text=True, tol=0.02)
+@image_comparison(["loglog.png"], remove_text=True, style='_classic_test', tol=0.02)
 def test_loglog():
     fig, ax = plt.subplots()
     x = np.arange(1, 11)
@@ -7740,7 +7751,7 @@ def test_bar_uint8():
         assert patch.xy[0] == x
 
 
-@image_comparison(['axisbelow.png'], remove_text=True)
+@image_comparison(['axisbelow.png'], remove_text=True, style='_classic_test')
 def test_axisbelow():
     # Test 'line' setting added in 6287.
     # Show only grids, not frame or ticks, to make this test
@@ -10043,8 +10054,8 @@ def test_boxplot_orientation(fig_test, fig_ref):
         ax_test.boxplot(all_data, orientation='horizontal')
 
 
-@image_comparison(["use_colorizer_keyword.png"],
-                   tol=0 if platform.machine() == 'x86_64' else 0.05)
+@image_comparison(["use_colorizer_keyword.png"], style='_classic_test',
+                  tol=0 if platform.machine() == 'x86_64' else 0.05)
 def test_use_colorizer_keyword():
     # test using the colorizer keyword
     np.random.seed(0)

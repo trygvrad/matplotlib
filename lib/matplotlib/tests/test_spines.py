@@ -106,7 +106,7 @@ def test_spine_nonlinear_data_positions(fig_test, fig_ref):
     ax.tick_params(axis="y", labelleft=False, left=False, right=True)
 
 
-@image_comparison(['spines_capstyle.png'])
+@image_comparison(['spines_capstyle.png'], style='_classic_test')
 def test_spines_capstyle():
     # issue 2542
     plt.rc('axes', linewidth=20)
@@ -144,7 +144,7 @@ def test_label_without_ticks():
         "X-Axis label not below the spine"
 
 
-@image_comparison(['black_axes.png'])
+@image_comparison(['black_axes.png'], style='_classic_test')
 def test_spines_black_axes():
     # GitHub #18804
     plt.rcParams["savefig.pad_inches"] = 0
