@@ -1179,6 +1179,15 @@ class _AxesBase(martist.Artist):
         which : {'both', 'active', 'original'}, default: 'both'
             Determines which position variables to change.
 
+            .. note::
+                This parameter is considered internal. End users should not use it.
+
+                For native Matplotlib `.Axes`, the active position is
+                determined by a combination of the original position and the
+                aspect ratio.  Any active position set by the user will therefore be
+                overwritten by internal handling.  This option is retained as it may be
+                relevant for some third party `.Axes` subclasses.
+
         See Also
         --------
         matplotlib.transforms.Bbox.from_bounds
