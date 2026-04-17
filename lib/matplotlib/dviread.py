@@ -1026,7 +1026,7 @@ class Tfm:
 
 class TtfMetrics:
     def __init__(self, filename):
-        self._face = font_manager.get_font(filename, hinting_factor=1)
+        self._face = font_manager.get_font(filename)
 
     def get_metrics(self, idx):
         # _mul1220 uses a truncating bitshift for compatibility with dvitype.

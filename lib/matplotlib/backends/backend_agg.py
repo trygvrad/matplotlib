@@ -179,11 +179,9 @@ class RendererAgg(RendererBase):
         load_flags = get_hinting_flag()
         for font, size, glyph_index, slant, extend, dx, dy in glyphs:  # dy is upwards.
             font.set_size(size, self.dpi)
-            hf = font._hinting_factor
             font._set_transform(
                 (0x10000 * np.array([[cos, -sin], [sin, cos]])
-                 @ [[extend, extend * slant], [0, 1]]
-                 @ [[1 / hf, 0], [0, 1]]).round().astype(int),
+                 @ [[extend, extend * slant], [0, 1]]).round().astype(int),
                 [round(0x40 * (x + dx * cos - dy * sin)),
                  # FreeType's y is upwards.
                  round(0x40 * (self.height - y + dx * sin + dy * cos))]

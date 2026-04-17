@@ -20,7 +20,6 @@ _log = logging.getLogger(__name__)
 def set_font_settings_for_testing():
     mpl.rcParams['font.family'] = 'DejaVu Sans'
     mpl.rcParams['text.hinting'] = 'default'
-    mpl.rcParams['text.hinting_factor'] = 1
 
 
 def set_reproducibility_for_testing():
