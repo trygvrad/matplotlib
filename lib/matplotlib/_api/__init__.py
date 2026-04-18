@@ -35,6 +35,54 @@ class _Unset:
 UNSET = _Unset()
 
 
+class UnsupportedError(RuntimeError):
+    """
+    Raised on inherited methods if the child class does not support the functionality
+    of the base class.
+
+    See `.unsupported_method` for details.
+    """
+
+
+class unsupported_method:
+    """
+    Descriptor that creates a method raising `.UnsupportedError`.
+
+    Historically, we have quite a few cases of inheritance hierarchies that do not
+    fully respect the Liskov Substitution Principle, e.g. Axes and Artist. Some of
+    the methods of a base class may not be implemented in the child class. In that case,
+    we override the method in the child class to raise `.UnsupportedError`.
+
+    Use in a class body to mark inherited methods as unsupported::
+
+        class Axes3D(Axes):
+            twinx = _api.unsupported_method()
+
+    Calling ``Axes3D().twinx()`` will raise
+    "UnsupportedError: Axes3D does not support 'twinx'."
+
+    Parameters
+    ----------
+    append_message : str
+        Optional additional text to be appended to the error message.
+    """
+    def __init__(self, *, append_message=None):
+        self.append_message = append_message
+
+    def __set_name__(self, owner, name):
+        message = f"{owner.__name__} does not support '{name}'."
+        if self.append_message:
+            message += ' ' + self.append_message
+
+        def method(self, *args, **kwargs):
+            raise UnsupportedError(message)
+
+        method.__name__ = name
+        method.__qualname__ = f"{owner.__qualname__}.{name}"
+        method.__module__ = owner.__module__
+        setattr(owner, name, method)
+
+
 class classproperty:
     """
     Like `property`, but also triggers on access via the class, and it is the
