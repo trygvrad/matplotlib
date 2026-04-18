@@ -853,10 +853,7 @@ class HTMLWriter(FileMovieWriter):
 
 class Animation:
     """
-    A base class for Animations.
-
-    This class is not usable as is, and should be subclassed to provide needed
-    behavior.
+    Abstract base class for Animations.
 
     .. note::
 
@@ -1421,7 +1418,7 @@ class Animation:
 
 class TimedAnimation(Animation):
     """
-    `Animation` subclass for time-based animation.
+    Abstract `Animation` subclass for time-based animation.
 
     A new frame is drawn every *interval* milliseconds.
 
