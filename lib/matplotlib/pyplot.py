@@ -870,7 +870,7 @@ def xkcd(
             "xkcd mode is not compatible with text.usetex = True")
 
     stack = ExitStack()
-    stack.callback(rcParams._update_raw, rcParams.copy())  # type: ignore[arg-type]
+    stack.callback(rcParams._update_raw, rcParams.copy())
 
     from matplotlib import patheffects
     rcParams.update({
@@ -1077,8 +1077,7 @@ default: None
         else:
             num = int(num)  # crude validation of num argument
 
-    # Type of "num" has narrowed to int, but mypy can't quite see it
-    manager = _pylab_helpers.Gcf.get_fig_manager(num)  # type: ignore[arg-type]
+    manager = _pylab_helpers.Gcf.get_fig_manager(num)
     if manager is None:
         max_open_warning = rcParams['figure.max_open_warning']
         if len(allnums) == max_open_warning >= 1:
@@ -1467,7 +1466,7 @@ def sca(ax: Axes) -> None:
     # but if you are calling this, it won't be None
     # Additionally the slight difference between `Figure` and `FigureBase` mypy catches
     fig = ax.get_figure(root=False)
-    figure(fig)  # type: ignore[arg-type]
+    figure(fig)
     fig.sca(ax)  # type: ignore[union-attr]
 
 

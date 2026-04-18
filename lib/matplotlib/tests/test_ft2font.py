@@ -188,9 +188,9 @@ def test_ft2font_invalid_args(tmp_path):
 
     with pytest.raises(TypeError, match='incompatible constructor arguments'):
         # failing to be a list will fail before the 0
-        ft2font.FT2Font(file, _fallback_list=(0,))  # type: ignore[arg-type]
+        ft2font.FT2Font(file, _fallback_list=(0,))
     with pytest.raises(TypeError, match='incompatible constructor arguments'):
-        ft2font.FT2Font(file, _fallback_list=[0])  # type: ignore[list-item]
+        ft2font.FT2Font(file, _fallback_list=[0])
 
     # kerning_factor argument.
     with pytest.raises(TypeError, match='incompatible constructor arguments'):

@@ -12,12 +12,12 @@ import matplotlib as mpl
 from matplotlib import cm
 from matplotlib.testing import subprocess_run_helper, is_ci_environment
 from matplotlib.testing.decorators import check_figures_equal
-from matplotlib.dates import rrulewrapper
+from matplotlib.dates import rrulewrapper  # type: ignore[attr-defined]
 from matplotlib.lines import VertexSelector
 import matplotlib.pyplot as plt
 import matplotlib.transforms as mtransforms
 import matplotlib.figure as mfigure
-from mpl_toolkits.axes_grid1 import axes_divider, parasite_axes  # type: ignore[import]
+from mpl_toolkits.axes_grid1 import axes_divider, parasite_axes
 
 
 def test_simple():

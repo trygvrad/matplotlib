@@ -1,7 +1,7 @@
 import pytest
 
 import matplotlib.colors as mcolors
-from matplotlib.lines import _get_dash_pattern
+from matplotlib.lines import _get_dash_pattern  # type: ignore[attr-defined]
 from matplotlib._style_helpers import style_generator
 
 
