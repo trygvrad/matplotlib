@@ -6511,6 +6511,37 @@ def test_relim_visible_only():
     assert ax.get_ylim() == y1
 
 
+def test_relim_collection():
+    fig, ax = plt.subplots()
+    sc = ax.scatter([1, 2, 3], [4, 5, 6])
+    ax.relim()
+    ax.autoscale_view()
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    assert xlim[0] <= 1 and xlim[1] >= 3
+    assert ylim[0] <= 4 and ylim[1] >= 6
+
+    # After updating offsets, relim should track the new data.
+    sc.set_offsets([[10, 20], [30, 40]])
+    ax.relim()
+    ax.autoscale_view()
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    assert xlim[0] <= 10 and xlim[1] >= 30
+    assert ylim[0] <= 20 and ylim[1] >= 40
+
+    # visible_only=True should ignore hidden collections.
+    line, = ax.plot([0, 1], [0, 1])
+    sc.set_visible(False)
+    ax.relim(visible_only=True)
+    ax.autoscale_view()
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    # With scatter hidden, limits should be driven by the line only.
+    assert xlim[1] < 10
+    assert ylim[1] < 10
+
+
 def test_text_labelsize():
     """
     tests for issue #1172

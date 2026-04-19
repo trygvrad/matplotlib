@@ -2434,6 +2434,7 @@ class _AxesBase(martist.Artist):
                 self._request_autoscale_view()
 
         self.stale = True
+        collection._set_in_autoscale(True)
         return collection
 
     def add_image(self, image):
@@ -2638,15 +2639,11 @@ class _AxesBase(martist.Artist):
         """
         Recompute the data limits based on current artists.
 
-        At present, `.Collection` instances are not supported.
-
         Parameters
         ----------
         visible_only : bool, default: False
             Whether to exclude invisible artists.
         """
-        # Collections are deliberately not supported (yet); see
-        # the TODO note in artists.py.
         self.dataLim.ignore(True)
         self.dataLim.set_points(mtransforms.Bbox.null().get_points())
         self.ignore_existing_data_limits = True
@@ -2661,6 +2658,23 @@ class _AxesBase(martist.Artist):
                     self._update_patch_limits(artist)
                 elif isinstance(artist, mimage.AxesImage):
                     self._update_image_limits(artist)
+                elif isinstance(artist, mcoll.Collection):
+                    datalim = artist.get_datalim(self.transData)
+                    points = datalim.get_points()
+                    if not np.isinf(datalim.minpos).all():
+                        points = np.concatenate([points,
+                                                 [datalim.minpos]])
+                    x_is_data, y_is_data = (
+                        artist.get_transform()
+                        .contains_branch_separately(self.transData))
+                    ox_is_data, oy_is_data = (
+                        artist.get_offset_transform()
+                        .contains_branch_separately(self.transData))
+                    self.update_datalim(
+                        points,
+                        updatex=x_is_data or ox_is_data,
+                        updatey=y_is_data or oy_is_data,
+                    )
 
     def update_datalim(self, xys, updatex=True, updatey=True):
         """
