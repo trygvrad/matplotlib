@@ -2432,9 +2432,12 @@ class _AxesBase(martist.Artist):
             )
             if autolim != "_datalim_only":
                 self._request_autoscale_view()
+            # Mark collection as participating in relim() only when autolim
+            # is enabled.  If autolim=False the caller explicitly opted out,
+            # so relim() must not pick this collection up later.
+            collection._set_in_autoscale(True)
 
         self.stale = True
-        collection._set_in_autoscale(True)
         return collection
 
     def add_image(self, image):

@@ -6542,6 +6542,40 @@ def test_relim_collection():
     assert ylim[1] < 10
 
 
+def test_relim_collection_autolim_false():
+    # GH#30859 - Collection added with autolim=False must not participate
+    # in relim() later.
+    import matplotlib.collections as mcollections
+    fig, ax = plt.subplots()
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    # Build a collection far outside current limits and add it with autolim=False.
+    sc = mcollections.PathCollection([])
+    sc.set_offsets([[100, 200], [300, 400]])
+    ax.add_collection(sc, autolim=False)
+    ax.relim()
+    ax.autoscale_view()
+    # Limits must remain unchanged because autolim=False was requested.
+    assert ax.get_xlim() == (0, 1)
+    assert ax.get_ylim() == (0, 1)
+
+
+def test_relim_collection_log_scale():
+    # GH#30859 - relim() for Collection on a log-scaled axis should
+    # correctly pick up minpos so that log scaling works properly.
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    sc = ax.scatter([1e-3, 1e-2, 1e-1], [1e1, 1e2, 1e3])
+    sc.set_offsets([[1e1, 1e4], [1e2, 1e5]])
+    ax.relim()
+    ax.autoscale_view()
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    assert xlim[0] <= 1e1 and xlim[1] >= 1e2
+    assert ylim[0] <= 1e4 and ylim[1] >= 1e5
+
+
 def test_text_labelsize():
     """
     tests for issue #1172
