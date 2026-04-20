@@ -6532,7 +6532,8 @@ def test_relim_collection():
     ax.relim(visible_only=True)
     # With scatter hidden, limits should be driven by the line only.
     assert_allclose(ax.dataLim.get_points(), [[0, 0], [1, 1]])
-    assert_array_equal(ax.dataLim.minpos, [np.inf, np.inf])
+    # minpos is the minimum *positive* value; line data [0, 1] gives 1.0.
+    assert_array_equal(ax.dataLim.minpos, [1., 1.])
 
 
 def test_relim_collection_autolim_false():
