@@ -2662,8 +2662,13 @@ class _AxesBase(martist.Artist):
                     datalim = artist.get_datalim(self.transData)
                     points = datalim.get_points()
                     if not np.isinf(datalim.minpos).all():
+                        # As in add_collection: include minpos so that
+                        # self.dataLim updates its own minpos, which ensures
+                        # log scales see the correct minimum.
                         points = np.concatenate([points,
                                                  [datalim.minpos]])
+                    # Only update dataLim for x/y if the collection uses
+                    # transData in that direction.
                     x_is_data, y_is_data = (
                         artist.get_transform()
                         .contains_branch_separately(self.transData))
