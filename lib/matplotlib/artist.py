@@ -240,9 +240,6 @@ Supported properties are
         with `.FigureCanvasBase.draw_idle`.  Call `~.axes.Axes.relim` to
         update the Axes limits if desired.
 
-        Note: `~.axes.Axes.relim` will not see collections even if the
-        collection was added to the Axes with *autolim* = True.
-
         Note: there is no support for removing the artist's legend entry.
         """
 
