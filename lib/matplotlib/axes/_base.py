@@ -2410,26 +2410,7 @@ class _AxesBase(martist.Artist):
             # Make sure viewLim is not stale (mostly to match
             # pre-lazy-autoscale behavior, which is not really better).
             self._unstale_viewLim()
-            datalim = collection.get_datalim(self.transData)
-            points = datalim.get_points()
-            if not np.isinf(datalim.minpos).all():
-                # By definition, if minpos (minimum positive value) is set
-                # (i.e., non-inf), then min(points) <= minpos <= max(points),
-                # and minpos would be superfluous. However, we add minpos to
-                # the call so that self.dataLim will update its own minpos.
-                # This ensures that log scales see the correct minimum.
-                points = np.concatenate([points, [datalim.minpos]])
-            # only update the dataLim for x/y if the collection uses transData
-            # in this direction.
-            x_is_data, y_is_data = (collection.get_transform()
-                                    .contains_branch_separately(self.transData))
-            ox_is_data, oy_is_data = (collection.get_offset_transform()
-                                      .contains_branch_separately(self.transData))
-            self.update_datalim(
-                points,
-                updatex=x_is_data or ox_is_data,
-                updatey=y_is_data or oy_is_data,
-            )
+            self._update_collection_limits(collection)
             if autolim != "_datalim_only":
                 self._request_autoscale_view()
             # Mark collection as participating in relim() only when autolim
@@ -2602,6 +2583,29 @@ class _AxesBase(martist.Artist):
         xys = trf_to_data.transform(vertices)
         self.update_datalim(xys, updatex=updatex, updatey=updatey)
 
+    def _update_collection_limits(self, collection):
+        """Update the data limits for the given collection."""
+        datalim = collection.get_datalim(self.transData)
+        points = datalim.get_points()
+        if not np.isinf(datalim.minpos).all():
+            # By definition, if minpos (minimum positive value) is set
+            # (i.e., non-inf), then min(points) <= minpos <= max(points),
+            # and minpos would be superfluous. However, we add minpos to
+            # the call so that self.dataLim will update its own minpos.
+            # This ensures that log scales see the correct minimum.
+            points = np.concatenate([points, [datalim.minpos]])
+        # only update the dataLim for x/y if the collection uses transData
+        # in this direction.
+        x_is_data, y_is_data = (collection.get_transform()
+                                 .contains_branch_separately(self.transData))
+        ox_is_data, oy_is_data = (collection.get_offset_transform()
+                                   .contains_branch_separately(self.transData))
+        self.update_datalim(
+            points,
+            updatex=x_is_data or ox_is_data,
+            updatey=y_is_data or oy_is_data,
+        )
+
     def add_table(self, tab):
         """
         Add a `.Table` to the Axes; return the table.
@@ -2662,27 +2666,7 @@ class _AxesBase(martist.Artist):
                 elif isinstance(artist, mimage.AxesImage):
                     self._update_image_limits(artist)
                 elif isinstance(artist, mcoll.Collection):
-                    datalim = artist.get_datalim(self.transData)
-                    points = datalim.get_points()
-                    if not np.isinf(datalim.minpos).all():
-                        # As in add_collection: include minpos so that
-                        # self.dataLim updates its own minpos, which ensures
-                        # log scales see the correct minimum.
-                        points = np.concatenate([points,
-                                                 [datalim.minpos]])
-                    # Only update dataLim for x/y if the collection uses
-                    # transData in that direction.
-                    x_is_data, y_is_data = (
-                        artist.get_transform()
-                        .contains_branch_separately(self.transData))
-                    ox_is_data, oy_is_data = (
-                        artist.get_offset_transform()
-                        .contains_branch_separately(self.transData))
-                    self.update_datalim(
-                        points,
-                        updatex=x_is_data or ox_is_data,
-                        updatey=y_is_data or oy_is_data,
-                    )
+                    self._update_collection_limits(artist)
 
     def update_datalim(self, xys, updatex=True, updatey=True):
         """
