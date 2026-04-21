@@ -2391,7 +2391,7 @@ class _AxesBase(martist.Artist):
 
             .. versionchanged:: 3.11
 
-               Since 3.11 `autolim=True` matches the standard behavior
+               Since 3.11 ``autolim=True`` matches the standard behavior
                of other ``add_[artist]`` methods: Axes data and view limits
                are both updated in the method, and the collection will
                be considered in future data limit updates through
@@ -2399,7 +2399,7 @@ class _AxesBase(martist.Artist):
 
                Prior to matplotlib 3.11 this was only a one-time update
                of the data limits. Updating view limits required an
-               explicit calls to `~.Axes.autoscale_view`, and collections
+               explicit call to `~.Axes.autoscale_view`, and collections
                did not take part in `.relim`.
 
             As an implementation detail, the value "_datalim_only" is
