@@ -2418,7 +2418,8 @@ class _AxesBase(martist.Artist):
             collection.set_clip_path(self.patch)
 
         if autolim:
-            collection._set_in_autoscale(True)
+            if autolim != "_datalim_only":
+                collection._set_in_autoscale(True)
             # Make sure viewLim is not stale (mostly to match
             # pre-lazy-autoscale behavior, which is not really better).
             self._unstale_viewLim()
