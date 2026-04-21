@@ -236,7 +236,6 @@ class FT2Font(Buffer):
     def __init__(
         self,
         filename: str | bytes | PathLike | BinaryIO,
-        hinting_factor: int = ...,
         *,
         face_index: int = ...,
         _fallback_list: list[FT2Font] | None = ...,

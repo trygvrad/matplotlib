@@ -597,7 +597,7 @@ class Stream:
 
 
 def _get_pdf_charprocs(font_path, glyph_indices):
-    font = get_font(font_path, hinting_factor=1)
+    font = get_font(font_path)
     conv = 1000 / font.units_per_EM  # Conversion to PS units (1/1000's).
     procs = {}
     for glyph_index in glyph_indices:

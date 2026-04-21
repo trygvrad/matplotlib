@@ -308,9 +308,7 @@
 ## - no_hinting: Disable hinting.  ("none" is a synonym.)
 #text.hinting: default
 
-#text.hinting_factor: 1  # Specifies the amount of softness for hinting in the
-                         # horizontal direction.  A value of 1 will hint to full
-                         # pixels.  A value of 2 will hint to half pixels etc.
+#text.hinting_factor: None  # This setting does nothing and is deprecated.
 #text.kerning_factor: None  # Specifies the scaling factor for kerning values. Values
                             # other than 0, 6, or None have no defined meaning.
                             # This setting is deprecated.

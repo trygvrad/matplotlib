@@ -1731,11 +1731,11 @@ def is_opentype_cff_font(filename):
 
 
 @lru_cache(64)
-def _get_font(font_filepaths, hinting_factor, *, _kerning_factor, thread_id,
+def _get_font(font_filepaths, *, _kerning_factor, thread_id,
               enable_last_resort):
     (first_fontpath, first_fontindex), *rest = font_filepaths
     fallback_list = [
-        ft2font.FT2Font(fpath, hinting_factor, face_index=index,
+        ft2font.FT2Font(fpath, face_index=index,
                         _kerning_factor=_kerning_factor)
         for fpath, index in rest
     ]
@@ -1749,12 +1749,12 @@ def _get_font(font_filepaths, hinting_factor, *, _kerning_factor, thread_id,
         # already in the list.
         if enable_last_resort:
             fallback_list.append(
-                ft2font.FT2Font(last_resort_path, hinting_factor,
+                ft2font.FT2Font(last_resort_path,
                                 _kerning_factor=_kerning_factor,
                                 _warn_if_used=True))
             last_resort_index = len(fallback_list)
     font = ft2font.FT2Font(
-        first_fontpath, hinting_factor, face_index=first_fontindex,
+        first_fontpath, face_index=first_fontindex,
         _fallback_list=fallback_list,
         _kerning_factor=_kerning_factor
     )
@@ -1783,6 +1783,7 @@ def _cached_realpath(path):
     return os.path.realpath(path)
 
 
+@_api.delete_parameter('3.11', 'hinting_factor')
 def get_font(font_filepaths, hinting_factor=None):
     """
     Get an `.ft2font.FT2Font` object given a list of file paths.
@@ -1816,20 +1817,16 @@ str, bytes, os.PathLike, FontPath
                 if isinstance(fname, FontPath) else (_cached_realpath(fname), 0)
                 for fname in font_filepaths)
 
-    hinting_factor = mpl._val_or_rc(hinting_factor, 'text.hinting_factor')
-
     font = _get_font(
         # must be a tuple to be cached
         paths,
-        hinting_factor,
         _kerning_factor=mpl.rcParams['text.kerning_factor'],
         # also key on the thread ID to prevent segfaults with multi-threading
         thread_id=threading.get_ident(),
         enable_last_resort=mpl.rcParams['font.enable_last_resort'],
     )
     # Ensure the transform is always consistent.
-    font._set_transform([[round(0x10000 / font._hinting_factor), 0], [0, 0x10000]],
-                        [0, 0])
+    font._set_transform([[0x10000, 0], [0, 0x10000]], [0, 0])
     return font
 
 

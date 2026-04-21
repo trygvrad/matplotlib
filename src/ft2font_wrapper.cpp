@@ -357,7 +357,6 @@ static PyGlyph *
 PyGlyph_from_FT2Font(const FT2Font *font)
 {
     const FT_Face &face = font->get_face();
-    const long hinting_factor = font->get_hinting_factor();
     const FT_Glyph &glyph = font->get_last_glyph();
 
     PyGlyph *self = new PyGlyph();
@@ -365,12 +364,12 @@ PyGlyph_from_FT2Font(const FT2Font *font)
     self->glyphInd = font->get_last_glyph_index();
     FT_Glyph_Get_CBox(glyph, ft_glyph_bbox_subpixels, &self->bbox);
 
-    self->width = face->glyph->metrics.width / hinting_factor;
+    self->width = face->glyph->metrics.width;
     self->height = face->glyph->metrics.height;
-    self->horiBearingX = face->glyph->metrics.horiBearingX / hinting_factor;
+    self->horiBearingX = face->glyph->metrics.horiBearingX;
     self->horiBearingY = face->glyph->metrics.horiBearingY;
     self->horiAdvance = face->glyph->metrics.horiAdvance;
-    self->linearHoriAdvance = face->glyph->linearHoriAdvance / hinting_factor;
+    self->linearHoriAdvance = face->glyph->linearHoriAdvance;
     self->vertBearingX = face->glyph->metrics.vertBearingX;
     self->vertBearingY = face->glyph->metrics.vertBearingY;
     self->vertAdvance = face->glyph->metrics.vertAdvance;
@@ -485,9 +484,6 @@ const char *PyFT2Font_init__doc__ = R"""(
     filename : str, bytes, os.PathLike, or io.BinaryIO
         The source of the font data in a format (ttf or ttc) that FreeType can read.
 
-    hinting_factor : int, optional
-        Must be positive. Used to scale the hinting in the x-direction.
-
     face_index : int, optional
         The index of the face in the font file to load.
 
@@ -505,13 +501,16 @@ const char *PyFT2Font_init__doc__ = R"""(
 )""";
 
 static PyFT2Font *
-PyFT2Font_init(py::object filename, long hinting_factor = 8, FT_Long face_index = 0,
+PyFT2Font_init(py::object filename, std::optional<long> hinting_factor = std::nullopt,
+               FT_Long face_index = 0,
                std::optional<std::vector<PyFT2Font *>> fallback_list = std::nullopt,
                std::optional<int> kerning_factor = std::nullopt,
                bool warn_if_used = false)
 {
-    if (hinting_factor <= 0) {
-        throw py::value_error("hinting_factor must be greater than 0");
+    if (hinting_factor) {
+        auto api = py::module_::import("matplotlib._api");
+        auto warn = api.attr("warn_deprecated");
+        warn("since"_a="3.11", "name"_a="hinting_factor", "obj_type"_a="parameter");
     }
     if (kerning_factor) {
         auto api = py::module_::import("matplotlib._api");
@@ -532,7 +531,7 @@ PyFT2Font_init(py::object filename, long hinting_factor = 8, FT_Long face_index 
                   std::back_inserter(fallback_fonts));
     }
 
-    auto self = new PyFT2Font(hinting_factor, fallback_fonts, warn_if_used);
+    auto self = new PyFT2Font(fallback_fonts, warn_if_used);
     self->set_kerning_factor(*kerning_factor);
 
     if (fallback_list) {
@@ -1514,7 +1513,6 @@ PyFT2Font_layout(PyFT2Font *self, std::u32string text, LoadFlags flags,
                  std::optional<std::vector<std::string>> features = std::nullopt,
                  std::variant<FT2Font::LanguageType, std::string> languages_or_str = nullptr)
 {
-    const auto hinting_factor = self->get_hinting_factor();
     const auto load_flags = static_cast<FT_Int32>(flags);
 
     FT2Font::LanguageType languages;
@@ -1567,7 +1565,7 @@ PyFT2Font_layout(PyFT2Font *self, std::u32string text, LoadFlags flags,
         x += glyph.x_advance;
         y += glyph.y_advance;
         // Note, linearHoriAdvance is a 16.16 instead of 26.6 fixed-point value.
-        prev_advance = ft_object->get_face()->glyph->linearHoriAdvance / 1024.0 / hinting_factor;
+        prev_advance = ft_object->get_face()->glyph->linearHoriAdvance / 1024.0;
     }
 
     return items;
@@ -1752,7 +1750,8 @@ PYBIND11_MODULE(ft2font, m, py::mod_gil_not_used())
         auto cls = py::class_<PyFT2Font>(m, "FT2Font", py::is_final(), py::buffer_protocol(),
                                          PyFT2Font__doc__)
         .def(py::init(&PyFT2Font_init),
-             "filename"_a, "hinting_factor"_a=8, py::kw_only(), "face_index"_a=0,
+             "filename"_a, "hinting_factor"_a=py::none(), py::kw_only(),
+             "face_index"_a=0,
              "_fallback_list"_a=py::none(), "_kerning_factor"_a=py::none(),
              "_warn_if_used"_a=false,
              PyFT2Font_init__doc__)
@@ -1923,9 +1922,6 @@ PYBIND11_MODULE(ft2font, m, py::mod_gil_not_used())
         .def_property_readonly(
           "fname", &PyFT2Font_fname,
           "The original filename for this object.")
-        .def_property_readonly(
-          "_hinting_factor", &PyFT2Font::get_hinting_factor,
-          "The hinting factor.")
 
         .def_buffer([](PyFT2Font &self) -> py::buffer_info {
             return self.get_image().request();

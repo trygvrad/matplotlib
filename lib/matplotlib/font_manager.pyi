@@ -142,7 +142,6 @@ class FontManager:
 def is_opentype_cff_font(filename: str) -> bool: ...
 def get_font(
     font_filepaths: Iterable[str | bytes | os.PathLike | FontPath] | str | bytes | os.PathLike | FontPath,
-    hinting_factor: int | None = ...,
 ) -> ft2font.FT2Font: ...
 
 fontManager: FontManager

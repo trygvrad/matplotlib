@@ -1115,7 +1115,7 @@ _validators = {
     "text.latex.preamble": validate_string,
     "text.hinting":        ["default", "no_autohint", "force_autohint",
                             "no_hinting", "auto", "native", "either", "none"],
-    "text.hinting_factor": validate_int,
+    "text.hinting_factor": validate_int_or_None,
     "text.kerning_factor": validate_int_or_None,
     "text.antialiased":    validate_bool,
     "text.parse_math":     validate_bool,
@@ -1875,11 +1875,9 @@ _DEFINITION = [
     ),
     _Param(
         "text.hinting_factor",
-        default=1,
-        validator=validate_int,
-        description="Specifies the amount of softness for hinting in the horizontal "
-                    "direction.  A value of 1 will hint to full pixels.  A value of 2 "
-                    "will hint to half pixels etc."
+        default=None,
+        validator=validate_int_or_None,
+        description="[DEPRECATED] This setting has no effect."
     ),
     _Param(
         "text.kerning_factor",

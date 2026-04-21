@@ -207,10 +207,8 @@ FT2Font::get_path(std::vector<double> &vertices, std::vector<unsigned char> &cod
     codes.push_back(CLOSEPOLY);
 }
 
-FT2Font::FT2Font(long hinting_factor_, std::vector<FT2Font *> &fallback_list,
-                 bool warn_if_used)
+FT2Font::FT2Font(std::vector<FT2Font *> &fallback_list, bool warn_if_used)
     : warn_if_used(warn_if_used), image({1, 1}), face(nullptr), fallbacks(fallback_list),
-      hinting_factor(hinting_factor_),
       // set default kerning factor to 0, i.e., no kerning manipulation
       kerning_factor(0)
 {
@@ -274,8 +272,8 @@ void FT2Font::set_size(double ptsize, double dpi)
 {
     FT_CHECK(
         FT_Set_Char_Size,
-        face, (FT_F26Dot6)(ptsize * 64), 0, (FT_UInt)(dpi * hinting_factor), (FT_UInt)dpi);
-    FT_Matrix transform = { 65536 / hinting_factor, 0, 0, 65536 };
+        face, (FT_F26Dot6)(ptsize * 64), 0, (FT_UInt)dpi, (FT_UInt)dpi);
+    FT_Matrix transform = { 65536, 0, 0, 65536 };
     FT_Set_Transform(face, &transform, nullptr);
 
     for (auto & fallback : fallbacks) {
@@ -315,7 +313,7 @@ int FT2Font::get_kerning(FT_UInt left, FT_UInt right, FT_Kerning_Mode mode)
 
     FT_Vector delta;
     if (!FT_Get_Kerning(face, left, right, mode, &delta)) {
-        return (int)(delta.x) / (hinting_factor << kerning_factor);
+        return (int)(delta.x) / (1 << kerning_factor);
     } else {
         return 0;
     }
@@ -527,11 +525,7 @@ void FT2Font::set_text(
         bbox.yMin = std::min(bbox.yMin, glyph_bbox.yMin);
         bbox.yMax = std::max(bbox.yMax, glyph_bbox.yMax);
 
-        if ((flags & FT_LOAD_NO_HINTING) != 0) {
-            pen.x += rglyph.x_advance - rglyph.x_offset;
-        } else {
-            pen.x += hinting_factor * rglyph.x_advance - rglyph.x_offset;
-        }
+        pen.x += rglyph.x_advance - rglyph.x_offset;
         pen.y += rglyph.y_advance - rglyph.y_offset;
 
         glyphs.push_back(thisGlyph);

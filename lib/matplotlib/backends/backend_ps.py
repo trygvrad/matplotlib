@@ -107,7 +107,7 @@ def _font_to_ps_type3(font_path, subset_index, glyph_indices):
         The string representation of a Type 3 font, which can be included
         verbatim into a PostScript file.
     """
-    font = get_font(font_path, hinting_factor=1)
+    font = get_font(font_path)
 
     preamble = """\
 %!PS-Adobe-3.0 Resource-Font

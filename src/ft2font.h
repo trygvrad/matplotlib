@@ -105,8 +105,7 @@ class FT2Font
     using LanguageRange = std::tuple<std::string, int, int>;
     using LanguageType = std::optional<std::vector<LanguageRange>>;
 
-    FT2Font(long hinting_factor, std::vector<FT2Font *> &fallback_list,
-            bool warn_if_used);
+    FT2Font(std::vector<FT2Font *> &fallback_list, bool warn_if_used);
     virtual ~FT2Font();
     void open(FT_Open_Args &open_args, FT_Long face_index);
     void close();
@@ -174,10 +173,6 @@ class FT2Font
     {
         return glyphs.size();
     }
-    long get_hinting_factor() const
-    {
-        return hinting_factor;
-    }
     FT_Bool has_kerning() const
     {
         return FT_HAS_KERNING(face);
@@ -195,7 +190,6 @@ class FT2Font
     std::unordered_map<long, FT2Font *> char_to_font;
     FT_BBox bbox;
     FT_Pos advance;
-    long hinting_factor;
     int kerning_factor;
 
     // prevent copying
