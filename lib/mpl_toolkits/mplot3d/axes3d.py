@@ -31,7 +31,6 @@ via ``do_3d_projection()``, then project to 2D for rendering.
 """
 
 from collections import defaultdict
-from functools import partialmethod
 import itertools
 import math
 import textwrap
@@ -71,6 +70,11 @@ class Axes3D(Axes):
         As a user, you do not instantiate Axes directly, but use Axes creation
         methods instead; e.g. from `.pyplot` or `.Figure`:
         `~.pyplot.subplots`, `~.pyplot.subplot_mosaic` or `.Figure.add_axes`.
+
+    .. note::
+
+        Some of the inherited behavior of Axes is not applicable to 3d and will raise
+        an `.UnsupportedError`.
     """
     name = '3d'
 
@@ -1197,16 +1201,16 @@ class Axes3D(Axes):
         """
         self._set_axis_scale(self.zaxis, value, **kwargs)
 
-    def _raise_semilog_not_implemented(self, name, *args, **kwargs):
-        raise NotImplementedError(
-            f"Axes3D does not support {name}. Use ax.set_xscale/set_yscale/set_zscale "
-            "and ax.plot(...) instead."
-        )
+    twinx = _api.unsupported_method()
+    twiny = _api.unsupported_method()
+    secondary_xaxis = _api.unsupported_method()
+    secondary_yaxis = _api.unsupported_method()
 
-    semilogx = partialmethod(_raise_semilog_not_implemented, "semilogx")
-    semilogy = partialmethod(_raise_semilog_not_implemented, "semilogy")
-    semilogz = partialmethod(_raise_semilog_not_implemented, "semilogz")
-    loglog = partialmethod(_raise_semilog_not_implemented, "loglog")
+    _msg = "Use ax.set_xscale/set_yscale/set_zscale and ax.plot(...) instead."
+    semilogx = _api.unsupported_method(append_message=_msg)
+    semilogy = _api.unsupported_method(append_message=_msg)
+    semilogz = _api.unsupported_method(append_message=_msg)
+    loglog = _api.unsupported_method(append_message=_msg)
 
     get_zticks = _axis_method_wrapper("zaxis", "get_ticklocs")
     set_zticks = _axis_method_wrapper("zaxis", "set_ticks")
