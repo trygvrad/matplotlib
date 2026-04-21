@@ -94,7 +94,7 @@ def test_inset_indicator_zorder():
 
 
 @image_comparison(['zoom_inset_connector_styles.png'], remove_text=True, style='mpl20',
-                  tol=0.024 if platform.machine() == 'arm64' else 0)
+                  tol=0.024 if platform.machine() in ['aarch64', 'arm64'] else 0)
 def test_zoom_inset_connector_styles():
     fig, axs = plt.subplots(2)
     for ax in axs:
