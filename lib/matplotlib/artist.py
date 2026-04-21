@@ -240,9 +240,6 @@ Supported properties are
         with `.FigureCanvasBase.draw_idle`.  Call `~.axes.Axes.relim` to
         update the Axes limits if desired.
 
-        Note: `~.axes.Axes.relim` will not see collections even if the
-        collection was added to the Axes with *autolim* = True.
-
         Note: there is no support for removing the artist's legend entry.
         """
 
@@ -271,11 +268,6 @@ Supported properties are
 
         else:
             raise NotImplementedError('cannot remove artist')
-        # TODO: the fix for the collections relim problem is to move the
-        # limits calculation into the artist itself, including the property of
-        # whether or not the artist should affect the limits.  Then there will
-        # be no distinction between axes.add_line, axes.add_patch, etc.
-        # TODO: add legend support
 
     def have_units(self):
         """Return whether units are set on any axis."""

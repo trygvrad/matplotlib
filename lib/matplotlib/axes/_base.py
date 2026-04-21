@@ -2386,10 +2386,21 @@ class _AxesBase(martist.Artist):
         autolim : bool
             Whether to update data and view limits.
 
+            If *False*, the collection does not take part in any limit
+            operations.
+
             .. versionchanged:: 3.11
 
-               This now also updates the view limits, making explicit
-               calls to `~.Axes.autoscale_view` unnecessary.
+               Since 3.11 ``autolim=True`` matches the standard behavior
+               of other ``add_[artist]`` methods: Axes data and view limits
+               are both updated in the method, and the collection will
+               be considered in future data limit updates through
+               `.relim`.
+
+               Prior to matplotlib 3.11 this was only a one-time update
+               of the data limits. Updating view limits required an
+               explicit call to `~.Axes.autoscale_view`, and collections
+               did not take part in `.relim`.
 
             As an implementation detail, the value "_datalim_only" is
             supported to smooth the internal transition from pre-3.11
@@ -2407,29 +2418,12 @@ class _AxesBase(martist.Artist):
             collection.set_clip_path(self.patch)
 
         if autolim:
+            if autolim != "_datalim_only":
+                collection._set_in_autoscale(True)
             # Make sure viewLim is not stale (mostly to match
             # pre-lazy-autoscale behavior, which is not really better).
             self._unstale_viewLim()
-            datalim = collection.get_datalim(self.transData)
-            points = datalim.get_points()
-            if not np.isinf(datalim.minpos).all():
-                # By definition, if minpos (minimum positive value) is set
-                # (i.e., non-inf), then min(points) <= minpos <= max(points),
-                # and minpos would be superfluous. However, we add minpos to
-                # the call so that self.dataLim will update its own minpos.
-                # This ensures that log scales see the correct minimum.
-                points = np.concatenate([points, [datalim.minpos]])
-            # only update the dataLim for x/y if the collection uses transData
-            # in this direction.
-            x_is_data, y_is_data = (collection.get_transform()
-                                    .contains_branch_separately(self.transData))
-            ox_is_data, oy_is_data = (collection.get_offset_transform()
-                                      .contains_branch_separately(self.transData))
-            self.update_datalim(
-                points,
-                updatex=x_is_data or ox_is_data,
-                updatey=y_is_data or oy_is_data,
-            )
+            self._update_collection_limits(collection)
             if autolim != "_datalim_only":
                 self._request_autoscale_view()
 
@@ -2598,6 +2592,29 @@ class _AxesBase(martist.Artist):
         xys = trf_to_data.transform(vertices)
         self.update_datalim(xys, updatex=updatex, updatey=updatey)
 
+    def _update_collection_limits(self, collection):
+        """Update the data limits for the given collection."""
+        datalim = collection.get_datalim(self.transData)
+        points = datalim.get_points()
+        if not np.isinf(datalim.minpos).all():
+            # By definition, if minpos (minimum positive value) is set
+            # (i.e., non-inf), then min(points) <= minpos <= max(points),
+            # and minpos would be superfluous. However, we add minpos to
+            # the call so that self.dataLim will update its own minpos.
+            # This ensures that log scales see the correct minimum.
+            points = np.concatenate([points, [datalim.minpos]])
+        # only update the dataLim for x/y if the collection uses transData
+        # in this direction.
+        x_is_data, y_is_data = (collection.get_transform()
+                                 .contains_branch_separately(self.transData))
+        ox_is_data, oy_is_data = (collection.get_offset_transform()
+                                   .contains_branch_separately(self.transData))
+        self.update_datalim(
+            points,
+            updatex=x_is_data or ox_is_data,
+            updatey=y_is_data or oy_is_data,
+        )
+
     def add_table(self, tab):
         """
         Add a `.Table` to the Axes; return the table.
@@ -2638,15 +2655,11 @@ class _AxesBase(martist.Artist):
         """
         Recompute the data limits based on current artists.
 
-        At present, `.Collection` instances are not supported.
-
         Parameters
         ----------
         visible_only : bool, default: False
             Whether to exclude invisible artists.
         """
-        # Collections are deliberately not supported (yet); see
-        # the TODO note in artists.py.
         self.dataLim.ignore(True)
         self.dataLim.set_points(mtransforms.Bbox.null().get_points())
         self.ignore_existing_data_limits = True
@@ -2661,6 +2674,8 @@ class _AxesBase(martist.Artist):
                     self._update_patch_limits(artist)
                 elif isinstance(artist, mimage.AxesImage):
                     self._update_image_limits(artist)
+                elif isinstance(artist, mcoll.Collection):
+                    self._update_collection_limits(artist)
 
     def update_datalim(self, xys, updatex=True, updatey=True):
         """

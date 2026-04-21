@@ -6518,6 +6518,79 @@ def test_relim_visible_only():
     assert ax.get_ylim() == y1
 
 
+def test_relim_collection():
+    fig, ax = plt.subplots()
+    sc = ax.scatter([1, 2, 3], [4, 5, 6])
+    ax.relim()
+    expected = sc.get_datalim(ax.transData)
+    assert_allclose(ax.dataLim.get_points(), expected.get_points())
+    assert_allclose(ax.dataLim.minpos, expected.minpos)
+
+    # After updating offsets, relim should track the new data.
+    sc.set_offsets([[10, 20], [30, 40]])
+    ax.relim()
+    expected = sc.get_datalim(ax.transData)
+    assert_allclose(ax.dataLim.get_points(), expected.get_points())
+    assert_allclose(ax.dataLim.minpos, expected.minpos)
+
+    # visible_only=True should ignore hidden collections.
+    line, = ax.plot([0, 1], [0, 1])
+    sc.set_visible(False)
+    ax.relim(visible_only=True)
+    # With scatter hidden, limits should be driven by the line only.
+    assert_allclose(ax.dataLim.get_points(), [[0, 0], [1, 1]])
+    # minpos is the minimum *positive* value; line data [0, 1] gives 1.0.
+    assert_array_equal(ax.dataLim.minpos, [1., 1.])
+
+
+def test_relim_collection_autolim_false():
+    # GH#30859 - Collection added with autolim=False must not participate
+    # in relim() later.
+    import matplotlib.collections as mcollections
+    fig, ax = plt.subplots()
+    ax.plot([0, 1], [0, 1])
+    ax.relim()
+    expected = ax.dataLim.frozen()
+    # Build a collection far outside current limits and add it with autolim=False.
+    sc = mcollections.PathCollection([])
+    sc.set_offsets([[100, 200], [300, 400]])
+    ax.add_collection(sc, autolim=False)
+    ax.relim()
+    # dataLim must remain unchanged because autolim=False was requested.
+    assert_allclose(ax.dataLim.get_points(), expected.get_points())
+    assert_allclose(ax.dataLim.minpos, expected.minpos)
+
+
+def test_relim_collection_log_scale():
+    # GH#30859 - relim() for Collection on a log-scaled axis should
+    # correctly propagate minpos into dataLim.
+    fig, ax = plt.subplots()
+    ax.set_xscale('log')
+    ax.set_yscale('log')
+    sc = ax.scatter([1e-3, 1e-2, 1e-1], [1e1, 1e2, 1e3])
+    sc.set_offsets([[1e1, 1e4], [1e2, 1e5]])
+    ax.relim()
+    expected = sc.get_datalim(ax.transData)
+    assert_allclose(ax.dataLim.get_points(), expected.get_points())
+    assert_allclose(ax.dataLim.minpos, expected.minpos)
+
+
+def test_relim_collection_autoscale_view():
+    # GH#30859 - end-to-end: after set_offsets(), relim() + autoscale_view()
+    # must update the visible axis limits, not just dataLim.
+    fig, ax = plt.subplots()
+    sc = ax.scatter([], [])
+    xs = np.linspace(0, 10, 50)
+    sc.set_offsets(np.column_stack((xs, np.sin(xs))))
+    ax.relim()
+    ax.autoscale_view()
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    # autoscale_view adds a margin, so limits should comfortably contain data
+    assert xlim[0] <= 0 and xlim[1] >= 10, f"xlim should contain [0, 10], got {xlim}"
+    assert ylim[0] <= -1 and ylim[1] >= 1, f"ylim should contain [-1, 1], got {ylim}"
+
+
 def test_text_labelsize():
     """
     tests for issue #1172
