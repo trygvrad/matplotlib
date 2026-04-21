@@ -2384,15 +2384,23 @@ class _AxesBase(martist.Artist):
         collection : `.Collection`
             The collection to add.
         autolim : bool
-            Whether to update data limits and request autoscaling.
+            Whether to update data and view limits.
 
-            If *False*, the collection is explicitly excluded from
-            `~.Axes.relim`.
+            If *False*, the collection does not take part in any limit
+            operations.
 
             .. versionchanged:: 3.11
 
-               This now also updates the view limits, making explicit
-               calls to `~.Axes.autoscale_view` unnecessary.
+               Since 3.11 `autolim=True` matches the standard behavior
+               of other ``add_[artist]`` methods: Axes data and view limits
+               are both updated in the method, and the collection will
+               be considered in future data limit updates through
+               `.relim`.
+
+               Prior to matplotlib 3.11 this was only a one-time update
+               of the data limits. Updating view limits required an
+               explicit calls to `~.Axes.autoscale_view`, and collections
+               did not take part in `.relim`.
 
             As an implementation detail, the value "_datalim_only" is
             supported to smooth the internal transition from pre-3.11
@@ -2409,11 +2417,8 @@ class _AxesBase(martist.Artist):
         if collection.get_clip_path() is None:
             collection.set_clip_path(self.patch)
 
-        # Keep relim() participation aligned with the autolim argument.
-        # autolim can also be the internal sentinel "_datalim_only".
-        collection._set_in_autoscale(bool(autolim))
-
         if autolim:
+            collection._set_in_autoscale(True)
             # Make sure viewLim is not stale (mostly to match
             # pre-lazy-autoscale behavior, which is not really better).
             self._unstale_viewLim()

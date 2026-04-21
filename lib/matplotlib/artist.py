@@ -268,10 +268,10 @@ Supported properties are
 
         else:
             raise NotImplementedError('cannot remove artist')
-        # TODO: the fix for the collections relim problem is to move the
-        # limits calculation into the artist itself, including the property of
-        # whether or not the artist should affect the limits.  Then there will
-        # be no distinction between axes.add_line, axes.add_patch, etc.
+        # TODO: move the limits calculation into the artist itself, including
+        # the property of whether or not the artist should affect the limits.
+        # Then there will be no distinction between axes.add_line,
+        # axes.add_patch, etc.
         # TODO: add legend support
 
     def have_units(self):
