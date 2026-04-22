@@ -23,6 +23,7 @@ any format supported by Pillow.
 .. redirect-from:: /gallery/misc/agg_buffer
 .. redirect-from:: /gallery/misc/agg_buffer_to_array
 """
+# sphinx_gallery_thumbnail_path = '_static/canvasagg.png'
 
 from PIL import Image
 
