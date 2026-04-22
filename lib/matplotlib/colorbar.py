@@ -2226,6 +2226,8 @@ def make_multivar_axes(parents, n_variates, n_major, location=None, orientation=
         n_major = n_variates
         n_minor = 1
     else:
+        if n_major == 0:
+            raise ValueError("n_major cannot be zero")
         n_minor = n_variates // n_major
         if n_major * n_minor < n_variates:
             n_minor += 1
