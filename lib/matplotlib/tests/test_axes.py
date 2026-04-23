@@ -40,7 +40,7 @@ import matplotlib.pyplot as plt
 import matplotlib.text as mtext
 import matplotlib.ticker as mticker
 import matplotlib.transforms as mtransforms
-import mpl_toolkits.axisartist as AA  # type: ignore[import]
+import mpl_toolkits.axisartist as AA
 from numpy.testing import (
     assert_allclose, assert_array_equal, assert_array_almost_equal)
 from matplotlib.testing.decorators import (

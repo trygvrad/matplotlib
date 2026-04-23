@@ -15,3 +15,7 @@ updates:
       interval: "weekly"
     exclude-paths:
       - "ci/minver-requirements.txt"
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "monthly"

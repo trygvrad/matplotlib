@@ -151,7 +151,7 @@ test-extra = [
 
 # Extra pip requirements for the GitHub Actions mypy build
 typing = [
-    "mypy>=1.9",
+    "mypy>=1.14",
     "typing-extensions>=4.6",
     # Extra stubs distributed separately from the main pypi package
     "pandas-stubs",

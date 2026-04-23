@@ -413,7 +413,7 @@ class TestLegendFunction:
             ax.legend((lnc, lns), labels=('a', 'b'))
 
     def test_parasite(self):
-        from mpl_toolkits.axes_grid1 import host_subplot  # type: ignore[import]
+        from mpl_toolkits.axes_grid1 import host_subplot
 
         host = host_subplot(111)
         par = host.twinx()
