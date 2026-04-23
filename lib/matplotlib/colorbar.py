@@ -1559,10 +1559,11 @@ class BivarColorbar:
                 rasterized=rasterized,
                 edgecolors='none', shading='flat')
         # Apply norm scaling (supports LogNorm etc.)
-        try:
+        if getattr(self.colorizer.norm.norms[0], '_scale', None):
+            # use the norm's scale (if it exists and is not None):
             self.ax.set_yscale(self.colorizer.norm.norms[0]._scale)
-        except TypeError:
-            # fallback for custom norms
+        else:
+            # fallback for custom norms, or NoNorm()
             self.ax.set_yscale(
                 'function',
                 functions=(
@@ -1570,10 +1571,12 @@ class BivarColorbar:
                     self.colorizer.norm.norms[0].inverse
                 )
             )
-        try:
+
+        if getattr(self.colorizer.norm.norms[1], '_scale', None):
+            # use the norm's scale (if it exists and is not None):
             self.ax.set_xscale(self.colorizer.norm.norms[1]._scale)
-        except TypeError:
-            # fallback for custom norms
+        else:
+            # fallback for custom norms, or NoNorm()
             self.ax.set_xscale(
                 'function',
                 functions=(

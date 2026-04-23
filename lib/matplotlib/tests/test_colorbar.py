@@ -1245,7 +1245,7 @@ def test_colorbar_format_string_and_old():
 
 @pytest.mark.parametrize('use_gridspec', [True, False])
 @image_comparison(['bivar_cbar_locationing.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_bivar_location(use_gridspec):
     data = (np.arange(12).reshape((3, 4)) % 4,
@@ -1259,7 +1259,7 @@ def test_colorbar_bivar_location(use_gridspec):
 
 
 @image_comparison(['bivar_cbar_locationing_constrained.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_bivar_location_constrained():
     data = (np.arange(12).reshape((3, 4)) % 4,
@@ -1273,7 +1273,7 @@ def test_colorbar_bivar_location_constrained():
 
 
 @image_comparison(['multivar_cbar_locationing.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_multivar_location():
     data = (np.arange(12).reshape((3, 4)) % 4,
@@ -1287,7 +1287,7 @@ def test_colorbar_multivar_location():
 
 
 @image_comparison(['multivar_cbar_locationing_constrained.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_multivar_location_constrained():
     data = (np.arange(12).reshape((3, 4)) % 4,
@@ -1302,7 +1302,7 @@ def test_colorbar_multivar_location_constrained():
 
 @pytest.mark.parametrize('use_gridspec', [True, False])
 @image_comparison(['bivar_cbar_sharing.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_bivar_sharing(use_gridspec):
     data = (np.arange(12).reshape((3, 4)) % 4,
@@ -1325,7 +1325,7 @@ def test_colorbar_bivar_sharing(use_gridspec):
 
 
 @image_comparison(['multivar_cbar_sharing.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_multivar_sharing():
     data = (np.arange(12).reshape((3, 4)) % 4,
@@ -1696,7 +1696,7 @@ def test_remove_colorbar_with_no_mappable():
 
 
 @image_comparison(['bivar_cbar_not_rasterized.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_bivar_cbar_not_rasterized():
     cm = mpl.bivar_colormaps['BiOrangeBlue'].resampled((5,3))
@@ -1709,7 +1709,7 @@ def test_bivar_cbar_not_rasterized():
 
 
 @image_comparison(['multivar_cbar_n_major.png',
-                   ],
+                   ], style='mpl20',
                   remove_text=True, savefig_kwarg={'dpi': 40}, tol=0.05)
 def test_colorbar_multivar_n_major():
     data = (np.arange(12).reshape((3, 4)) % 4,
