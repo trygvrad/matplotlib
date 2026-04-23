@@ -1417,7 +1417,7 @@ class BivarColorbar:
     r"""
     Draw a bivariate colorbar in an existing Axes.
 
-    Typically, bivariate colorbars are created using `.Figure.bivar_colorbar`
+    Typically, bivariate colorbars are created using `.Figure.colorbar_bivar`
     and associated with `.ColorizingArtist`\s (such as an
     `.AxesImage` generated via `~.axes.Axes.imshow`).
 
@@ -1443,9 +1443,6 @@ class BivarColorbar:
 
         mappable : `.ColorizingArtist`
             The mappable whose colormap and norm will be used.
-
-            To show the colors versus index instead of on a 0-1 scale, set the
-            mappable's norm to ``colors.NoNorm()``.
 
         alpha : float
             The colorbars transparency between 0 (transparent) and 1 (opaque).
@@ -1608,36 +1605,6 @@ class BivarColorbar:
     def yaxis(self):
         return self.ax.yaxis
 
-    """
-    def _y_limits_changed(self, ax=None):
-        if not self._allow_change_limits:
-            ylim = self.ax.get_ylim()
-            if self.colorizer.norm.norms[0].vmin != ylim[0]:
-                self.colorizer.norm.norms[0].vmin = ylim[0]
-            if self.colorizer.norm.norms[0].vmax != ylim[1]:
-                self.colorizer.norm.norms[0].vmax = ylim[1]
-
-    def _x_limits_changed(self, ax=None):
-        if not self._allow_change_limits:
-            xlim = self.ax.get_xlim()
-            if self.colorizer.norm.norms[1].vmin != xlim[0]:
-                self.colorizer.norm.norms[1].vmin = xlim[0]
-            if self.colorizer.norm.norms[1].vmax != xlim[1]:
-                self.colorizer.norm.norms[1].vmax = xlim[1]
-    """
-    """
-    def _update_limits(self, ax=None):
-        if not self._allow_change_limits:
-            ylim = self.ax.get_ylim()
-            xlim = self.ax.get_xlim()
-            if (self.colorizer.norm.norms[0].vmin != ylim[0] or
-                    self.colorizer.norm.norms[0].vmax != ylim[1] or
-                    self.colorizer.norm.norms[1].vmin != xlim[0] or
-                    self.colorizer.norm.norms[1].vmax != xlim[1]):
-                raise ValueError("Changing the limits of this axis must be done "
-                                 "using the norm attached to the bivariate colorbar.")
-    """
-
     def update_normals(self, mappable=None):
         self.set_alpha(self.mappable.get_alpha())
         #self._draw_all()
@@ -1721,7 +1688,48 @@ class BivarColorbar:
 
 
 class MultivarColorbar(Sequence):
+    r"""
+    Draw a multivariate colorbar in existing Axes.
+
+    Typically, multivariate colorbars are created using `.Figure.colorbar_multivar`
+    and associated with `.ColorizingArtist`\s (such as an
+    `.AxesImage` generated via `~.axes.Axes.imshow`).
+
+    MultivarColorbar is iterable, and the constituent Colorbar objects can be accessed
+    by index.
+    """
+
     def __init__(self, axes, mappable=None, **kwargs):
+        """
+        Parameters
+        ----------
+        axes : list of `~matplotlib.axes.Axes`
+            The `~.axes.Axes` instances in which the colorbars are drawn.
+
+        mappable : `.ColorizingArtist`
+            The mappable whose colormap and norm will be used.
+
+        alpha : float
+            The colorbars transparency between 0 (transparent) and 1 (opaque).
+
+        location : None or {'left', 'right', 'top', 'bottom'}
+            Set the multivariate colorbars's location
+
+        Other Parameters
+        ----------------
+        orientation : None or {'vertical', 'horizontal'}
+            If None, use the value determined by *location*. If both
+            *orientation* and *location* are None then defaults to 'vertical'.
+
+        ticklocation : {'auto', 'left', 'right', 'top', 'bottom'}
+            The location of the colorbar ticks. The *ticklocation* must match
+            *orientation*. For example, a horizontal colorbar can only have ticks
+            at the top or the bottom. If 'auto', the ticks will be the same as
+            *location*, so a colorbar to the left will have ticks to the left. If
+            *location* is None, the ticks will be at the bottom for a horizontal
+            colorbar and at the right for a vertical.
+        """
+
         if isinstance(mappable, mpl.colorizer.Colorizer):
             mappable = mcolorizer.ColorizingArtist(mappable)
 
@@ -2167,7 +2175,7 @@ def make_axes(parents, location=None, orientation=None, fraction=0.15,
 def make_bivar_axes(parents, location=None, fraction=0.15,
                     shrink=1.0, aspect=1.0, **kwargs):
     """
-    Create an `~.axes.Axes` suitable for a bivar_colorbar.
+    Create an `~.axes.Axes` suitable for a bivariate colorbar.
 
     The Axes is placed in the figure of the *parents* Axes, by resizing and
     repositioning *parents*.
