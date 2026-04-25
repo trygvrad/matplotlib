@@ -1282,7 +1282,7 @@ def test_colorbar_multivar_location():
     locations = ['left', 'right', 'top', 'bottom']
     fig, axes = plt.subplots(2, 2)
     for i, ax in enumerate(axes.ravel()):
-        mim = ax.imshow(data, cmap='2VarAddA')
+        mim = ax.imshow(data, cmap='2Spectra')
         fig.colorbar_multivar(mim, location=locations[i])
 
 
@@ -1296,7 +1296,7 @@ def test_colorbar_multivar_location_constrained():
     locations = ['left', 'right', 'top', 'bottom']
     fig, axes = plt.subplots(2, 2, constrained_layout='constrained')
     for i, ax in enumerate(axes.ravel()):
-        mim = ax.imshow(data, cmap='2VarAddA')
+        mim = ax.imshow(data, cmap='2Spectra')
         fig.colorbar_multivar(mim, location=locations[i])
 
 
@@ -1334,11 +1334,11 @@ def test_colorbar_multivar_sharing():
     # -------------------
     plt.figure()
     ax1 = plt.subplot(211, anchor='NE', aspect='equal')
-    plt.imshow(data, cmap='3VarAddA')
+    plt.imshow(data, cmap='3Spectra')
     ax2 = plt.subplot(223)
-    plt.imshow(data, cmap='3VarAddA')
+    plt.imshow(data, cmap='3Spectra')
     ax3 = plt.subplot(224)
-    plt.imshow(data, cmap='3VarAddA')
+    plt.imshow(data, cmap='3Spectra')
 
     plt.colorbar_multivar(ax=[ax2, ax3, ax1], location='right')
     plt.colorbar_multivar(ax=[ax2, ax3, ax1], location='left')
@@ -1530,7 +1530,7 @@ def test_multivar_cbar_remove_from_figure():
     fig = plt.figure()
     ax = fig.add_subplot()
     mp = ax.pcolormesh([[[100, 1], [10, 1]], [[0.5, 0.2], [0.3, 1]]],
-                       cmap='2VarAddA',
+                       cmap='2Spectra',
                        )
     pre_position = ax.get_position()
     cb = fig.colorbar_multivar(mp)
@@ -1552,14 +1552,14 @@ def test_bivar_cbar_remove_with_no_mappable():
 def test_multivar_cbar_from_colorizer():
     fig, ax = plt.subplots()
     norm = mpl.colors.MultiNorm(['linear', 'linear'])
-    ca = mpl.colorizer.Colorizer('2VarAddA', norm)
+    ca = mpl.colorizer.Colorizer('2Spectra', norm)
     cb = fig.colorbar_multivar(ca, ax=ax)
 
 
 def test_multivar_cbar_from_colorizer_cax():
     fig, axes = plt.subplots(1, 3)
     norm = mpl.colors.MultiNorm(['linear', 'linear', 'linear'])
-    ca = mpl.colorizer.Colorizer('3VarAddA', norm)
+    ca = mpl.colorizer.Colorizer('3Spectra', norm)
     cb = fig.colorbar_multivar(ca, caxes=axes)
 
 
@@ -1720,7 +1720,7 @@ def test_colorbar_multivar_n_major():
     locations = ['left', 'right', 'top', 'bottom']
     for i, axs in enumerate(axes):
         for j, ax in enumerate(axs):
-            mim = ax.imshow(data, cmap='3VarAddA')
+            mim = ax.imshow(data, cmap='3Spectra')
             fig.colorbar_multivar(mim, n_major=j + 1, location=locations[i])
 
     with pytest.raises(ValueError, match="cannot be zero"):
@@ -1742,7 +1742,7 @@ def test_multivar_cbar_set_label_limits():
             np.arange(12).reshape((3, 4)) % 5)
     # -------------------
     fig, ax = plt.subplots(1, 1)
-    mim = ax.imshow(data, cmap='3VarAddA')
+    mim = ax.imshow(data, cmap='3Spectra')
     cbs = fig.colorbar_multivar(mim)
     cbs[0].set_label('A')
     assert len(cbs) == 3

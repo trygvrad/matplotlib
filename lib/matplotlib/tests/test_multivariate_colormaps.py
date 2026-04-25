@@ -82,12 +82,12 @@ def test_multivar_alpha_mixing():
 
 
 def test_multivar_cmap_call():
-    cmap = mpl.multivar_colormaps['2VarAddA']
+    cmap = mpl.multivar_colormaps['2Spectra']
     assert_array_equal(cmap((0.0, 0.0)), (0, 0, 0, 1))
     assert_array_equal(cmap((1.0, 1.0)), (1, 1, 1, 1))
     assert_allclose(cmap((0.0, 0.0), alpha=0.1), (0, 0, 0, 0.1), atol=0.1)
 
-    cmap = mpl.multivar_colormaps['2VarSubA']
+    cmap = mpl.multivar_colormaps['2Chroma']
     assert_array_equal(cmap((0.0, 0.0)), (1, 1, 1, 1))
     assert_allclose(cmap((1.0, 1.0)), (0, 0, 0, 1), atol=0.1)
 
@@ -110,7 +110,7 @@ def test_multivar_cmap_call():
     with pytest.raises(ValueError, match="clip cannot be false"):
         cs = cmap([(0, 5, 9), (0, 0, 0)], bytes=True, clip=False)
     # Tests calling a multivariate colormap with integer values
-    cmap = mpl.multivar_colormaps['2VarSubA']
+    cmap = mpl.multivar_colormaps['2Chroma']
 
     # call only integers
     cs = cmap([(0, 50, 100, 0, 0, 300), (0, 0, 0, 50, 100, 300)])
@@ -179,7 +179,7 @@ def test_multivar_cmap_call():
         cs = cmap((0, 5, 9))
 
     # test over/under
-    cmap = mpl.multivar_colormaps['2VarAddA']
+    cmap = mpl.multivar_colormaps['2Spectra']
     with pytest.raises(ValueError, match='i.e. be of length 2'):
         cmap.with_extremes(over=0)
     with pytest.raises(ValueError, match='i.e. be of length 2'):
@@ -192,18 +192,18 @@ def test_multivar_cmap_call():
 
 
 def test_multivar_bad_mode():
-    cmap = mpl.multivar_colormaps['2VarSubA']
+    cmap = mpl.multivar_colormaps['2Chroma']
     with pytest.raises(ValueError, match="is not a valid value for"):
         cmap = mpl.colors.MultivarColormap(cmap[:], 'bad')
 
 
 def test_multivar_resample():
-    cmap = mpl.multivar_colormaps['3VarAddA']
+    cmap = mpl.multivar_colormaps['3Spectra']
     cmap_resampled = cmap.resampled((None, 10, 3))
 
-    assert_allclose(cmap_resampled[1](0.25), (0.093, 0.116, 0.059, 1.0))
-    assert_allclose(cmap_resampled((0, 0.25, 0)), (0.093, 0.116, 0.059, 1.0))
-    assert_allclose(cmap_resampled((1, 0.25, 1)), (0.417271, 0.264624, 0.274976, 1.),
+    assert_allclose(cmap_resampled[1](0.25), (0.085, 0.115, 0.025, 1.0))
+    assert_allclose(cmap_resampled((0, 0.25, 0)), (0.085, 0.115, 0.025, 1.0))
+    assert_allclose(cmap_resampled((1, 0.25, 1)), (0.424565, 0.247412, 0.237188, 1.),
                                    atol=0.01)
 
     with pytest.raises(ValueError, match="lutshape must be of length"):
@@ -508,7 +508,7 @@ def test_bivariate_repr_html():
 
 
 def test_multivariate_repr_png():
-    cmap = mpl.multivar_colormaps['3VarAddA']
+    cmap = mpl.multivar_colormaps['3Spectra']
     png = cmap._repr_png_()
     assert len(png) > 0
     img = Image.open(BytesIO(png))
@@ -521,7 +521,7 @@ def test_multivariate_repr_png():
 
 
 def test_multivariate_repr_html():
-    cmap = mpl.multivar_colormaps['3VarAddA']
+    cmap = mpl.multivar_colormaps['3Spectra']
     html = cmap._repr_html_()
     assert len(html) > 0
     for c in cmap:
@@ -541,7 +541,7 @@ def test_bivar_eq():
     cmap_1 = mpl.bivar_colormaps['BiPeak']
     assert (cmap_0 == cmap_1) is True
 
-    cmap_1 = mpl.multivar_colormaps['2VarAddA']
+    cmap_1 = mpl.multivar_colormaps['2Spectra']
     assert (cmap_0 == cmap_1) is False
 
     cmap_1 = mpl.bivar_colormaps['BiCone']
@@ -569,9 +569,9 @@ def test_multivar_eq():
     """
     Tests equality between multivariate colormaps
     """
-    cmap_0 = mpl.multivar_colormaps['2VarAddA']
+    cmap_0 = mpl.multivar_colormaps['2Spectra']
 
-    cmap_1 = mpl.multivar_colormaps['2VarAddA']
+    cmap_1 = mpl.multivar_colormaps['2Spectra']
     assert (cmap_0 == cmap_1) is True
 
     cmap_1 = mpl.bivar_colormaps['BiPeak']
@@ -581,13 +581,13 @@ def test_multivar_eq():
                                          'sRGB_add')
     assert (cmap_0 == cmap_1) is False
 
-    cmap_1 = mpl.multivar_colormaps['3VarAddA']
+    cmap_1 = mpl.multivar_colormaps['3Spectra']
     assert (cmap_0 == cmap_1) is False
 
-    cmap_1 = mpl.multivar_colormaps['2VarAddA']
+    cmap_1 = mpl.multivar_colormaps['2Spectra']
     cmap_1 = cmap_1.with_extremes(bad='k')
     assert (cmap_0 == cmap_1) is False
 
-    cmap_1 = mpl.multivar_colormaps['2VarAddA']
+    cmap_1 = mpl.multivar_colormaps['2Spectra']
     cmap_1 = mpl.colors.MultivarColormap(cmap_1[:], 'sRGB_sub')
     assert (cmap_0 == cmap_1) is False

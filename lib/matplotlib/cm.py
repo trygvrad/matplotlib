@@ -239,3 +239,23 @@ globals().update(_colormaps)
 _multivar_colormaps = ColormapRegistry(multivar_cmaps)
 
 _bivar_colormaps = ColormapRegistry(bivar_cmaps)
+
+# We adjust the docs here, as the docstring for ColormapRegistry
+# is specific for scalar colormaps.
+# This is largely to format matplotlib_configuration_api.rts reasonably
+_multivar_colormaps.__doc__ = r"""
+    Container for multivariate colormaps that are known to Matplotlib by name.
+
+    To get a list of all registered multivariate colormaps, you can do::
+
+        from matplotlib import multivar_colormaps
+        list(multivar_colormaps)
+    """
+_bivar_colormaps.__doc__ = r"""
+    Container for bivariate colormaps that are known to Matplotlib by name.
+
+    To get a list of all registered bivariate colormaps, you can do::
+
+        from matplotlib import bivar_colormaps
+        list(bivar_colormaps)
+    """

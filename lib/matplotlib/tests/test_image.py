@@ -475,7 +475,7 @@ def test_format_cursor_data_multinorm(data, text):
     from matplotlib.backend_bases import MouseEvent
     fig, ax = plt.subplots()
     cmap_bivar = mpl.bivar_colormaps['BiOrangeBlue']
-    cmap_multivar = mpl.multivar_colormaps['2VarAddA']
+    cmap_multivar = mpl.multivar_colormaps['2Spectra']
 
     # This is a test for ColorizingArtist._format_cursor_data_override()
     # with data with multiple channels.
@@ -2063,4 +2063,4 @@ def test_invalid_interpolation_stage_multinorm():
 
     with pytest.raises(ValueError,
             match="'data' is the only valid interpolation_stage"):
-        ax.imshow(data, cmap='2VarAddA', interpolation_stage='rgba')
+        ax.imshow(data, cmap='2Spectra', interpolation_stage='rgba')

@@ -2145,12 +2145,12 @@ def test_colorizer_multinorm_implicit():
 
     # test call with two single values
     data = [0.1, 0.2]
-    res = (0.098039, 0.149020, 0.2, 1.0)
+    res = (0.098039, 0.14902, 0.2, 1.0)
     assert_array_almost_equal(ca.to_rgba(data), res)
 
     # test call with two 1d arrays
     data = [[0.1, 0.2], [0.3, 0.4]]
-    res = [[0.09803922, 0.19803922, 0.29803922, 1.],
+    res = [[0.098039, 0.198039, 0.298039, 1.],
            [0.2, 0.3, 0.4, 1.]]
     assert_array_almost_equal(ca.to_rgba(data), res)
 
@@ -2179,12 +2179,12 @@ def test_colorizer_multinorm_implicit():
         ca.to_rgba([[0.1]])
 
     # test multivariate
-    ca = mcolorizer.Colorizer('3VarAddA')
+    ca = mcolorizer.Colorizer('3Spectra')
     ca.vmin = (-0.1, -0.2, -0.3)
     ca.vmax = (0.1, 0.2, 0.3)
 
     data = [0.1, 0.1, 0.1]
-    res = (0.712612, 0.896847, 0.954494, 1.0)
+    res = (0.7214, 0.880506, 0.926788, 1.0)
     assert_array_almost_equal(ca.to_rgba(data), res)
 
 
@@ -2209,7 +2209,7 @@ def test_colorizer_multinorm_explicit():
 
     # test call with two single values
     data = [0.1, 0.2]
-    res = (0.098039, 0.374510, 0.65098, 1.)
+    res = (0.098039, 0.37451, 0.65098, 1.)
     assert_array_almost_equal(ca.to_rgba(data), res)
 
 
@@ -2254,7 +2254,7 @@ def test_colorizer_bivar_cmap():
 
 
 def test_colorizer_multivar_cmap():
-    ca = mcolorizer.Colorizer('3VarAddA', [mcolors.Normalize(),
+    ca = mcolorizer.Colorizer('3Spectra', [mcolors.Normalize(),
                                            mcolors.Normalize(),
                                            'log'])
     cartist = mcolorizer.ColorizingArtist(ca)

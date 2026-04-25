@@ -10420,14 +10420,14 @@ def test_multivariate_visualizations():
 
     fig, axes = plt.subplots(1, 5, figsize=(8, 2))
 
-    axes[0].imshow((x_0, x_1, x_2), cmap='3VarAddA')
-    axes[1].pcolor((x_0, x_1, x_2), cmap='3VarAddA')
-    axes[2].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA')
+    axes[0].imshow((x_0, x_1, x_2), cmap='3Spectra')
+    axes[1].pcolor((x_0, x_1, x_2), cmap='3Spectra')
+    axes[2].pcolormesh((x_0, x_1, x_2), cmap='3Spectra')
 
     x = np.arange(5)
     y = np.arange(5)
     X, Y = np.meshgrid(x, y)
-    axes[3].pcolormesh(X, Y, (x_0, x_1, x_2), cmap='3VarAddA')
+    axes[3].pcolormesh(X, Y, (x_0, x_1, x_2), cmap='3Spectra')
 
     patches = [
         mpl.patches.Wedge((.3, .7), .1, 0, 360),             # Full circle
@@ -10438,7 +10438,7 @@ def test_multivariate_visualizations():
     colors_0 = np.arange(len(patches)) // 2
     colors_1 = np.arange(len(patches)) % 2
     colors_2 = np.arange(len(patches)) % 3
-    p = mpl.collections.PatchCollection(patches, cmap='3VarAddA', alpha=0.5)
+    p = mpl.collections.PatchCollection(patches, cmap='3Spectra', alpha=0.5)
     p.set_array((colors_0, colors_1, colors_2))
     axes[4].add_collection(p)
     remove_ticks_and_titles(fig)
@@ -10459,13 +10459,13 @@ def test_multivariate_pcolormesh_alpha():
 
     axes[0, 0].pcolormesh(x_1,  alpha=0.5)
     axes[0, 1].pcolormesh((x_0, x_1), cmap='BiPeak', alpha=0.5)
-    axes[0, 2].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA', alpha=0.5)
+    axes[0, 2].pcolormesh((x_0, x_1, x_2), cmap='3Spectra', alpha=0.5)
 
     al = np.arange(25, dtype='float32').reshape(5, 5)[::-1].T % 6 / 5
 
     axes[1, 0].pcolormesh(x_1,  alpha=al)
     axes[1, 1].pcolormesh((x_0, x_1), cmap='BiPeak', alpha=al)
-    axes[1, 2].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA', alpha=al)
+    axes[1, 2].pcolormesh((x_0, x_1, x_2), cmap='3Spectra', alpha=al)
     remove_ticks_and_titles(fig)
 
 
@@ -10484,14 +10484,14 @@ def test_multivariate_imshow_alpha():
     axes[0, 0].imshow(x_1, interpolation='nearest',  alpha=0.5)
     axes[0, 1].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak', alpha=0.5)
     axes[0, 2].imshow((x_0, x_1, x_2), interpolation='nearest',
-                      cmap='3VarAddA', alpha=0.5)
+                      cmap='3Spectra', alpha=0.5)
 
     al = np.arange(25, dtype='float32').reshape(5, 5)[::-1].T % 6 / 5
 
     axes[1, 0].imshow(x_1, interpolation='nearest',  alpha=al)
     axes[1, 1].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak', alpha=al)
     axes[1, 2].imshow((x_0, x_1, x_2), interpolation='nearest',
-                      cmap='3VarAddA', alpha=al)
+                      cmap='3Spectra', alpha=al)
     remove_ticks_and_titles(fig)
 
 
@@ -10512,27 +10512,27 @@ def test_multivariate_pcolormesh_norm():
 
     axes[0, 0].pcolormesh(x_1)
     axes[0, 1].pcolormesh((x_0, x_1), cmap='BiPeak')
-    axes[0, 2].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA')
+    axes[0, 2].pcolormesh((x_0, x_1, x_2), cmap='3Spectra')
     axes[0, 3].pcolormesh((x_0, x_1), cmap='BiPeak')  # repeated for visual consistency
-    axes[0, 4].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA')  # repeated
+    axes[0, 4].pcolormesh((x_0, x_1, x_2), cmap='3Spectra')  # repeated
 
     vmin = 1
     vmax = 3
     axes[1, 0].pcolormesh(x_1, vmin=vmin, vmax=vmax)
     axes[1, 1].pcolormesh((x_0, x_1), cmap='BiPeak', vmin=[vmin]*2, vmax=[vmax]*2)
-    axes[1, 2].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA',
+    axes[1, 2].pcolormesh((x_0, x_1, x_2), cmap='3Spectra',
                           vmin=[vmin]*3, vmax=[vmax]*3)
     axes[1, 3].pcolormesh((x_0, x_1), cmap='BiPeak',
                           vmin=(None, vmin), vmax=(None, vmax))
-    axes[1, 4].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA',
+    axes[1, 4].pcolormesh((x_0, x_1, x_2), cmap='3Spectra',
                           vmin=(None, vmin, None), vmax=(None, vmax, None))
 
     norm = mcolors.LogNorm(vmin=1, vmax=5)
     axes[2, 0].pcolormesh(x_1, norm=norm)
     axes[2, 1].pcolormesh((x_0, x_1), cmap='BiPeak', norm=(norm, norm))
-    axes[2, 2].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA', norm=(norm, norm, norm))
+    axes[2, 2].pcolormesh((x_0, x_1, x_2), cmap='3Spectra', norm=(norm, norm, norm))
     axes[2, 3].pcolormesh((x_0, x_1), cmap='BiPeak', norm=('linear', norm))
-    axes[2, 4].pcolormesh((x_0, x_1, x_2), cmap='3VarAddA',
+    axes[2, 4].pcolormesh((x_0, x_1, x_2), cmap='3Spectra',
                           norm=('linear', norm, 'linear'))
 
     remove_ticks_and_titles(fig)
@@ -10556,30 +10556,30 @@ def test_multivariate_imshow_norm():
     # removes ambiguity when using masked array (from LogNorm)
     axes[0, 0].imshow(x_1, interpolation='nearest')
     axes[0, 1].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak')
-    axes[0, 2].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3VarAddA')
+    axes[0, 2].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3Spectra')
     axes[0, 3].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak')
-    axes[0, 4].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3VarAddA')
+    axes[0, 4].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3Spectra')
 
     vmin = 1
     vmax = 3
     axes[1, 0].imshow(x_1, interpolation='nearest', vmin=vmin, vmax=vmax)
     axes[1, 1].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak',
                       vmin=[vmin]*2, vmax=[vmax]*2)
-    axes[1, 2].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3VarAddA',
+    axes[1, 2].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3Spectra',
                       vmin=[vmin]*3, vmax=[vmax]*3)
     axes[1, 3].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak',
                       vmin=(None, vmin), vmax=(None, vmax))
-    axes[1, 4].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3VarAddA',
+    axes[1, 4].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3Spectra',
                       vmin=(None, vmin, None), vmax=(None, vmax, None))
 
     n = mcolors.LogNorm(vmin=1, vmax=5)
     axes[2, 0].imshow(x_1, interpolation='nearest', norm=n)
     axes[2, 1].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak', norm=(n, n))
-    axes[2, 2].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3VarAddA',
+    axes[2, 2].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3Spectra',
                       norm=(n, n, n))
     axes[2, 3].imshow((x_0, x_1), interpolation='nearest', cmap='BiPeak',
                       norm=('linear', n))
-    axes[2, 4].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3VarAddA',
+    axes[2, 4].imshow((x_0, x_1, x_2), interpolation='nearest', cmap='3Spectra',
                       norm=('linear', n, 'linear'))
 
     remove_ticks_and_titles(fig)

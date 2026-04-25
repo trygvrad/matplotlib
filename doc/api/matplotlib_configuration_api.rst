@@ -83,6 +83,12 @@ Colormaps and color sequences
 .. autodata:: color_sequences
    :no-value:
 
+.. autodata:: bivar_colormaps
+   :no-value:
+
+.. autodata:: multivar_colormaps
+   :no-value:
+
 Miscellaneous
 =============
 
